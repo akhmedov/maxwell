@@ -18,7 +18,7 @@ maxwell: $(OBJECTS)
 	@rm -f build/test.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
-test: $(OBJECTS)
+test: $(OBJECTS)	
 	@rm -f build/main.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
@@ -26,6 +26,7 @@ list:
 	@find . -name '*.cpp' -o -name '*.hpp' -o -name 'Makefile' | xargs wc -l
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
+	@mkdir -p build
 	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(GMP_FLAGS) -Iinclude -c $< -o $@
 
 gnuplot:
