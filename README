@@ -1,0 +1,152 @@
+### ABSTRUCT ###
+
+Maxwell project was developed in scope of a PhD research to porovide 
+heigh efficient numerical evaluation tool. Research topic is trancient 
+field radiation in nonlinear trancient nonstationary medium from arditrary
+sourse. The tool allows to compute and plot electromagnetic field with 
+arbitrary radiator and compare result with pre-defined solution.
+
+Source code is wrote within ISO c++14 standard and POSIX comatibility. 
+Build system is only one Makefile with several available options. 
+There are 'test', 'maxwell' and 'debug' options. Code containce paralel 
+calculations on std::threads with data access control on std::mutex.
+
+Source code and build systems supports GNU/Linux, MacOS and BSD operation 
+systems. Development dependency is limited by C++ development stack and
+X11 development package. Folowing OS list is recomended for development 
+process, the system is tested on the list:
+
+- GNU/Linux Ubuntu 16.04 LTE x86_64 (GNU GCC version 5.4.0 20160607)
+- MacOS Sierra 10.12.5 x86_64 (Apple LLVM version 8.1.0)
+
+### NOTES ###
+
+lux et veritas
+
+Наука сама по себе деградирует. Чем выше уровень научного прогресса тем
+сильнее само-деградация. По этому для роста древа знаний человечество 
+нуждается в новых инструментах. Только появление новых инструментов может 
+сдержать эту деградцию.  
+
+Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
+
+### UBUNTU INSTALL ###
+
+~ $ sudo apt-get install build-essential cmake git
+~ $ sudo apt-get install libx11-dev
+~ $ git clone https://server/maxwell.git
+~ $ make gnuplot gnump test
+~ $ ./build/test
+~ $ make -j4 maxwell
+~ $ ./build/maxwell --help
+~ $ ./build/maxwell --model 1 --arg 1.5 90
+~ $ ./build/maxwell --model 5
+
+### USEFULL DEBUG COMANDS
+
+~ $ make clean
+~ $ make list
+
+~ $ du -h ./build/maxwell
+~ $ ls -lh ./build/maxwell
+~ $ file ./build/maxwell
+~ $ stat -x ./build/maxwell
+~ $ nm -D libgmp.so | grep __gmpf_init
+
+~ $ cat <> maxwell.conf | sed '/\(^FLOAT_BITRATE =\).*/ s//\1$(TERMS)/'
+~ $ date && nice -n 10 ./build/gnuplot --conf PATH --model NUM && date
+
+### LICENCE ###
+
+!!! find licence: GPL, MIT, etc.
+1. source is open;
+2. authering save;
+3a. main auther is co-author of child proj;
+3b. aggried comercial use;
+
+### TEST LIST ###
+
+- manual test on maxwell.conf
+- caclucaliton manager vs single stream test
++ I1 I3 I4 I5 test on Integral::simpson() method
+- test of getters and setters
+
+### BUG LIST ###
+
+- refactor GnuPlot::write_commants_to_script()
+- refactor of --arg parther in main.cpp
+- refactor and restructur of main.cpp; code is not clean
+- refactor of ready_model.cpp; code copy-paste
+- refactor of manager.cpp; code copy-paste
+- extract all cout, cerr and exaptions handling to a separate CLI class
+- catch illegal answers in model
+- get maxwell version from chared configuration object
+- Config conflict: Class Conflict::TEMS_NUM MissileField::STATIC_TERMS_NUMBER 
+
+- warnings on GNU GCC 5.4.0 20160607
+- Makefile refactor; test and maxwell build without rm command
+- implement functionality of Calculation Manager in ready_model.cpp
++ implement functionality of Config::print_progress()
++ implement functionality of Config::plot_color_map()
++ implement functionality of Config::plot_grid()
++ implement functionality of Config::plot_baund_cage()
++ implement functionality of Config::plot_device()
++ implement functionality of Config::path_gnuplot_binary()
++ implement functionality of Config::gnp_script_path()
+- implement functionality of Config::magnetic_term_num()
++ implement functionality of Config::float_bitrate()
+
+### TODO LIST ###
+
+- LIST ALL tested methods next to respount include
+- implement make help option in Makefile
++ gnuplot font size
+- refactor of void Manager::call (AbstractField, string)
++ add THREAD_NUMBER option to maxwell.conf
++ calculation manager progress bar
++ configuration file for global paramiters
+
++ add funvtion MissileEffect::static_field(rho, phi, z, eps = 10e-10)
++ add function GnuPlot::multi_plot2d()
+- add function GnuPlot::animation_plot2d()
+- add function GnuPlot::animation_plot3d()
+
+- call gnuplot from enter point without system() call (version 1.0)
+- client server calculation ability through web soket (version 1.0)
+- build configuration for Windows 10 (version 1.0)
+- implement QT plot device (version 1.0)
+
+- integration
+https://en.wikipedia.org/wiki/Simpson's_rule
+https://en.wikipedia.org/wiki/Gaussian_quadrature
+http://www.cs.rpi.edu/~flaherje/pdf/fea6.pdf
+https://www.gnu.org/software/gsl/manual
+
+### Install gnump ###
+
+https://gmplib.org
+./configure --help
+
+### GNU Plot Install ###
+
+http://plplot.sourceforge.net/
+http://www.gnuplot.info
+http://www.gnuplot.info/demo/surface1.html
+http://gnuplot.sourceforge.net/demo/pm3d.html
+
+# FONT SIZE FOR X11
+# set term x11 font "times-roman,15,normal"
+
+# GENERAL FONT SIZE
+# set ylabel "" font font "Times-New-Roman,15"
+# set tics font "Times-New-Roman,15"
+# set key font "Times-New-Roman,15"
+
+# MOVE LONG DOWN YLABEL
+# set ylabel "f(x) = J_1(ax) J_0(bx) J_0(cx)" offset 0,-5
+
+### QT SUPPORT ###
+
+./configure --with-qt --prefix=$(PROJECT_DIR)/gnuplot
+sudo apt-get install qtbase5-dev libqt5svg5-dev
+

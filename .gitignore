@@ -1,0 +1,6 @@
+/**/.*
+!/.gitignore
+/gnump/
+/gnuplot/
+/build/
+
