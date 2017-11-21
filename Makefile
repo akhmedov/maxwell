@@ -23,7 +23,8 @@ test: $(OBJECTS)
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
 list:
-	@find . -name '*.cpp' -o -name '*.hpp' -o -name 'Makefile' | xargs wc -l
+	@find . -name '*.cpp' -o -name '*.hpp' \
+	-o -name '.gitignore' -o -name 'Makefile' | xargs wc -l
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build
