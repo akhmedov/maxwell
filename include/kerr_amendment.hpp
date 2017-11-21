@@ -13,6 +13,8 @@
 #ifndef kerr_amendment_hpp
 #define kerr_amendment_hpp
 
+#define TERMS_NUMBER 10e3
+
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "nonlinear_medium.hpp"
@@ -64,10 +66,10 @@ struct KerrAmendment : public MissileField, public NonlinearField {
 
 protected:
 
-	std::complex<double> evolution_h (long m, double nu, double vt, double z) const;
-	std::complex<double> evolution_Ih (long m, double nu, double vt, double z) const;
-	std::complex<double> evolution_Vh (long m, double nu, double vt, double z) const;
-	std::complex<double> modal_source (long m, double nu, double vt, double z) const;
+	double im_evolution_h (long m, double nu, double vt, double z) const;
+	double im_evolution_Ih (long m, double nu, double vt, double z) const;
+	double im_evolution_Vh (long m, double nu, double vt, double z) const;
+	double im_modal_source (long m, double nu, double vt, double z) const;
 	
 	double riemann (double nu, double vt_diff, double z_diff) const;
 

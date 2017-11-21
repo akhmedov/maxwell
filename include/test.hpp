@@ -34,7 +34,6 @@ struct Test : private Math, private KerrAmendment {
 	static bool simpson_I1 ();
 	static bool simpson_I2 ();
 	static bool invers_sqrt ();
-	static bool jm_imag_only ();
 	static bool field_getters ();
 	static bool real_convolution ();
 };

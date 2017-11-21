@@ -14,7 +14,6 @@ KerrMedium::KerrMedium (double realative_mu, double realative_eps, double chi3_e
 		this->chi3 = chi3_electric;
 	else
 		std::invalid_argument("Kerr coefficient must be positive.");
-
 	
 	if (conduct > 0) 
 		this->sigma = conduct;
@@ -55,10 +54,24 @@ double KerrMedium::relative_permeability (double ct, double z, std::size_t term)
 KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium)
 : MissileField(*field), NonlinearField(field, medium) { }
 
-double KerrAmendment::electric_rho (double ct, double rho, double phi, double z) const
+double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
 {
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::electric_phi is not implemented");
+	auto re_modes = [this, vt, rho, phi, z] (double nu) {
+
+		auto mode = [this, vt, rho, phi, z] (std::size_t m, double nu) {
+			double res = - std::cos(m * phi);
+			res /= std::sqrt( LinearMedium::EPS0 );
+			res *= jn(m, nu * rho) * this->im_evolution_Vh(m, nu, vt, z);
+			res /= rho * std::sqrt(nu);
+			return res;
+		};
+
+		return mode(-1, nu) + mode(1, nu) + mode(3, nu) + mode(-3, nu); 
+	};
+
+	size_t bais = TERMS_NUMBER;
+	Simpson I = Simpson(10*bais);
+	return I.value(0, bais, re_modes);
 }
 
 double KerrAmendment::electric_phi (double ct, double rho, double phi, double z) const
@@ -95,34 +108,14 @@ double KerrAmendment::magnetic_z (double ct, double rho, double phi, double z) c
 
 std::complex<double> KerrAmendment::complex_electric_rho (double vt, double rho, double phi, double z) const
 {
-
-	auto mode = [this, vt, rho, phi, z] (std::size_t m, double nu) {
-		std::complex<double> res =  - std::cos(m * phi) - 1i * std::sin(m * phi);
-		res /= std::sqrt( LinearMedium::EPS0 );
-		res *= jn(m, nu * rho) * this->evolution_Vh(m, nu, vt, z).imag();
-		res /= rho * std::sqrt(nu);
-		return res;
-	};
-
-	auto re_modes = [mode] (double nu) { 
-		return mode(-1, nu).real() + mode(1, nu).real() + 
-		mode(3, nu).real() + mode(-3, nu).real(); 
-	};
-
-	auto im_modes = [mode] (double nu) { 
-		return mode(-1, nu).imag() + mode(1, nu).imag() + 
-		mode(3, nu).imag() + mode(-3, nu).imag(); 
-	};
-
-	size_t bais = 10e5;
-	Simpson I = Simpson(10*bais);
-	return I.value(0, bais, re_modes) + I.value(0, bais, im_modes);
+	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
+	throw std::logic_error("KerrAmendment::electric_rho is not implemented");
 }
 
 std::complex<double> KerrAmendment::complex_electric_phi (double ct, double rho, double phi, double z) const
 {
 	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::magnetic_phi is not implemented");
+	throw std::logic_error("KerrAmendment::electric_phi is not implemented");
 }
 
 std::complex<double> KerrAmendment::complex_electric_z (double ct, double rho, double phi, double z) const
@@ -151,48 +144,39 @@ std::complex<double> KerrAmendment::complex_magnetic_z (double ct, double rho, d
 
 /* */
 
-std::complex<double> KerrAmendment::evolution_Ih (long m, double nu, double vt, double z) const
+double KerrAmendment::im_evolution_Ih (long m, double nu, double vt, double z) const
 {
-	auto Re_hm = [&] (double val_z) {
-		return this->evolution_h(m, nu, vt, val_z).real();
+	auto Im_hm = [this, m, nu, vt] (double val_z) {
+		return this->im_evolution_h(m, nu, vt, val_z);
 	};
 
-	auto Im_hm = [&] (double val_z) {
-		return this->evolution_h(m, nu, vt, val_z).imag();
-	};
-
-	return Math::derivative(Re_hm, z) + 1i * Math::derivative(Im_hm, z);
+	return Math::derivative(Im_hm, z);
 }
 
-std::complex<double> KerrAmendment::evolution_Vh (long m, double nu, double vt, double z) const
+double KerrAmendment::im_evolution_Vh (long m, double nu, double vt, double z) const
 {
 	double mu_r = nl_medium->relative_permeability(vt,z);
 
-	auto Im_hm = [&] (double val_vt) {
-		return this->evolution_h(m, nu, val_vt, z).imag();
+	auto Im_hm = [this, m, nu, z] (double val_vt) {
+		return this->im_evolution_h(m, nu, val_vt, z);
 	};
 
-	auto Re_hm = [&] (double val_vt) {
-		return this->evolution_h(m, nu, val_vt, z).real();
-	};
-
-	return - mu_r * ( Math::derivative(Re_hm, vt) + 1i * Math::derivative(Im_hm, vt) );
+	return - mu_r * Math::derivative(Im_hm, vt);
 }
 
-std::complex<double> KerrAmendment::evolution_h (long m, double nu, double vt, double z) const
+double KerrAmendment::im_evolution_h (long m, double nu, double vt, double z) const
 {
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson It = Simpson(10*bais);
 
-	auto func1 = [&] (double vt_perp) {
-		std::cout << nu << ' ' << vt_perp << std::endl;
+	auto func1 = [this, bais, m, nu, vt, z] (double vt_perp) {
 		Simpson Iz = Simpson(10*bais);
-		auto func2 = [&] (double z_perp) {
+		std::cout << nu << ' ' << m << ' ' << vt_perp << std::endl;
+		auto func2 = [this, m, nu, vt, z, vt_perp] (double z_perp) {
 			if ( vt_perp - z_perp < 10e-10) return 0.0;
 			double G = this->riemann(nu, vt - vt_perp, z - z_perp);
-			// if (G < 10e-10) return 0.0;
-			std::complex<double> jm = this->modal_source(m, nu, vt_perp, z_perp);
-			return jm.imag() * G;
+			double jm = this->im_modal_source(m, nu, vt_perp, z_perp);
+			return jm * G;
 		};
 		return Iz.value(vt_perp, vt_perp + 2 * this->R, func2);
 	};
@@ -216,7 +200,7 @@ double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
 	else return 0;
 }
 
-std::complex<double> KerrAmendment::modal_source (long m, double nu, double ct, double z) const
+double KerrAmendment::im_modal_source (long m, double nu, double ct, double z) const
 {
 	double terms = 0;
 
@@ -257,7 +241,7 @@ std::complex<double> KerrAmendment::modal_source (long m, double nu, double ct, 
 		default: terms = 0;
 	}
 	
-	return 1i * terms;
+	return terms;
 }
 
 double KerrAmendment::N1 (long m, double nu, double ct, double z) const
@@ -277,7 +261,7 @@ double KerrAmendment::N1 (long m, double nu, double ct, double z) const
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
@@ -310,7 +294,7 @@ double KerrAmendment::N2 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
@@ -341,7 +325,7 @@ double KerrAmendment::N3 (long m, double nu, double ct, double z) const
 	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
@@ -372,7 +356,7 @@ double KerrAmendment::N4 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
@@ -407,7 +391,7 @@ double KerrAmendment::N5 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
@@ -438,7 +422,7 @@ double KerrAmendment::N6 (long m, double nu, double ct, double z) const
 	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 
-	size_t bais = 10e5;
+	size_t bais = TERMS_NUMBER;
 	Simpson I = Simpson(10*bais);
 	auto func = [&] (double rho) { 
 		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);

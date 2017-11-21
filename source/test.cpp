@@ -188,28 +188,6 @@ bool Test::invers_sqrt ()
 	return true;
 }
 
-bool Test::jm_imag_only ()
-{
-	double radius = 3.14159;
-	double magnitude = 2.7;
-	double eps_r = 2.1;
-	double mu_r = 2.2;
-	double chi = 10e-6;
-	double sigma = 10e-7;
-
-	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
-	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
-	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
-
-	for (long m = -1; m <= 1; m+=2) {
-		complex<double> res = non_linear->modal_source(m, 23.5, 10.1, 10);
-		if (res.real() > 10e-16) return false;
-	}
-	
-	return true;
-}
-
 bool Test::field_getters ()
 {
 	double radius = 3.14159;
@@ -250,7 +228,7 @@ bool Test::real_convolution ()
 	MissileField* linear = new MissileField(source, medium);
 	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
 
-	complex<double> Erho = non_linear->complex_electric_rho (0.2, 0, 0, 0.1 );
+	complex<double> Erho = non_linear->electric_rho (0.2, 0, 0, 0.1);
 	cout << "Result: " << Erho << endl;
 	
 	return false;
@@ -291,10 +269,6 @@ int main()
 	cout << "MissileField::Test::simpson_I2 \t\t"; 
 	cout.flush();
 	cout << Test::simpson_I2() << endl;
-
-	cout << "KerrAmendment::Test::jm_imag_only \t"; 
-	cout.flush();
-	cout << Test::jm_imag_only() << endl;
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
