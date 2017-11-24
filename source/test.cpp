@@ -234,11 +234,108 @@ bool Test::real_convolution ()
 	return false;
 }
 
+
+bool Test::monte_carlo_vector ()
+{
+	vector<pair<double,double>> limits;
+	limits.push_back(make_pair(0,1));
+	limits.push_back(make_pair(0,1));
+
+	MonteCarlo distr = MonteCarlo (3000, limits );
+
+	std::valarray<double> val = distr.random_array();
+	/* for (auto i : val) cout << i << ' ';
+	cout << endl; */
+
+	return false;
+}
+
+bool Test::monte_carlo_integral ()
+{
+	double radius = 1;
+
+	auto func = [] (double rho, double phi, double theta) {
+		return rho * rho * sin(theta);
+	};
+
+	auto int_func = [radius] () {
+		double R3 = radius * radius * radius;
+		return 4 * M_PI * R3 / 3;
+	};
+
+	vector<pair<double,double>> limits;
+	limits.push_back( make_pair(0,radius) );
+	limits.push_back( make_pair(0,M_PI_2) );
+	limits.push_back( make_pair(0,M_PI_2) );
+
+	MonteCarlo integral = MonteCarlo (10e5, limits );
+	double volume = 8 * integral.value(func);
+	double error = 100 * abs(volume-int_func()) / int_func();
+
+	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+	return error < 1 ? true : false;
+}
+
+#include <initializer_list>
+
+bool Test::monte_carlo_improper ()
+{
+	double a = 1, b = 1;
+
+	auto func = [a,b] (double x, double y, double z) {
+		return exp(-y-z) * j0(a*sqrt(x*y)) * j0(b*sqrt(x*z));
+	};
+
+	auto int_func = [a,b] () {
+		return a*a/4 + b*b/4;
+	};
+
+	vector<pair<double,double>> limits;
+	limits.push_back(make_pair(0,10e3));
+	limits.push_back(make_pair(0,10e3));
+	limits.push_back(make_pair(0,10e3));
+
+	MonteCarlo integral = MonteCarlo(10e9, limits);
+	double volume = integral.value(func);
+	double error = 100 * abs(volume-int_func()) / int_func();
+
+	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+
+	return false;
+}
+
+bool Test::imptoper_int_bessel ()
+{
+	double a = 2;
+
+	auto func = [a] (double x) {
+		return j0(a * x);
+	};
+
+	auto int_func = [a] () {
+		return 1 / a;
+	};
+
+	vector<pair<double,double>> limits;
+	limits.push_back(make_pair(0,10e3));
+	MonteCarlo integral = MonteCarlo(10e7, limits);
+	double monte_carlo = integral.value(func);
+	double error_mc = 100 * abs(monte_carlo-int_func()) / int_func();
+
+	size_t bais = 10e5;
+	Simpson I = Simpson(10*bais);
+	double simpson = I.value(0, bais, func);
+	double error_s = 100 * abs(monte_carlo-int_func()) / int_func();
+
+	// cout << simpson << ' ' << monte_carlo << ' ' << int_func() << endl;
+	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
+}
+
 int main()
 {
 	cout << boolalpha;
 
-	/* cout << "Math::Test::next_prime \t\t\t"; 
+	cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -258,11 +355,11 @@ int main()
 	cout.flush();
 	cout << Test::invers_sqrt() << endl;
 
-	cout << "Math::Test::devidative \t\t\t"; 
+	cout << "Math::Test::deridative \t\t\t"; 
 	cout.flush();
 	cout << Test::bessel_perp() << endl;
 
-	cout << "MissileField::Test::simpson_I1 \t\t"; 
+	/* cout << "MissileField::Test::simpson_I1 \t\t"; 
 	cout.flush();
 	cout << Test::simpson_I1() << endl;
 
@@ -272,11 +369,27 @@ int main()
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
-	cout << Test::field_getters() << endl; */
+	cout << Test::field_getters() << endl;
 
 	cout << "KerrAmendment::Test::real_convolution \t";
 	cout.flush();
-	cout << Test::real_convolution() << endl;
+	cout << Test::real_convolution() << endl; */
+
+	cout << "Math::Test::monte_carlo_vector \t\t"; 
+	cout.flush();
+	cout << Test::monte_carlo_vector() << endl;
+
+	cout << "Math::Test::monte_carlo_integral \t";
+	cout.flush();
+	cout << Test::monte_carlo_integral() << endl;
+
+	cout << "Math::Test::monte_carlo_improper \t";
+	cout.flush();
+	cout << Test::monte_carlo_improper() << endl;
+
+	cout << "Math::Test::imptoper_int_bessel \t";
+	cout.flush();
+	cout << Test::imptoper_int_bessel() << endl;
 	
 	return 0;
 }
