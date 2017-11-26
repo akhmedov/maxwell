@@ -110,6 +110,7 @@ double MonteCarlo::value ( const std::function<double(double, double, double, do
 	double res = 0;
 	std::size_t current_roll = 0;
 	while (current_roll <= rand_rolls) {
+		// if () std::cout <<  << std::endl;
 		std::valarray<double> rand = random_array();
 		res += func(rand[0], rand[1], rand[2], rand[3]);
 		current_roll++;

@@ -48,14 +48,6 @@ struct KerrAmendment : public MissileField, public NonlinearField {
 
 	KerrAmendment (MissileField* field, KerrMedium* medium);
 
-	std::complex<double> complex_electric_rho (double ct, double rho, double phi, double z) const;
-	std::complex<double> complex_electric_phi (double ct, double rho, double phi, double z) const;
-	std::complex<double> complex_electric_z (double ct, double rho, double phi, double z) const;
-
-	std::complex<double> complex_magnetic_rho (double ct, double rho, double phi, double z) const;
-	std::complex<double> complex_magnetic_phi (double ct, double rho, double phi, double z) const;
-	std::complex<double> complex_magnetic_z (double ct, double rho, double phi, double z) const;
-
 	double electric_rho (double ct, double rho, double phi, double z) const;
 	double electric_phi (double ct, double rho, double phi, double z) const;
 	double electric_z (double ct, double rho, double phi, double z) const;
@@ -66,19 +58,15 @@ struct KerrAmendment : public MissileField, public NonlinearField {
 
 protected:
 
-	double im_evolution_h (long m, double nu, double vt, double z) const;
-	double im_evolution_Ih (long m, double nu, double vt, double z) const;
-	double im_evolution_Vh (long m, double nu, double vt, double z) const;
-	double im_modal_source (long m, double nu, double vt, double z) const;
-	
-	double riemann (double nu, double vt_diff, double z_diff) const;
+	double im_modal_source (int m, double nu, double ct, double varrho, double z) const;
+	double riemann (double nu, double vt_diff, double z_diff) const; 
 
-	double N1 (long m, double nu, double ct, double z) const;
-	double N2 (long m, double nu, double ct, double z) const;
-	double N3 (long m, double nu, double ct, double z) const;
-	double N4 (long m, double nu, double ct, double z) const;
-	double N5 (long m, double nu, double ct, double z) const;
-	double N6 (long m, double nu, double ct,  double z) const;
+	double N1 (int m, double nu, double ct, double varrho, double z) const;
+	double N2 (int m, double nu, double ct, double varrho, double z) const;
+	double N3 (int m, double nu, double ct, double varrho, double z) const;
+	double N4 (int m, double nu, double ct, double varrho, double z) const;
+	double N5 (int m, double nu, double ct, double varrho, double z) const;
+	double N6 (int m, double nu, double ct, double varrho, double z) const;
 
 	double vint_bessel_011_perp (double vt, double z, double rho, double R) const;
 	double vint_bessel_001_perp (double vt, double z, double rho, double R) const;

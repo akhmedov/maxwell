@@ -217,19 +217,20 @@ bool Test::field_getters ()
 bool Test::real_convolution ()
 {
 	double radius = 1;
-	double magnitude = 2.7;
+	double magnitude = 100;
 	double eps_r = 1;
 	double mu_r = 1;
-	double chi = 10e-6;
-	double sigma = 10e-7;
+	double chi = 10e-15;
+	double sigma = 0;
 
 	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
 	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
 	MissileField* linear = new MissileField(source, medium);
 	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
 
-	complex<double> Erho = non_linear->electric_rho (0.2, 0, 0, 0.1);
-	cout << "Result: " << Erho << endl;
+	double nonlinear_Erho = non_linear->electric_rho (2.1, 0.8, 0, 2);
+	double linear_Erho = linear->electric_rho (2.1, 0.8, 0, 2);
+	cout << "Result: " << linear_Erho << ' ' << nonlinear_Erho << endl;
 	
 	return false;
 }
@@ -268,11 +269,11 @@ bool Test::monte_carlo_integral ()
 	limits.push_back( make_pair(0,M_PI_2) );
 	limits.push_back( make_pair(0,M_PI_2) );
 
-	MonteCarlo integral = MonteCarlo (10e5, limits );
+	MonteCarlo integral = MonteCarlo (10e8, limits );
 	double volume = 8 * integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
-	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+	cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 	return error < 1 ? true : false;
 }
 
@@ -295,11 +296,11 @@ bool Test::monte_carlo_improper ()
 	limits.push_back(make_pair(0,10e3));
 	limits.push_back(make_pair(0,10e3));
 
-	MonteCarlo integral = MonteCarlo(10e9, limits);
+	MonteCarlo integral = MonteCarlo(10e8, limits);
 	double volume = integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
-	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+	cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 
 	return false;
 }
@@ -318,16 +319,16 @@ bool Test::imptoper_int_bessel ()
 
 	vector<pair<double,double>> limits;
 	limits.push_back(make_pair(0,10e3));
-	MonteCarlo integral = MonteCarlo(10e7, limits);
+	MonteCarlo integral = MonteCarlo(10e8, limits);
 	double monte_carlo = integral.value(func);
 	double error_mc = 100 * abs(monte_carlo-int_func()) / int_func();
 
 	size_t bais = 10e5;
 	Simpson I = Simpson(10*bais);
 	double simpson = I.value(0, bais, func);
-	double error_s = 100 * abs(monte_carlo-int_func()) / int_func();
+	double error_s = 100 * abs(simpson-int_func()) / int_func();
 
-	// cout << simpson << ' ' << monte_carlo << ' ' << int_func() << endl;
+	// cout << error_s << ' ' << error_mc << endl;
 	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
 }
 
@@ -359,7 +360,7 @@ int main()
 	cout.flush();
 	cout << Test::bessel_perp() << endl;
 
-	/* cout << "MissileField::Test::simpson_I1 \t\t"; 
+	cout << "MissileField::Test::simpson_I1 \t\t"; 
 	cout.flush();
 	cout << Test::simpson_I1() << endl;
 
@@ -373,7 +374,7 @@ int main()
 
 	cout << "KerrAmendment::Test::real_convolution \t";
 	cout.flush();
-	cout << Test::real_convolution() << endl; */
+	cout << Test::real_convolution() << endl;
 
 	cout << "Math::Test::monte_carlo_vector \t\t"; 
 	cout.flush();

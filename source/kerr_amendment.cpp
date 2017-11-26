@@ -56,22 +56,41 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium)
 
 double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
 {
-	auto re_modes = [this, vt, rho, phi, z] (double nu) {
 
-		auto mode = [this, vt, rho, phi, z] (std::size_t m, double nu) {
-			double res = - std::cos(m * phi);
-			res /= std::sqrt( LinearMedium::EPS0 );
-			res *= jn(m, nu * rho) * this->im_evolution_Vh(m, nu, vt, z);
+	/* Monte-Carlo Inegration */
+	auto field = [this, rho, phi, z] (double vt) {
+
+		auto mode = [this, vt, rho, phi, z] (int m, double varrho, double z_perp, double vt_perp, double nu) {
+			double mu_r = nl_medium->relative_permeability(vt,z);
+			double sqrt_eps0 = std::sqrt(NonlinearMedium::EPS0);
+			double G = this->riemann(nu, vt_perp - vt, z_perp - z);
+			double res = std::cos(m * phi);
+			res *= m * G * jn(m, nu * rho);
 			res /= rho * std::sqrt(nu);
-			return res;
+			res *= varrho * this->im_modal_source(m,nu,vt,varrho,z);
+			return res * mu_r / sqrt_eps0;
 		};
 
-		return mode(-1, nu) + mode(1, nu) + mode(3, nu) + mode(-3, nu); 
+		auto modes_sum = [this, vt, rho, phi, z, mode] (double varrho, double z_perp, double vt_perp, double nu) {
+			double sum = 0;
+			sum += mode(-1, varrho, z_perp, vt_perp, nu);
+			sum += mode(1, varrho, z_perp, vt_perp, nu);
+			sum += mode(-3, varrho, z_perp, vt_perp, nu);
+			sum += mode(3, varrho, z_perp, vt_perp, nu);
+			return sum;
+		};
+
+		std::vector<std::pair<double,double>> limits;
+		limits.push_back(std::make_pair(0,10e3));
+		limits.push_back(std::make_pair(0,10e3));
+		limits.push_back(std::make_pair(0,10e3));
+		limits.push_back(std::make_pair(0,10e3));
+		MonteCarlo integral = MonteCarlo(10e8, limits);
+		return integral.value(modes_sum);
 	};
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	return I.value(0, bais, re_modes);
+	return Math::derivative(field,vt);
+
 }
 
 double KerrAmendment::electric_phi (double ct, double rho, double phi, double z) const
@@ -106,84 +125,6 @@ double KerrAmendment::magnetic_z (double ct, double rho, double phi, double z) c
 
 /* */
 
-std::complex<double> KerrAmendment::complex_electric_rho (double vt, double rho, double phi, double z) const
-{
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::electric_rho is not implemented");
-}
-
-std::complex<double> KerrAmendment::complex_electric_phi (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::electric_phi is not implemented");
-}
-
-std::complex<double> KerrAmendment::complex_electric_z (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::electric_z is not implemented");
-}
-
-std::complex<double> KerrAmendment::complex_magnetic_rho (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
-}
-
-std::complex<double> KerrAmendment::complex_magnetic_phi (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::magnetic_phi is not implemented");
-}
-
-std::complex<double> KerrAmendment::complex_magnetic_z (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::magnetic_z is not implemented");
-}
-
-/* */
-
-double KerrAmendment::im_evolution_Ih (long m, double nu, double vt, double z) const
-{
-	auto Im_hm = [this, m, nu, vt] (double val_z) {
-		return this->im_evolution_h(m, nu, vt, val_z);
-	};
-
-	return Math::derivative(Im_hm, z);
-}
-
-double KerrAmendment::im_evolution_Vh (long m, double nu, double vt, double z) const
-{
-	double mu_r = nl_medium->relative_permeability(vt,z);
-
-	auto Im_hm = [this, m, nu, z] (double val_vt) {
-		return this->im_evolution_h(m, nu, val_vt, z);
-	};
-
-	return - mu_r * Math::derivative(Im_hm, vt);
-}
-
-double KerrAmendment::im_evolution_h (long m, double nu, double vt, double z) const
-{
-	size_t bais = TERMS_NUMBER;
-	Simpson It = Simpson(10*bais);
-
-	auto func1 = [this, bais, m, nu, vt, z] (double vt_perp) {
-		Simpson Iz = Simpson(10*bais);
-		std::cout << nu << ' ' << m << ' ' << vt_perp << std::endl;
-		auto func2 = [this, m, nu, vt, z, vt_perp] (double z_perp) {
-			if ( vt_perp - z_perp < 10e-10) return 0.0;
-			double G = this->riemann(nu, vt - vt_perp, z - z_perp);
-			double jm = this->im_modal_source(m, nu, vt_perp, z_perp);
-			return jm * G;
-		};
-		return Iz.value(vt_perp, vt_perp + 2 * this->R, func2);
-	};
-
-	return It.value(10e-10, bais, func1);
-}
-
 double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
 { 
 	double distance = vt_diff * vt_diff - z_diff * z_diff;
@@ -194,47 +135,44 @@ double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
 	double mu_r = nl_medium->relative_permeability(vt_diff,z_diff);
 	double velocity = NonlinearMedium::C / (eps_r * mu_r);
 
-	double interval = vt_diff - z_diff;
-	if (interval > 0) return j0(nu * distance) * velocity / 2;
-	// else if (interval == 0) return velocity / 4; 
-	else return 0;
+	return j0(nu * distance) * velocity / 2;
 }
 
-double KerrAmendment::im_modal_source (long m, double nu, double ct, double z) const
+double KerrAmendment::im_modal_source (int m, double nu, double ct, double varrho, double z) const
 {
 	double terms = 0;
 
 	switch (m) {
 		case -1: { 
-			terms -= 3 * KerrAmendment::N1(-1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N2(-1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N3(-1,nu,ct,z);
-			terms += 3 * KerrAmendment::N4(-1,nu,ct,z);
-			terms += 1 * KerrAmendment::N5(-1,nu,ct,z);
-			terms += 1 * KerrAmendment::N6(-1,nu,ct,z);
+			terms -= 3 * KerrAmendment::N1(-1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N2(-1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N3(-1,nu,ct,varrho,z);
+			terms += 3 * KerrAmendment::N4(-1,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N5(-1,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N6(-1,nu,ct,varrho,z);
 			break;
 		}
 		case 1: {
-			terms -= 3 * KerrAmendment::N1(1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N2(1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N3(1,nu,ct,z);
-			terms -= 3 * KerrAmendment::N4(1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N5(1,nu,ct,z);
-			terms -= 1 * KerrAmendment::N6(1,nu,ct,z);
+			terms -= 3 * KerrAmendment::N1(1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N2(1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N3(1,nu,ct,varrho,z);
+			terms -= 3 * KerrAmendment::N4(1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N5(1,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N6(1,nu,ct,varrho,z);
 			break; 
 		}
 		case -3: {
-			terms -= 1 * KerrAmendment::N1(-3,nu,ct,z);
-			terms += 1 * KerrAmendment::N2(-3,nu,ct,z);
-			terms -= 1 * KerrAmendment::N4(-3,nu,ct,z);
-			terms += 1 * KerrAmendment::N5(-3,nu,ct,z);
+			terms -= 1 * KerrAmendment::N1(-3,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N2(-3,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N4(-3,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N5(-3,nu,ct,varrho,z);
 			break; 
 		}
 		case 3: { 
-			terms += 1 * KerrAmendment::N1(3,nu,ct,z);
-			terms += 1 * KerrAmendment::N2(3,nu,ct,z);
-			terms -= 1 * KerrAmendment::N4(3,nu,ct,z);
-			terms += 1 * KerrAmendment::N5(3,nu,ct,z);
+			terms += 1 * KerrAmendment::N1(3,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N2(3,nu,ct,varrho,z);
+			terms -= 1 * KerrAmendment::N4(3,nu,ct,varrho,z);
+			terms += 1 * KerrAmendment::N5(3,nu,ct,varrho,z);
 			break; 
 		}
 
@@ -244,8 +182,10 @@ double KerrAmendment::im_modal_source (long m, double nu, double ct, double z) c
 	return terms;
 }
 
-double KerrAmendment::N1 (long m, double nu, double ct, double z) const
+double KerrAmendment::N1 (int m, double nu, double ct, double varrho, double z) const
 {
+	// TODO: check for varrho dependency
+
 	double A3 = this->A0 * this->A0 * this->A0;
 	double chi = nl_medium->relative_permittivity(ct, z, 3);
 
@@ -261,22 +201,17 @@ double KerrAmendment::N1 (long m, double nu, double ct, double z) const
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, rho, this->R);
-		return jn(m,rho*nu) * i1 * i1 * i1_perp;
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, varrho, this->R);
 
 	double res = 3 * m * A3 * chi * std::sqrt(NonlinearMedium::MU0);
 	res /= 64 * std::sqrt(nu);
 	res *= em_relation * em_relation * em_relation;
-	res *= I.value(0, bais, func);
+	res *= jn(m,varrho*nu) * i1 * i1 * i1_perp;
 	return res;
 }
 
-double KerrAmendment::N2 (long m, double nu, double ct, double z) const
+double KerrAmendment::N2 (int m, double nu, double ct, double varrho, double z) const
 {
 	double A3 = this->A0 * this->A0 * this->A0;
 	double chi = nl_medium->relative_permittivity(ct, z, 3);
@@ -294,25 +229,19 @@ double KerrAmendment::N2 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, rho, this->R);
-		double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, rho, this->R);
-		double res = i1_perp * (i2 - i1) + 2 * i1 * (i2_perp - i1_perp);
-		return (i2 - i1) * res;
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, varrho, this->R);
+	double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, varrho, this->R);
 
 	double res = m * A3 * chi * std::sqrt(NonlinearMedium::MU0);
 	res /= 64 * std::sqrt(nu);
 	res *= em_relation * em_relation * em_relation;
-	res *= I.value(0, bais, func);
+	res *= (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
 	return res;
 }
 
-double KerrAmendment::N3 (long m, double nu, double ct, double z) const
+double KerrAmendment::N3 (int m, double nu, double ct, double varrho, double z) const
 {
 	double sigma = nl_medium->conductivity(ct, z);
 	double eps_r = nl_medium->relative_permittivity(ct,z);
@@ -325,20 +254,15 @@ double KerrAmendment::N3 (long m, double nu, double ct, double z) const
 	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		return i1 * jn(m,rho*nu);
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
 
 	double res = m * this->A0 * sigma * std::sqrt(NonlinearMedium::MU0);
 	res /= 4 * std::sqrt(nu);
-	res *= em_relation * I.value(0, bais, func);
+	res *= em_relation * i1 * jn(m,varrho*nu);
 	return res;
 }
 
-double KerrAmendment::N4 (long m, double nu, double ct, double z) const
+double KerrAmendment::N4 (int m, double nu, double ct, double varrho, double z) const
 {
 	double A3 = this->A0 * this->A0 * this->A0;
 	double chi = nl_medium->relative_permittivity(ct, z, 3);
@@ -356,24 +280,19 @@ double KerrAmendment::N4 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, rho, this->R);
-		double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, rho, this->R);
-		double bessel = jn(m-1,rho*nu) - jn(m+1,rho*nu);
-		return rho * (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp) * bessel;
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, varrho, this->R);
+	double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, varrho, this->R);
+	double bessel = jn(m-1,varrho*nu) - jn(m+1,varrho*nu);
 
 	double res = A3 * chi * std::sqrt(NonlinearMedium::MU0) * std::sqrt(nu) / 128;
 	res *= em_relation * em_relation * em_relation;
-	res *= I.value(0, bais, func);
+	res *= (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp) * bessel;
 	return res;
 }
 
-double KerrAmendment::N5 (long m, double nu, double ct, double z) const
+double KerrAmendment::N5 (int m, double nu, double ct, double varrho, double z) const
 {
 	double A3 = this->A0 * this->A0 * this->A0;
 	double chi = nl_medium->relative_permittivity(ct, z, 3);
@@ -391,25 +310,20 @@ double KerrAmendment::N5 (long m, double nu, double ct, double z) const
 
 	double vt = ct / std::sqrt(eps_r * mu_r);
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, rho, this->R);
-		double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, rho, this->R);
-		double bessel = jn(m-1,rho*nu) - jn(m+1,rho*nu);
-		double mult = i1 * (i2_perp - i1_perp) + 2 * i1_perp * (i2 - i1);
-		return rho * mult * bessel;
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i1_perp = velocity * this->vint_bessel_011_perp(vt, z, varrho, this->R);
+	double i2_perp = velocity * this->vint_bessel_001_perp(vt, z, varrho, this->R);
+	double bessel = jn(m-1,varrho*nu) - jn(m+1,varrho*nu);
+	double mult = i1 * (i2_perp - i1_perp) + 2 * i1_perp * (i2 - i1);
 
 	double res = 3 * A3 * chi * std::sqrt(NonlinearMedium::MU0) * std::sqrt(nu) / 128;
 	res *= em_relation * em_relation * em_relation;
-	res *= I.value(0, bais, func);
+	res *= mult * bessel;
 	return res;
 }
 
-double KerrAmendment::N6 (long m, double nu, double ct, double z) const
+double KerrAmendment::N6 (int m, double nu, double ct, double varrho, double z) const
 {
 	double sigma = nl_medium->conductivity(ct, z);
 	double eps_r = nl_medium->relative_permittivity(ct,z);
@@ -422,17 +336,12 @@ double KerrAmendment::N6 (long m, double nu, double ct, double z) const
 	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 
-	size_t bais = TERMS_NUMBER;
-	Simpson I = Simpson(10*bais);
-	auto func = [&] (double rho) { 
-		double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), rho, this->R);
-		double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), rho, this->R);
-		double bessel = jn(m-1,rho*nu) - jn(m+1,rho*nu);
-		return rho * (i2 - i1) * bessel;
-	};
+	double i1 = this->int_bessel_011(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double i2 = this->int_bessel_001(std::sqrt(vt_z.get_d()), varrho, this->R);
+	double bessel = jn(m-1,varrho*nu) - jn(m+1,varrho*nu);
 
 	double res = this->A0 * sigma * std::sqrt(NonlinearMedium::MU0) * std::sqrt(nu) / 8;
-	res *= em_relation * I.value(0, bais, func);
+	res *= em_relation * (i2 - i1) * bessel;
 	return res;
 }
 
