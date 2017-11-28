@@ -19,14 +19,29 @@ double Simpson::value (double from, double to, std::function<double(double)> fun
 
 	double h = (to - from) / this->quadr_terms;
 	double I = 0;
-	for (std::size_t i = 0; i < this->quadr_terms; i++) {
+
+	/* for (std::size_t i = 0; i < terms; i++) {
 		double a = from + h * i;
 		double b = from + h * (i+1);
 		I += func(a) + 4 * func((a + b)/2) + func(b);
+	} */
+
+	double a = from;
+	double b = from + h;
+	double f_a = func(a);
+	double f_ab = func((a + b)/2);
+	double f_b = func(b);
+
+	while (b <= to) {
+		I += f_a + 4 * f_ab + f_b;
+		a = b;
+		b += h;
+		f_a = f_b;
+		f_ab = func((a + b)/2);
+		f_b = func(b);
 	}
 
-	I = I * (to - from) / 6;
-	return I / this->quadr_terms;
+	return I * (to - from) / this->quadr_terms / 6;
 }
 
 // =========================================================================

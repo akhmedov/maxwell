@@ -57,7 +57,7 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium)
 double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
 {
 
-	/* Monte-Carlo Inegration */
+	/* Monte-Carlo Inegration 
 	auto field = [this, rho, phi, z] (double vt) {
 
 		auto mode = [this, vt, rho, phi, z] (int m, double varrho, double z_perp, double vt_perp, double nu) {
@@ -89,8 +89,48 @@ double KerrAmendment::electric_rho (double vt, double rho, double phi, double z)
 		return integral.value(modes_sum);
 	};
 
-	return Math::derivative(field,vt);
+	return Math::derivative(field,vt); */
 
+	/* Simpson Inegration */
+	double R = this->R;
+	Simpson I2 = Simpson(100);
+	Simpson I3 = Simpson(10e3);
+	Simpson I4 = Simpson(10e4);
+
+	auto mode = [this, vt, rho, phi, z] (int m, double varrho, double z_perp, double vt_perp, double nu) {
+		double mu_r = nl_medium->relative_permeability(vt,z);
+		double sqrt_eps0 = std::sqrt(NonlinearMedium::EPS0);
+		double G = this->riemann(nu, vt_perp - vt, z_perp - z);
+		double res = std::cos(m * phi);
+		res *= m * G * jn(m, nu * rho);
+		res /= rho * std::sqrt(nu);
+		res *= varrho * this->im_modal_source(m,nu,vt,varrho,z);
+		return res * mu_r / sqrt_eps0;
+	};
+
+	auto field = [&I2, &I3, &I4, &R, &mode] (double vt) {
+		auto int_zperp = [&I2, &I3, &I4, &R, &mode] (double nu) {
+			auto int_vtperp = [&I2, &I4, &R, &mode, &nu] (double vt_perp) {  
+				auto int_varrho = [&I2, &I4, &mode, &nu, &vt_perp] (double z_perp) {
+					std::cout << nu << ' ' << vt_perp << ' ' << z_perp << std::endl;
+					auto modes_sum = [&mode, &z_perp, &vt_perp, &nu] (double varrho) {
+						double sum = 0;
+						sum += mode(-1, varrho, z_perp, vt_perp, nu);
+						sum += mode( 1, varrho, z_perp, vt_perp, nu);
+						sum += mode(-3, varrho, z_perp, vt_perp, nu);
+						sum += mode( 3, varrho, z_perp, vt_perp, nu);
+						return sum;
+					};
+					return I4.value(0, 10e3, modes_sum);
+				};
+				return I2.value(vt_perp, vt_perp + 2*R, int_varrho);
+			};
+			return I3.value(0, 10e2, int_vtperp);
+		};
+		return I4.value(0, 10e3, int_zperp);
+	};
+
+	return Math::derivative(field,vt);
 }
 
 double KerrAmendment::electric_phi (double ct, double rho, double phi, double z) const

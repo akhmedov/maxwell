@@ -336,7 +336,7 @@ int main()
 {
 	cout << boolalpha;
 
-	cout << "Math::Test::next_prime \t\t\t"; 
+	/* cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -356,7 +356,7 @@ int main()
 	cout.flush();
 	cout << Test::invers_sqrt() << endl;
 
-	cout << "Math::Test::deridative \t\t\t"; 
+	cout << "Math::Test::deridative \t\t\t";
 	cout.flush();
 	cout << Test::bessel_perp() << endl;
 
@@ -370,13 +370,13 @@ int main()
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
-	cout << Test::field_getters() << endl;
+	cout << Test::field_getters() << endl; */
 
 	cout << "KerrAmendment::Test::real_convolution \t";
 	cout.flush();
 	cout << Test::real_convolution() << endl;
 
-	cout << "Math::Test::monte_carlo_vector \t\t"; 
+	/* cout << "Math::Test::monte_carlo_vector \t\t"; 
 	cout.flush();
 	cout << Test::monte_carlo_vector() << endl;
 
@@ -390,7 +390,7 @@ int main()
 
 	cout << "Math::Test::imptoper_int_bessel \t";
 	cout.flush();
-	cout << Test::imptoper_int_bessel() << endl;
+	cout << Test::imptoper_int_bessel() << endl; */
 	
 	return 0;
 }
