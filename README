@@ -81,7 +81,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 - extract all cout, cerr and exaptions handling to a separate CLI class
 - catch illegal answers in model
 - get maxwell version from chared configuration object
-- Config conflict: Class Conflict::TEMS_NUM MissileField::STATIC_TERMS_NUMBER 
+- Config conflict: Conflict::TEMS_NUM == MissileField::STATIC_TERMS_NUMBER 
 
 - warnings on GNU GCC 5.4.0 20160607
 - Makefile refactor; test and maxwell build without rm command
@@ -98,6 +98,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### TODO LIST ###
 
+- Implement logger class
 - LIST ALL tested methods next to respount include
 - implement make help option in Makefile
 + gnuplot font size
@@ -106,6 +107,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 + calculation manager progress bar
 + configuration file for global paramiters
 
+- Optimization of Simpson four-dim algorithm
 + add funvtion MissileEffect::static_field(rho, phi, z, eps = 10e-10)
 + add function GnuPlot::multi_plot2d()
 - add function GnuPlot::animation_plot2d()
@@ -149,4 +151,3 @@ http://gnuplot.sourceforge.net/demo/pm3d.html
 
 ./configure --with-qt --prefix=$(PROJECT_DIR)/gnuplot
 sudo apt-get install qtbase5-dev libqt5svg5-dev
-

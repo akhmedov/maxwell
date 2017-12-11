@@ -273,11 +273,9 @@ bool Test::monte_carlo_integral ()
 	double volume = 8 * integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
-	cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 	return error < 1 ? true : false;
 }
-
-#include <initializer_list>
 
 bool Test::monte_carlo_improper ()
 {
@@ -300,9 +298,9 @@ bool Test::monte_carlo_improper ()
 	double volume = integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
-	cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
+	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 
-	return false;
+	return error < 10 ? true : false;
 }
 
 bool Test::imptoper_int_bessel ()
@@ -332,11 +330,36 @@ bool Test::imptoper_int_bessel ()
 	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
 }
 
+bool Test::simpson_dim ()
+{
+	auto func = [] (double w, double x, double y, double z) {
+		return w * x * y * z;
+	};
+
+	auto anal = [] () {
+		return 16.0;
+	};
+
+	vector< tuple<double,size_t,double> > limits;
+	limits.push_back(make_tuple(0, 70, 2));
+	limits.push_back(make_tuple(0, 70, 2));
+	limits.push_back(make_tuple(0, 70, 2));
+	limits.push_back(make_tuple(0, 70, 2));
+	SimpsonMultiDim integral = SimpsonMultiDim(limits);
+	double numeric = integral.value(func);
+
+	double diff = abs(numeric - anal());
+	double error = 100 * diff / anal();
+
+	if (error >= 5) return false;
+	return true;
+}
+
 int main()
 {
 	cout << boolalpha;
 
-	/* cout << "Math::Test::next_prime \t\t\t"; 
+	cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -370,13 +393,13 @@ int main()
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
-	cout << Test::field_getters() << endl; */
+	cout << Test::field_getters() << endl;
 
-	cout << "KerrAmendment::Test::real_convolution \t";
+	cout << "Math::Test::simpson_dim \t\t"; 
 	cout.flush();
-	cout << Test::real_convolution() << endl;
+	cout << Test::simpson_dim() << endl;
 
-	/* cout << "Math::Test::monte_carlo_vector \t\t"; 
+	cout << "Math::Test::monte_carlo_vector \t\t"; 
 	cout.flush();
 	cout << Test::monte_carlo_vector() << endl;
 
@@ -390,7 +413,13 @@ int main()
 
 	cout << "Math::Test::imptoper_int_bessel \t";
 	cout.flush();
-	cout << Test::imptoper_int_bessel() << endl; */
+	cout << Test::imptoper_int_bessel() << endl; 
+
+	/* cout << "KerrAmendment::Test::real_convolution \t";
+	cout.flush();
+	cout << Test::real_convolution() << endl; */
+
+	
 	
 	return 0;
 }

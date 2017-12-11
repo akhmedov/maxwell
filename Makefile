@@ -1,3 +1,11 @@
+#
+#  Makefile
+#  Maxwell
+#
+#  Created by Rolan Akhmedov on 08.07.17.
+#  Copyright © 2017 Rolan Akhmedov. All rights reserved.
+#
+
 CXX = gcc
 CXX_FLAGS = -Wall -Wextra -Wformat=2 -Wold-style-definition
 CXX_LIB = -lstdc++ -lm -pthread 
@@ -12,7 +20,7 @@ OBJECTS = $(patsubst source/%.cpp, build/%.o, $(SOURCES))
 GMP_LIBS = -L $(PROJECT_DIR)/gnump/lib -lgmp -lgmpxx
 GMP_FLAGS = -I $(PROJECT_DIR)/gnump/include
 
-.PHONY: gnuplot gnump
+.PHONY: gnuplot gnump clean list
 
 maxwell: $(OBJECTS)
 	@rm -f build/test.o

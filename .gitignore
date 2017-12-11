@@ -1,6 +1,13 @@
+# Ignore all dot files exept .gitignore
 /**/.*
 !/.gitignore
+
+# Ignore project build birictorice with contents
 /gnump/
 /gnuplot/
 /build/
 
+# Ignore log files
+/**/*.log
+
+# Ignore temporary MS Exel Files

@@ -12,11 +12,13 @@
 #include <cmath>
 #include <random>
 #include <vector>
-#include <utility>			// std::pair
+#include <utility>			// std::pair std::tiple
 #include <valarray>
 #include <functional>
+#include <iostream>
 
-typedef std::vector<std::pair<double,double>> vector_pair;
+typedef std::vector<std::pair<double,double>> vector_pair_dd;
+typedef std::vector<std::tuple<double,std::size_t,double>> vector_tuple_did;
 
 struct Integral { };
 
@@ -27,9 +29,30 @@ private:
 	const std::size_t quadr_terms;
 };
 
+struct SimpsonMultiDim : public Integral {
+	SimpsonMultiDim ( const vector_tuple_did &limits );
+	double value (const std::function<double(double,double,double,double)> &func) const;
+private:
+	const double w_min;
+	const std::size_t w_terms;
+	const double w_max;
+
+	const double x_min;
+	const std::size_t x_terms;
+	const double x_max;
+
+	const double y_min;
+	const std::size_t y_terms;
+	const double y_max;
+
+	const double z_min;
+	const std::size_t z_terms;
+	const double z_max;
+};
+
 struct MonteCarlo : public Integral {
 
-	MonteCarlo ( std::size_t rolls, const vector_pair &limits );
+	MonteCarlo ( std::size_t rolls, const vector_pair_dd &limits );
 	std::valarray<double> random_array ();
 
 	double value ( const std::function<double(double)> &func );

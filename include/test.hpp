@@ -28,8 +28,6 @@
 struct Test : private Math, private Integral, private KerrAmendment {
 	static bool next_prime ();
 	static bool binom_prod ();
-	static bool yacobi_pol_property ();
-	static bool yacobi_pol_compare ();
 	static bool bessel_perp ();
 	static bool simpson_I1 ();
 	static bool simpson_I2 ();
@@ -37,9 +35,12 @@ struct Test : private Math, private Integral, private KerrAmendment {
 	static bool field_getters ();
 	static bool real_convolution ();
 	static bool monte_carlo_vector ();
+	static bool yacobi_pol_property ();
 	static bool monte_carlo_integral ();
 	static bool monte_carlo_improper ();
 	static bool imptoper_int_bessel ();
+	static bool yacobi_pol_compare ();
+	static bool simpson_dim ();
 };
 
 #endif /* test_hpp */
