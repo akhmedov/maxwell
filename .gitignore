@@ -11,3 +11,4 @@
 /**/*.log
 
 # Ignore temporary MS Exel Files
+/**/~$*
