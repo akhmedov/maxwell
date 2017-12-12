@@ -58,6 +58,7 @@ struct KerrAmendment : public MissileField, public NonlinearField {
 
 protected:
 
+	double im_modal_source_sum (double nu, double ct, double varrho, double z) const;
 	double im_modal_source (int m, double nu, double ct, double varrho, double z) const;
 	double riemann (double nu, double vt_diff, double z_diff) const; 
 

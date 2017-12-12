@@ -65,7 +65,11 @@ double SimpsonMultiDim::value (const std::function<double(double,double,double,d
 	double hy = (this->y_max - this->y_min) / this->y_terms;
 	double hz = (this->z_max - this->z_min) / this->z_terms;
 
-	double total_volume = (this->w_max-this->w_min) * (this->x_max-this->x_min) * (this->y_max-this->y_min) * (this->z_max-this->z_min);
+	double total_volume = (this->w_max-this->w_min) 
+						* (this->x_max-this->x_min) 
+						* (this->y_max-this->y_min) 
+						* (this->z_max-this->z_min);
+
 	double total_terms = this->w_terms * this->x_terms * this->y_terms * this->z_terms;
 	double I = 0;
 
@@ -129,14 +133,10 @@ double SimpsonMultiDim::value (const std::function<double(double,double,double,d
 		}
 	}
 
-	/* 
-	w_max    - 100
-	arg_grid - x
-	*/
-
+	std::size_t W, X, Y, Z;
 
 	while (arg_grid[0][2] <= this->w_max) {
-		std::cout << arg_grid[0][2] * this->w_max / 100 << '%' << std::endl;
+		std::cout << arg_grid[0][2] << ' ' << this->w_max << std::endl;
 		arg_grid[1][0] = this->x_min;
 		arg_grid[1][2] = this->x_min + hx;
 		arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2;
@@ -153,46 +153,39 @@ double SimpsonMultiDim::value (const std::function<double(double,double,double,d
 				
 				while (arg_grid[3][2] <= this->z_max) {
 
-					for (std::size_t w = 0; w < 3; w++) {
-						for (std::size_t x = 0; x < 3; x++) {
-							for (std::size_t y = 0; y < 3; y++) {
-								for (std::size_t z = 0; z < 3; z++) {
-									I += c_grid[w][x][y][z] * fun_grid[w][x][y][z];
-								}
-							}
-						}
-					}
-
-					arg_grid[3][0] = arg_grid[3][2]; // UPD: z_min
+					arg_grid[3][0] += hz; // UPD: z_min
+					arg_grid[3][1] += hz; // UPD: z_mid
 					arg_grid[3][2] += hz; // UPD: z_max
-					arg_grid[3][1] = (arg_grid[3][0] + arg_grid[3][2]) / 2; // UPD: z_mid
-					
-					// fuc_grid reset: TODO (not optimum)
-					for (std::size_t w = 0; w < 3; w++) {
-						for (std::size_t x = 0; x < 3; x++) {
-							for (std::size_t y = 0; y < 3; y++) {
-								for (std::size_t z = 0; z < 3; z++) {
-									fun_grid[w][x][y][z] = func(arg_grid[0][w],
-																arg_grid[1][x],
-																arg_grid[2][y],
-																arg_grid[3][z]);
+
+					for (W = 0; W < 3; W++) {
+						for (X = 0; X < 3; X++) {
+							for (Y = 0; Y < 3; Y++) {
+								for (Z = 0; Z < 3; Z++) {
+									// summation of 81 terms
+									I += c_grid[W][X][Y][Z] * fun_grid[W][X][Y][Z];
+									// update fun_grid matrix
+									// TODO: not optimum
+									fun_grid[W][X][Y][Z] = func(arg_grid[0][W],
+																arg_grid[1][X],
+																arg_grid[2][Y],
+																arg_grid[3][Z]);
 								}
 							}
 						}
 					}
 
 				}
-				arg_grid[2][0] = arg_grid[2][2]; // UPD: y_min
+				arg_grid[2][0] += hy; // UPD: y_min
+				arg_grid[2][1] += hy; // UPD: y_mid
 				arg_grid[2][2] += hy; // UPD: y_max
-				arg_grid[2][1] = (arg_grid[2][0] + arg_grid[2][2]) / 2; // UPD: y_mid
 			}
-			arg_grid[1][0] = arg_grid[1][2]; // UPD: x_min
+			arg_grid[1][0] += hx; // UPD: x_min
+			arg_grid[1][1] += hx; // UPD: x_mid
 			arg_grid[1][2] += hx; // UPD: x_max
-			arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2; // UPD: x_mid
 		}
-		arg_grid[0][0] = arg_grid[0][2]; // UPD: w_min
+		arg_grid[0][0] += hw; // UPD: w_min
+		arg_grid[0][1] += hw; // UPD: w_mid
 		arg_grid[0][2] += hw; // UPD: w_max
-		arg_grid[0][1] = (arg_grid[0][0] + arg_grid[0][2]) / 2; // UPD: w_mid
 	}
 
 	return total_volume / total_terms / 1296.0 * I;

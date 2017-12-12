@@ -143,10 +143,10 @@ double KerrAmendment::electric_rho (double vt, double rho, double phi, double z)
 		};
 
 		std::vector< std::tuple<double,std::size_t,double> > limits;
-		limits.push_back(std::make_tuple(0, 100, 10e3)); // rho_perp
-		limits.push_back(std::make_tuple(0, 100, 10e3)); // z_perp
-		limits.push_back(std::make_tuple(0, 100, 10e3)); // vt_perp
-		limits.push_back(std::make_tuple(0, 100, 10e3)); // nu_perp
+		limits.push_back(std::make_tuple(0, 2e3, 1e3)); // rho_perp
+		limits.push_back(std::make_tuple(0, 20, 2));    // z_perp
+		limits.push_back(std::make_tuple(0, 20, 2));    // vt_perp
+		limits.push_back(std::make_tuple(0, 2e3, 1e3)); // nu_perp
 		SimpsonMultiDim integral = SimpsonMultiDim(limits);
 		return integral.value(modes_sum);
 	};
@@ -200,6 +200,34 @@ double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
 	return j0(nu * distance) * velocity / 2;
 }
 
+
+double KerrAmendment::im_modal_source_sum (double nu, double ct, double varrho, double z) const
+{
+	double terms = 0;
+
+	terms -= 3 * KerrAmendment::N1(-1,nu,ct,varrho,z);
+	terms -= 1 * KerrAmendment::N2(-1,nu,ct,varrho,z);
+	terms += 3 * KerrAmendment::N4(-1,nu,ct,varrho,z);
+	terms += 1 * KerrAmendment::N5(-1,nu,ct,varrho,z);
+
+	terms -= 3 * KerrAmendment::N1(1,nu,ct,varrho,z);
+	terms -= 1 * KerrAmendment::N2(1,nu,ct,varrho,z);
+	terms -= 3 * KerrAmendment::N4(1,nu,ct,varrho,z);
+	terms -= 1 * KerrAmendment::N5(1,nu,ct,varrho,z);
+
+	terms -= 1 * KerrAmendment::N1(-3,nu,ct,varrho,z);
+	terms += 1 * KerrAmendment::N2(-3,nu,ct,varrho,z);
+	terms -= 1 * KerrAmendment::N4(-3,nu,ct,varrho,z);
+	terms += 1 * KerrAmendment::N5(-3,nu,ct,varrho,z);
+
+	terms += 1 * KerrAmendment::N1(3,nu,ct,varrho,z);
+	terms += 1 * KerrAmendment::N2(3,nu,ct,varrho,z);
+	terms -= 1 * KerrAmendment::N4(3,nu,ct,varrho,z);
+	terms += 1 * KerrAmendment::N5(3,nu,ct,varrho,z);
+	
+	return terms;
+}
+
 double KerrAmendment::im_modal_source (int m, double nu, double ct, double varrho, double z) const
 {
 	double terms = 0;
@@ -208,19 +236,19 @@ double KerrAmendment::im_modal_source (int m, double nu, double ct, double varrh
 		case -1: { 
 			terms -= 3 * KerrAmendment::N1(-1,nu,ct,varrho,z);
 			terms -= 1 * KerrAmendment::N2(-1,nu,ct,varrho,z);
-			terms -= 1 * KerrAmendment::N3(-1,nu,ct,varrho,z);
+			// terms -= 1 * KerrAmendment::N3(-1,nu,ct,varrho,z);
 			terms += 3 * KerrAmendment::N4(-1,nu,ct,varrho,z);
 			terms += 1 * KerrAmendment::N5(-1,nu,ct,varrho,z);
-			terms += 1 * KerrAmendment::N6(-1,nu,ct,varrho,z);
+			// terms += 1 * KerrAmendment::N6(-1,nu,ct,varrho,z);
 			break;
 		}
 		case 1: {
 			terms -= 3 * KerrAmendment::N1(1,nu,ct,varrho,z);
 			terms -= 1 * KerrAmendment::N2(1,nu,ct,varrho,z);
-			terms -= 1 * KerrAmendment::N3(1,nu,ct,varrho,z);
+			// terms -= 1 * KerrAmendment::N3(1,nu,ct,varrho,z);
 			terms -= 3 * KerrAmendment::N4(1,nu,ct,varrho,z);
 			terms -= 1 * KerrAmendment::N5(1,nu,ct,varrho,z);
-			terms -= 1 * KerrAmendment::N6(1,nu,ct,varrho,z);
+			// terms -= 1 * KerrAmendment::N6(1,nu,ct,varrho,z);
 			break; 
 		}
 		case -3: {
@@ -415,8 +443,7 @@ double KerrAmendment::vint_bessel_011_perp (double vt, double z, double rho, dou
 	double rho2 = rho * rho;
 	double R2 = R * R;
 
-	if (vt_z < 0) throw std::invalid_argument("ct-z < 0 is not legal");
-	if (vt_z == 0) throw std::invalid_argument("ct-z = 0 is not legal");
+	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
 	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 
@@ -436,8 +463,7 @@ double KerrAmendment::vint_bessel_001_perp (double vt, double z, double rho, dou
 	double rho2 = rho * rho;
 	double R2 = R * R;
 
-	if (vt_z < 0) throw std::invalid_argument("ct-z < 0 is not legal");
-	if (vt_z == 0) throw std::invalid_argument("ct-z = 0 is not legal");
+	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
 	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 

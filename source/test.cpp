@@ -408,7 +408,7 @@ int main()
 
 	cout << "Math::Test::imptoper_int_bessel \t";
 	cout.flush();
-	cout << Test::imptoper_int_bessel() << endl; 
+	cout << Test::imptoper_int_bessel() << endl;
 
 	cout << "Math::Test::simpson_dim \t\t"; 
 	cout.flush();

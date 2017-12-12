@@ -58,7 +58,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### LICENCE ###
 
-!!! find licence: GPL, MIT, etc.
+!!! find licence: GPL, MIT, etc. (no BSD)
 1. source is open;
 2. authering save;
 3a. main auther is co-author of child proj;
@@ -66,6 +66,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### TEST LIST ###
 
+- numerical derivative test of derivative of I1 and I2
 - manual test on maxwell.conf
 - caclucaliton manager vs single stream test
 + I1 I3 I4 I5 test on Integral::simpson() method
@@ -73,6 +74,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### BUG LIST ###
 
+- numerical linear vs analitical linear
 - refactor GnuPlot::write_commants_to_script()
 - refactor of --arg parther in main.cpp
 - refactor and restructur of main.cpp; code is not clean
@@ -98,6 +100,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### TODO LIST ###
 
+- Implement calculation DB
 - Implement logger class
 - LIST ALL tested methods next to respount include
 - implement make help option in Makefile

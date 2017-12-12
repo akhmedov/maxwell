@@ -1,14 +1,17 @@
-# Ignore all dot files exept .gitignore
+# All dot files exept .gitignore
 /**/.*
 !/.gitignore
 
-# Ignore project build birictorice with contents
+# Default outputfile
+/maxwell.gnp
+
+# Project build birictorice with contents
 /gnump/
 /gnuplot/
 /build/
 
-# Ignore log files
+# All log files
 /**/*.log
 
-# Ignore temporary MS Exel Files
+# All temporary MS Exel Files
 /**/~$*

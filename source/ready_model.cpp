@@ -489,7 +489,7 @@ void ReadyModel::magnetic_static_terms (double rho, double phi, double z)
 	plot->cage_on();
 	plot->set_logscale_ox(true);
 	std::vector<std::string> title = { "N = 0", 
-									   "N = 1" , 
+									   "N = 1", 
 									   "N = 5", 
 									   "N = 20", 
 									   "N = 40", 
