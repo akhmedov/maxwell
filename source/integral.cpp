@@ -129,7 +129,14 @@ double SimpsonMultiDim::value (const std::function<double(double,double,double,d
 		}
 	}
 
+	/* 
+	w_max    - 100
+	arg_grid - x
+	*/
+
+
 	while (arg_grid[0][2] <= this->w_max) {
+		std::cout << arg_grid[0][2] * this->w_max / 100 << '%' << std::endl;
 		arg_grid[1][0] = this->x_min;
 		arg_grid[1][2] = this->x_min + hx;
 		arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2;

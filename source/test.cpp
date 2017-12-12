@@ -214,28 +214,6 @@ bool Test::field_getters ()
 	return true;
 }
 
-bool Test::real_convolution ()
-{
-	double radius = 1;
-	double magnitude = 100;
-	double eps_r = 1;
-	double mu_r = 1;
-	double chi = 10e-15;
-	double sigma = 0;
-
-	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
-	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
-	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
-
-	double nonlinear_Erho = non_linear->electric_rho (2.1, 0.8, 0, 2);
-	double linear_Erho = linear->electric_rho (2.1, 0.8, 0, 2);
-	cout << "Result: " << linear_Erho << ' ' << nonlinear_Erho << endl;
-	
-	return false;
-}
-
-
 bool Test::monte_carlo_vector ()
 {
 	vector<pair<double,double>> limits;
@@ -355,11 +333,32 @@ bool Test::simpson_dim ()
 	return true;
 }
 
+bool Test::real_convolution ()
+{
+	double radius = 1;
+	double magnitude = 100;
+	double eps_r = 1;
+	double mu_r = 1;
+	double chi = 10e-15;
+	double sigma = 0;
+
+	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
+	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
+	MissileField* linear = new MissileField(source, medium);
+	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
+
+	double nonlinear_Erho = non_linear->electric_rho (2.1, 0.8, 0, 2);
+	double linear_Erho = linear->electric_rho (2.1, 0.8, 0, 2);
+	cout << "Result: " << linear_Erho << ' ' << nonlinear_Erho << endl;
+	
+	return false;
+}
+
 int main()
 {
 	cout << boolalpha;
 
-	cout << "Math::Test::next_prime \t\t\t"; 
+	/* cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -395,10 +394,6 @@ int main()
 	cout.flush();
 	cout << Test::field_getters() << endl;
 
-	cout << "Math::Test::simpson_dim \t\t"; 
-	cout.flush();
-	cout << Test::simpson_dim() << endl;
-
 	cout << "Math::Test::monte_carlo_vector \t\t"; 
 	cout.flush();
 	cout << Test::monte_carlo_vector() << endl;
@@ -415,11 +410,13 @@ int main()
 	cout.flush();
 	cout << Test::imptoper_int_bessel() << endl; 
 
-	/* cout << "KerrAmendment::Test::real_convolution \t";
+	cout << "Math::Test::simpson_dim \t\t"; 
 	cout.flush();
-	cout << Test::real_convolution() << endl; */
+	cout << Test::simpson_dim() << endl; */
 
-	
-	
+	cout << "KerrAmendment::Test::real_convolution \t";
+	cout.flush();
+	cout << Test::real_convolution() << endl;
+
 	return 0;
 }
