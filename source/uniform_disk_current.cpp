@@ -111,7 +111,6 @@ double MissileField::electric_rho (double ct, double rho, double phi, double z) 
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	if (vt_z.get_d() <= 0) return 0;
 
-	
 	double value = this->A0 / 2;
 	value *= std::sqrt(LinearMedium::MU0 * medium->relative_permeability(ct,z));
 	value /= std::sqrt(LinearMedium::EPS0 * medium->relative_permittivity(ct,z));

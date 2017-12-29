@@ -19,7 +19,6 @@
 #include <fstream>
 
 #include "phys_math.hpp"
-#include "ready_model.hpp"
 #include "integral.hpp"
 #include "gnu_plot.hpp"
 #include "uniform_disk_current.hpp"

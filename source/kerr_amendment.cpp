@@ -143,10 +143,10 @@ double KerrAmendment::electric_rho (double vt, double rho, double phi, double z)
 		};
 
 		std::vector< std::tuple<double,std::size_t,double> > limits;
-		limits.push_back(std::make_tuple(0, 2e3, 1e3)); // rho_perp
-		limits.push_back(std::make_tuple(0, 20, 2));    // z_perp
-		limits.push_back(std::make_tuple(0, 20, 2));    // vt_perp
-		limits.push_back(std::make_tuple(0, 2e3, 1e3)); // nu_perp
+		limits.push_back(std::make_tuple(0, 4e3, 1e3)); // rho_perp
+		limits.push_back(std::make_tuple(0, 40, 2));    // z_perp
+		limits.push_back(std::make_tuple(0, 40, 2));    // vt_perp
+		limits.push_back(std::make_tuple(0, 40, 2)); 	// nu_perp
 		SimpsonMultiDim integral = SimpsonMultiDim(limits);
 		return integral.value(modes_sum);
 	};

@@ -8,233 +8,360 @@
 
 #include "config.hpp"
 
-bool Config::print_progress_value = true;
-bool Config::call_gnuplot_value = true;
-bool Config::plot_grid_value = true;
-bool Config::plot_bcage_value = true;
-bool Config::display_params_value = true;
-
-Colormap Config::plot_cmap_value = Colormap::gray;
-PlotDev Config::device_value = PlotDev::x11;
-
-std::string Config::ppath_gnuplot_value = "gnuplot";
-std::string Config::ppath_gnp_value = "maxwell.gmp";
-
-std::size_t Config::h_terms_value = 100;
-std::size_t Config::fbitrate_value = 256;
-std::size_t Config::thread_number_value = 4;
-
-float Config::plane_disk_radius_value = 1;
-float Config::plane_disk_magnitude_value = 1;
-float Config::plane_disk_epsr_value = 1;
-float Config::plane_disk_mur_value = 1;
-
-void Config::read (std::string posix_path)
+Config::Config ()
 {
-	std::ifstream file(posix_path);
-	std::string line;
+	this->plot_cl_option = 0;
+	this->dataset_cl_option = 0;
+	this->version_cl_option = false;
+	this->help_cl_option = false;
 
-	while (std::getline(file, line)) {
+	this->print_progress_value = true;
+	this->call_gnuplot_value = true;
+	this->plot_grid_value = true;
+	this->plot_bcage_value = true;
+	this->display_params_value = true;
 
-		std::string new_line;
+	this->plot_cmap_value = Colormap::gray;
+	this->device_value = PlotDev::x11;
 
-		unique_copy (line.begin(), line.end(), 
-			std::back_insert_iterator<std::string>(new_line),
-			[] (char a, char b) { return std::isspace(a) && std::isspace(b); 
-		});
+	this->ppath_gnuplot_value = "gnuplot";
+	this->ppath_gnp_value = "maxwell.gmp";
+	this->ppath_maxwell_config = "maxwell.conf";
 
-		if (new_line[0] == ' ') new_line.erase(0,1);
-		std::size_t lsize = new_line.size() - 1;
-		if (new_line[lsize] == ' ') new_line.erase(lsize);
+	this->h_terms_value = 100;
+	this->fbitrate_value = 256;
+	this->thread_number_value = 4;
 
-		if (new_line.find("#") == std::string::npos) {
-			std::size_t eq_char = new_line.find("=");
-			if (eq_char != std::string::npos) {
+	this->impulse_shape_value = ImpulseShape::rect;
 
-				std::string arg = new_line.substr(eq_char+1);
-				if (arg[0] == ' ') arg.erase(0,1);
-				std::size_t arg_size = arg.size() - 1;
-				if (arg[arg_size] == ' ') arg.erase(arg_size);
-				std::string option = new_line.substr(0, eq_char);
+	this->plane_disk_radius_value = 1;
+	this->plane_disk_magnitude_value = 1;
+	this->plane_disk_epsr_value = 1;
+	this->plane_disk_mur_value = 1;
+	this->kerr_coeff_value = 0;
+	this->is_medium_kerr = false;
+	this->noise_percent = 0;
 
-				if (option.find("PRINT_PROGRESS") != std::string::npos) {
-					if (arg.find("TRUE") != std::string::npos)
-						Config::print_progress_value = true;
-					else if (arg.find("FALSE") != std::string::npos)
-						Config::print_progress_value = false;
-					else throw std::logic_error("Only TRUE/FALSE allowed...");
-				}
-
-				else if (option.find("DISPLAY_PARAMS") != std::string::npos) {
-					if (arg.find("TRUE") != std::string::npos)
-						Config::display_params_value = true;
-					else if (arg.find("FALSE") != std::string::npos)
-						Config::display_params_value = false;
-					else throw std::logic_error("Only TRUE/FALSE allowed...");
-				}
-
-				else if (option.find("CALL_GNUPLOT_BIN") != std::string::npos) {
-					if (arg.find("TRUE") != std::string::npos)
-						Config::call_gnuplot_value = true;
-					else if (arg.find("FALSE") != std::string::npos)
-						Config::call_gnuplot_value = false;
-					else throw std::logic_error("Only TRUE/FALSE allowed...");
-				}
-
-				else if (option.find("PLOT_COLOR_MAP") != std::string::npos) {
-					if (arg.find("GRAYSCALE") != std::string::npos)
-						Config::plot_cmap_value = Colormap::gray;
-					else if (arg.find("PARULA") != std::string::npos)
-						Config::plot_cmap_value = Colormap::parula;
-					else throw std::logic_error("Not implemented...");
-				}
-
-				else if (option.find("PLOT_GRID") != std::string::npos) {
-					if (arg.find("TRUE") != std::string::npos)
-						Config::plot_grid_value = true;
-					else if (arg.find("FALSE") != std::string::npos)
-						Config::plot_grid_value = false;
-					else throw std::logic_error("Not implemented...");
-				}
-
-				else if (option.find("PLOT_BOUND_CAGE") != std::string::npos) {
-					if (arg.find("TRUE") != std::string::npos)
-						Config::plot_bcage_value = true;
-					else if (arg.find("FALSE") != std::string::npos)
-						Config::plot_bcage_value = false;
-					else throw std::logic_error("Not implemented...");
-				}
-
-				else if (option.find("PLOT_DEVICE") != std::string::npos) {
-					if (arg.find("X11") != std::string::npos)
-						Config::device_value = PlotDev::x11;
-					else if (arg.find("TERM") != std::string::npos)
-						Config::device_value = PlotDev::term;
-					else throw std::logic_error("Not implemented...");
-				}
-
-				else if (option.find("GNUPLOT_BIN") != std::string::npos) {
-					// std::experimental::filesystem::exists(arg);
-					Config::ppath_gnuplot_value = arg;
-				}
-
-				else if (option.find("SCRIPT_NAME") != std::string::npos) {
-					// std::experimental::filesystem::exists(arg);
-					Config::ppath_gnp_value = arg;
-				}
-
-				else if (option.find("MAGNETIC_TERM_NUM") != std::string::npos) {
-					Config::h_terms_value = std::stoi(arg);
-				}
-
-				else if (option.find("FLOAT_BITRATE") != std::string::npos) {
-					Config::fbitrate_value = std::stoi(arg);
-				}
-
-				else if (option.find("PDISK_RADIUS") != std::string::npos) {
-					Config::plane_disk_radius_value = std::stof(arg);
-				}
-
-				else if (option.find("PDISK_MAGNITUDE") != std::string::npos) {
-					Config::plane_disk_magnitude_value = std::stof(arg);
-				}
-
-				else if (option.find("PDISK_EPSR") != std::string::npos) {
-					Config::plane_disk_epsr_value = std::stof(arg);
-				}
-
-				else if (option.find("PDISK_MUR") != std::string::npos) {
-					Config::plane_disk_mur_value = std::stof(arg);
-				}
-
-				else if (option.find("THREAD_NUMBER") != std::string::npos) {
-					Config::thread_number_value = std::stof(arg);
-				}
-			}
-		} 
-	}
-	file.close();
+	/* TODO: Non default options
+	this->vt_value;
+	this->rho_value;
+	this->phi_value;
+	this->z_value; */
 }
 
-bool Config::print_progress ()
+/* setters */
+
+void Config::receiver_vt (double value)
 {
-	return Config::print_progress_value;
+	this->vt_value = {value, value, value};
 }
 
-bool Config::display_params ()
+void Config::receiver_rho (double value)
 {
-	return Config::display_params_value;
+	this->rho_value = {value, value, value};
 }
 
-bool Config::call_gnuplot ()
+void Config::receiver_phi (double value)
 {
-	return Config::call_gnuplot_value;
+	this->phi_value = {value, value, value};
 }
 
-bool Config::plot_grid ()
+void Config::receiver_z (double value)
 {
-	return Config::plot_grid_value;
+	this->z_value = {value, value, value};
 }
 
-bool Config::plot_baund_cage ()
+void Config::receiver_vt (double from, double step, double to)
 {
-	return Config::plot_bcage_value;
+	this->vt_value = {from, step, to};
 }
 
-Colormap Config::plot_color_map ()
+void Config::receiver_rho (double from, double step, double to)
 {
-	return Config::plot_cmap_value;
+	this->rho_value = {from, step, to};
 }
 
-PlotDev Config::plot_device ()
+void Config::receiver_phi (double from, double step, double to)
 {
-	return Config::device_value;
+	this->phi_value = {from, step, to};
 }
 
-std::string Config::path_gnuplot_binary ()
+void Config::receiver_z (double from, double step, double to)
 {
-	return Config::ppath_gnuplot_value;
+	this->z_value = {from, step, to};
 }
 
-std::string Config::gnp_script_path ()
+void Config::version_opt (bool option)
 {
-	return Config::ppath_gnp_value;
+	this->version_cl_option = option;
 }
 
-std::size_t Config::magnetic_term_num ()
+void Config::help_opt (bool option)
 {
-	return Config::h_terms_value;
+	this->help_cl_option = option;
 }
 
-std::size_t Config::float_bitrate ()
+void Config::dataset_model (std::size_t enum_model_name)
 {
-	return Config::fbitrate_value;
+	this->dataset_cl_option = enum_model_name;
 }
 
-std::size_t Config::thread_number ()
+void Config::plot_model (std::size_t enum_model_name)
 {
-	return Config::thread_number_value;
+	this->plot_cl_option = enum_model_name;
+}
+
+void Config::print_progress (bool option)
+{
+	this->print_progress_value = option;
+}
+
+void Config::plot_grid (bool option)
+{
+	this->plot_grid_value = option;
+}
+
+void Config::plot_baund_cage (bool option)
+{
+	this->plot_bcage_value = option;
+}
+
+void Config::call_gnuplot (bool option) 
+{
+	this->call_gnuplot_value = option;
+}
+
+void Config::display_params (bool option)
+{
+	this->display_params_value = option;
+}
+
+void Config::plot_color_map (Colormap plot_color)
+{
+	this->plot_cmap_value = plot_color;
+}
+
+void Config::plot_device (PlotDev plot_device)
+{
+	this->device_value = plot_device;
+}
+
+void Config::path_gnuplot_binary (std::string posix_path)
+{
+	this->ppath_gnuplot_value = posix_path;
+}
+
+void Config::gnp_script_path (std::string posix_path)
+{
+	this->ppath_gnp_value = posix_path;
+}
+
+void Config::maxwell_config_path (std::string posix_path)
+{
+	this->ppath_maxwell_config = posix_path;
+}
+
+void Config::magnetic_term_num (std::size_t terms)
+{
+	this->h_terms_value = terms;
+}
+
+void Config::float_bitrate (std::size_t float_digits)
+{
+	this->fbitrate_value = float_digits;
+}
+
+void Config::thread_number (std::size_t threads)
+{
+	this->thread_number_value = threads;
+}
+
+void Config::impulse_shape (ImpulseShape shape)
+{
+	this->impulse_shape_value = shape;
+}
+
+void Config::plane_disk_radius (float radius)
+{
+	this->plane_disk_radius_value = radius;
+}
+
+void Config::plane_disk_magnitude (float magnitude)
+{
+	this->plane_disk_magnitude_value = magnitude;
+}
+
+void Config::plane_disk_epsr (float eps_r)
+{
+	this->plane_disk_epsr_value = eps_r;
+}
+
+void Config::plane_disk_mur (float mu_r)
+{
+	this->plane_disk_mur_value = mu_r;
+}
+
+void Config::kerr_value (double chi_3)
+{
+	this->kerr_coeff_value = chi_3;
+}
+
+void Config::kerr_medium (bool option)
+{
+	this->is_medium_kerr = option;
+}
+
+void Config::noise_level (double persent)
+{
+	this->noise_percent = persent;
+}
+
+/* getters */
+
+double Config::kerr_value () const
+{
+	return this->kerr_coeff_value;
+}
+
+bool Config::kerr_medium () const
+{
+	return this->is_medium_kerr;
+}
+
+std::array<double,3> Config::receiver_vt () const
+{
+	return this->vt_value;
+}
+
+std::array<double,3> Config::receiver_rho () const
+{
+	return this->rho_value;
+}
+
+std::array<double,3> Config::receiver_phi () const
+{
+	return this->phi_value;
+}
+
+std::array<double,3> Config::receiver_z () const
+{
+	return this->z_value;
+}
+
+bool Config::version_opt () const
+{
+	return this->version_cl_option; 
+}
+
+bool Config::help_opt () const
+{
+	return this->help_cl_option;
+}
+
+std::size_t Config::dataset_model () const
+{
+	return this->dataset_cl_option;
+}
+
+std::size_t Config::plot_model () const
+{
+	return this->plot_cl_option;
+}
+
+bool Config::print_progress () const
+{
+	return this->print_progress_value;
+}
+
+bool Config::display_params () const
+{
+	return this->display_params_value;
+}
+
+bool Config::call_gnuplot () const
+{
+	return this->call_gnuplot_value;
+}
+
+bool Config::plot_grid () const
+{
+	return this->plot_grid_value;
+}
+
+bool Config::plot_baund_cage () const
+{
+	return this->plot_bcage_value;
+}
+
+Colormap Config::plot_color_map () const
+{
+	return this->plot_cmap_value;
+}
+
+PlotDev Config::plot_device () const
+{
+	return this->device_value;
+}
+
+std::string Config::path_gnuplot_binary () const
+{
+	return this->ppath_gnuplot_value;
+}
+
+std::string Config::gnp_script_path () const
+{
+	return this->ppath_gnp_value;
+}
+
+std::string Config::maxwell_config_path () const
+{
+	return this->ppath_maxwell_config;
+}
+
+
+std::size_t Config::magnetic_term_num () const
+{
+	return this->h_terms_value;
+}
+
+std::size_t Config::float_bitrate () const
+{
+	return this->fbitrate_value;
+}
+
+std::size_t Config::thread_number () const
+{
+	return this->thread_number_value;
 }
 
 // Plane Disk Problem Global Propertes
 
-float Config::plane_disk_radius ()
+ImpulseShape Config::impulse_shape () const
 {
-	return Config::plane_disk_radius_value;
+	return this->impulse_shape_value;
 }
 
-float Config::plane_disk_magnitude ()
+float Config::plane_disk_radius () const
 {
-	return Config::plane_disk_magnitude_value;
+	return this->plane_disk_radius_value;
 }
 
-float Config::plane_disk_epsr ()
+float Config::plane_disk_magnitude () const
 {
-	return Config::plane_disk_epsr_value;
+	return this->plane_disk_magnitude_value;
 }
 
-float Config::plane_disk_mur ()
+float Config::plane_disk_epsr () const
 {
-	return Config::plane_disk_mur_value;
+	return this->plane_disk_epsr_value;
 }
 
+float Config::plane_disk_mur () const
+{
+	return this->plane_disk_mur_value;
+}
+
+double Config::noise_level () const
+{
+	return this->noise_percent;
+}

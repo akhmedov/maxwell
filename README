@@ -72,6 +72,11 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 + I1 I3 I4 I5 test on Integral::simpson() method
 - test of getters and setters
 
+### UPDATE LIST FOR c++17 STANDART
+
+- use std::vatiant in Config:: class for receiver evants
+- use std::filsistems::exists() for file check in CLI:: and Manager::
+
 ### BUG LIST ###
 
 - numerical linear vs analitical linear
