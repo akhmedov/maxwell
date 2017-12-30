@@ -62,10 +62,8 @@ void Manager::add_argument (std::vector<double> arg)
 
 //=============================================================================
 
-void Manager::call ( double (*func) (double) )
+void Manager::call ( std::function<double(double)> func)
 {
-	// static bool called = false;
-	// if (called) return;
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
@@ -106,10 +104,8 @@ void Manager::call ( double (*func) (double) )
 
 //=============================================================================
 
-void Manager::call ( double (*func) (double,double,double,double) )
+void Manager::call ( std::function<double(double,double,double,double)> func)
 {
-	// static bool called = false;
-	// if (called) return;
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
@@ -198,39 +194,13 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 
 //=============================================================================
 
-void Manager::call ( const AbstractField& field, std::string method )
+void Manager::call ( std::function<double(const AbstractField&,double,double,double,double)> component, const AbstractField& field)
 {
-	if ( !method.compare("electric_x") ) {
-		this->call(field, 1);
-		return;
-	} else if ( !method.compare("magnetic_y") ) {
-		this->call(field, 2);
-		return;
-	}
-	std::invalid_argument("Invalid method name");
-
-}
-
-//=============================================================================
-
-void Manager::call ( const AbstractField& field, std::size_t method )
-{
-	// static bool called = false;
-	// if (called) return;
-
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
-			double res = 0;
-			switch (method) {
-				case 1:
-					res = field.electric_x(arg[0], arg[1], arg[2], arg[3]);
-					break;
-				case 2:
-					res = field.magnetic_y(arg[0], arg[1], arg[2], arg[3]);
-					break;
-			}
+			double res = component(field, arg[0], arg[1], arg[2], arg[3]);
 			arg.insert( arg.begin(), res );
 			this->result_write.lock();
 			this->data_left--;
@@ -262,5 +232,5 @@ void Manager::call ( const AbstractField& field, std::size_t method )
 		}
 	}
 	std::cout << std::endl;
-	// std::this_thread::sleep_for(3s); 
+	// std::this_thread::sleep_for(3s);
 }

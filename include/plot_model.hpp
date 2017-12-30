@@ -29,6 +29,7 @@ private:
 	std::vector<std::function<void(PlotModel&)>> model_pointer;
 	void __Ex_from_ct ();
 	void __Hy_from_ct ();
+	void __Ex_from_ct_rho ();
 };
 
 #endif /* plot_model_hpp */

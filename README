@@ -6,13 +6,13 @@ field radiation in nonlinear trancient nonstationary medium from arditrary
 sourse. The tool allows to compute and plot electromagnetic field with 
 arbitrary radiator and compare result with pre-defined solution.
 
-Source code is wrote within ISO c++14 standard and POSIX comatibility. 
+Source code is wrote within ISO c++17 standard and POSIX comatibility. 
 Build system is only one Makefile with several available options. 
 There are 'test', 'maxwell' and 'debug' options. Code containce paralel 
 calculations on std::threads with data access control on std::mutex.
 
-Source code and build systems supports GNU/Linux, MacOS and BSD operation 
-systems. Development dependency is limited by C++ development stack and
+Source code is OS free and build systems supports GNU/Linux, MacOS and 
+BSD operation systems. Development dependency is limited by STL, GMP and 
 X11 development package. Folowing OS list is recomended for development 
 process, the system is tested on the list:
 
@@ -35,14 +35,17 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 ~ $ sudo apt-get install build-essential cmake git
 ~ $ sudo apt-get install libx11-dev
 ~ $ git clone https://server/maxwell.git
-~ $ make gnuplot gnump test
+~ $ make gnuplot gnump 
+~ $ make -j4 test
 ~ $ ./build/test
-~ $ make -j4 maxwell
+~ $ make maxwell
 ~ $ ./build/maxwell --help
-~ $ ./build/maxwell --model 1 --arg 1.5 90
-~ $ ./build/maxwell --model 5
+~ $ ./build/maxwell --plot 3 --cylindric 1.9:0.01:3,0:0.01:3,0,2
+~ $ ./build/maxwell --plot 2 --cylindric 1.9:0.01:10,0,0,2
+~ $ ./build/maxwell --kerr 1e-9 --plot 1 --cylindric 1.9:0.01:3,0,0,2
+~ $ ./build/maxwell --noise 50 --data 1 --cylindric 1.9:0.01:3,2,0:0.01:6.28,2
 
-### USEFULL DEBUG COMANDS
+### USEFULL DEBUG COMANDS ###
 
 ~ $ make clean
 ~ $ make list
@@ -70,7 +73,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 - manual test on maxwell.conf
 - caclucaliton manager vs single stream test
 + I1 I3 I4 I5 test on Integral::simpson() method
-- test of getters and setters
++ test of getters and setters
 
 ### UPDATE LIST FOR c++17 STANDART
 
@@ -81,13 +84,12 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 - numerical linear vs analitical linear
 - refactor GnuPlot::write_commants_to_script()
-- refactor of --arg parther in main.cpp
-- refactor and restructur of main.cpp; code is not clean
-- refactor of ready_model.cpp; code copy-paste
++ refactor of --arg parther in main.cpp
++ refactor and restructur of main.cpp; code is not clean
++ refactor of ready_model.cpp; code copy-paste
 - refactor of manager.cpp; code copy-paste
 - extract all cout, cerr and exaptions handling to a separate CLI class
 - catch illegal answers in model
-- get maxwell version from chared configuration object
 - Config conflict: Conflict::TEMS_NUM == MissileField::STATIC_TERMS_NUMBER 
 
 - warnings on GNU GCC 5.4.0 20160607
@@ -105,6 +107,8 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### TODO LIST ###
 
+- numerical and analitic implementation of E(ct) by CLI option
+- numerical implementation of H(ct,rho) as new model 
 - Implement calculation DB
 - Implement logger class
 - LIST ALL tested methods next to respount include
@@ -115,7 +119,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 + calculation manager progress bar
 + configuration file for global paramiters
 
-- Optimization of Simpson four-dim algorithm
++ Optimization of Simpson four-dim algorithm
 + add funvtion MissileEffect::static_field(rho, phi, z, eps = 10e-10)
 + add function GnuPlot::multi_plot2d()
 - add function GnuPlot::animation_plot2d()

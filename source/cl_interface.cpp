@@ -362,7 +362,19 @@ void CLI::print_help () const
 	std::cout << "      rect                infinity                                      " << std::endl;
 	std::cout << "     gauss                       1              sigma=1                 " << std::endl;
 	std::cout << "  triangle                       1                                      " << std::endl;
-	
+
+	std::cout << std::endl;
+	std::cout << "  PARAMITER         DEFAULT_VALUE      OTHER_OPTIONS                    " << std::endl;
+	std::cout << "------------------------------------------------------------------------" << std::endl;	
+	std::cout << "  --magnitude                   1      any positive float               " << std::endl;
+	std::cout << "  --radius                      1      any positive float               " << std::endl;
+	std::cout << "  --mur                         1      any positive float               " << std::endl;
+	std::cout << "  --epsr                        1      any positive float               " << std::endl;
+	std::cout << "  --shape                    rect      gauss,triangle                   " << std::endl;
+	std::cout << "  --noise                       0      any positive float (%)           " << std::endl;
+	std::cout << "  --kerr                        0      any positive float               " << std::endl;
+
+
 	std::cout << std::endl;
 	std::cout << "All numerical options are equal to zero or grater" << std::endl;
 	std::cout << "More options are avalible in maxwell.conf" << std::endl;
