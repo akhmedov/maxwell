@@ -41,6 +41,7 @@ std::vector<double> AbstractField::electric_cartesian (double ct, double rho, do
 	array.push_back(this->electric_z(ct, rho, phi, z));
 	return array;
 }
+
 double AbstractField::magnetic_x (double ct, double rho, double phi, double z) const
 {
 	const double magnetic_rho = this->magnetic_rho(ct,rho,phi,z);

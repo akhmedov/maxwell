@@ -37,7 +37,7 @@ void PlotModel::__Ex_from_ct ()
 
 	std::size_t thread_num = this->global_conf->thread_number();
 	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( this->global_conf->print_progress() ); 
+	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
@@ -73,7 +73,7 @@ void PlotModel::__Ex_from_ct ()
 	plot->set_oy_label("Ex, V/m");
 	plot->grid_on();
 	plot->cage_on();
-	plot->set_logscale_ox(true);
+	// plot->set_logscale_ox(true);
 	plot->plot2d(plot_data);
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }

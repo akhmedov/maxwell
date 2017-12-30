@@ -17,16 +17,16 @@ struct AbstractField {
 	virtual double electric_rho (double ct, double rho, double phi, double z) const = 0;
 	virtual double electric_phi (double ct, double rho, double phi, double z) const = 0;
 	virtual double electric_z (double ct, double rho, double phi, double z) const = 0;
-	
+
 	double electric_x (double ct, double rho, double phi, double z) const;
 	double electric_y (double ct, double rho, double phi, double z) const;
 	std::vector<double> electric_cylindric (double ct, double rho, double phi, double z) const;
 	std::vector<double> electric_cartesian (double ct, double rho, double phi, double z) const;
-	
+
 	virtual double magnetic_rho (double ct, double rho, double phi, double z) const = 0;
 	virtual double magnetic_phi (double ct, double rho, double phi, double z) const = 0;
 	virtual double magnetic_z (double ct, double rho, double phi, double z) const = 0;
-	
+
 	double magnetic_x (double ct, double rho, double phi, double z) const;
 	double magnetic_y (double ct, double rho, double phi, double z) const;
 	std::vector<double> magnetic_cylindric (double ct, double rho, double phi, double z) const;

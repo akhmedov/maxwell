@@ -179,6 +179,8 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 	if (!param.compare("--cylindric")) {
 		std::vector<std::string> wp = CLI::split(arg,',');
 
+		std::cout << "test" << std::endl;
+
 		if (CLI::is_range_value(wp[0])) {
 			std::vector<std::string> vt = CLI::split(wp[0],':');
 			this->global_conf->receiver_vt(std::stod(vt[0]), std::stod(vt[1]), std::stod(vt[2]));
@@ -189,10 +191,11 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 			this->global_conf->receiver_rho(std::stod(rho[0]), std::stod(rho[1]), std::stod(rho[2]));
 		} else this->global_conf->receiver_rho(std::stod(wp[1]));
 
+		double rad = M_PI / 180;
 		if (CLI::is_range_value(wp[2])) {
 			std::vector<std::string> phi = CLI::split(wp[2],':');
-			this->global_conf->receiver_phi(std::stod(phi[0]), std::stod(phi[1]), std::stod(phi[2]));
-		} else this->global_conf->receiver_phi(std::stod(wp[2]));
+			this->global_conf->receiver_phi(rad*std::stod(phi[0]), rad*std::stod(phi[1]), rad*std::stod(phi[2]));
+		} else this->global_conf->receiver_phi(rad*std::stod(wp[2]));
 
 		if (CLI::is_range_value(wp[3])) {
 			std::vector<std::string> z = CLI::split(wp[3],':');
@@ -254,7 +257,10 @@ bool CLI::is_range_value (const std::string& literal)
 	std::vector<std::string> ranged = CLI::split(literal, ':');
 	if (ranged.size() != 3) return false;
 
-	return CLI::is_float(ranged[0]) && CLI::is_float(ranged[1]) && CLI::is_float(ranged[2]);
+	bool is_float = CLI::is_float(ranged[0]) && CLI::is_float(ranged[1]) && CLI::is_float(ranged[2]);
+	
+	if (is_float) return std::stod(ranged[0]) < std::stod(ranged[2]);
+	else return false;
 }
 
 bool CLI::is_onedim_model (const std::string& literal)
@@ -292,20 +298,20 @@ bool CLI::is_twodim_model (const std::string& literal)
 bool CLI::is_event (const std::string& literal)
 {
 	std::vector<std::string> world_point = CLI::split(literal, ',');
-	
+	if (world_point.size() != 4) return false;
 	
 	bool is_floats = true;
 
 	for (auto i : world_point) {
 		bool condition = CLI::is_float(i) || CLI::is_range_value(i);
-		// std::cout << literal << ' ' << i << ' ' << condition << std::endl;
 		if (!condition)
 			is_floats = false;
 	}
 
-	// std::cout << is_floats << std::endl;
-
-	return is_floats;
+	if (is_floats) {
+		double phi = std::stod(world_point[2]);
+		if (phi >= 0 && phi <= 360) return true;
+	} else return false;
 }
 
 std::vector<std::string> CLI::split (const std::string& literal, char separator)

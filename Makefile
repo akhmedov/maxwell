@@ -7,7 +7,8 @@
 #
 
 CXX = gcc
-CXX_FLAGS = -Wall -Wextra -Wformat=2 -Wold-style-definition
+CXX_FLAGS = $(if ${DEBUG},-Wall -Wextra -Wformat=2 -Wold-style-definition,)
+CXX_FLAGS += $(if ${PDISK_LINEAR_INT},-DNUMERIC_PDISK_LINEAR_INT,) 
 CXX_LIB = -lstdc++ -lm -pthread 
 CXX_STD = -std=c++14 -O2
 
@@ -20,7 +21,7 @@ OBJECTS = $(patsubst source/%.cpp, build/%.o, $(SOURCES))
 GMP_LIBS = -L $(PROJECT_DIR)/gnump/lib -lgmp -lgmpxx
 GMP_FLAGS = -I $(PROJECT_DIR)/gnump/include
 
-.PHONY: gnuplot gnump clean list
+.PHONY: gnuplot gnump clean list help
 
 maxwell: $(OBJECTS)
 	@rm -f build/test.o
@@ -33,6 +34,18 @@ test: $(OBJECTS)
 list:
 	@find . -name '*.cpp' -o -name '*.hpp' \
 	-o -name '.gitignore' -o -name 'Makefile' | xargs wc -l
+
+help:
+	@echo "Make goals list and its perpous:"
+	@echo "  maxwell - realize build (default goal)"
+	@echo "  test    - build for unit, integration and manual testing"
+	@echo "  clean   - clean build dirictory"
+	@echo "  list    - list project tree"
+	@echo "  help    - print this menu"
+	@echo ""
+	@echo "Avalible envitoment non-zero variables:"
+	@echo "  PDISK_LINEAR_INT - numerical integration for linear problem"
+	@echo "  DEBUG            - more compiler optons"
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build

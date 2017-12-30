@@ -39,11 +39,12 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 ~ $ make -j4 test
 ~ $ ./build/test
 ~ $ make maxwell
+~ $ make clean && make -j4 PDISK_LINEAR_INT=1 DEBUG=1
 ~ $ ./build/maxwell --help
 ~ $ ./build/maxwell --plot 3 --cylindric 1.9:0.01:3,0:0.01:3,0,2
 ~ $ ./build/maxwell --plot 2 --cylindric 1.9:0.01:10,0,0,2
 ~ $ ./build/maxwell --kerr 1e-9 --plot 1 --cylindric 1.9:0.01:3,0,0,2
-~ $ ./build/maxwell --noise 50 --data 1 --cylindric 1.9:0.01:3,2,0:0.01:6.28,2
+~ $ ./build/maxwell --noise 50 --data 1 --cylindric 1.9:0.01:3,2,0:1:90,2
 
 ### USEFULL DEBUG COMANDS ###
 

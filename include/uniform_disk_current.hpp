@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "config.hpp"
+#include "integral.hpp"
 #include "phys_math.hpp"
 #include "linear_medium.hpp"
 #include "linear_source.hpp"
@@ -63,9 +64,11 @@ struct MissileField : public LinearField {
 
 	double static_magnitude (double z) const;
 	double static_magnitude (double rho, double phi, double z, double eps = 10e-10) const;
+
 	double electric_rho (double ct, double rho, double phi, double z) const;
 	double electric_phi (double ct, double rho, double phi, double z) const;
 	double electric_z (double ct, double rho, double phi, double z) const;
+
 	double magnetic_rho (double ct, double rho, double phi, double z) const;
 	double magnetic_phi (double ct, double rho, double phi, double z) const;
 	double magnetic_z (double ct, double rho, double phi, double z) const;
