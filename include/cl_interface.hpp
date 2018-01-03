@@ -39,6 +39,7 @@ protected:
 	static bool is_float (const std::string& literal);
 	static bool is_int (const std::string& literal);
 	static bool is_path (const std::string& literal);
+	static bool is_pair (const std::string& literal);
 
 	static bool is_onedim_model (const std::string& literal);
 	static bool is_twodim_model (const std::string& literal);

@@ -25,6 +25,7 @@ using std::chrono_literals::operator""ms;
 struct Manager {
 	Manager ();
 	Manager (std::size_t threads);
+	void reset ();
 	void progress_bar (bool status = true);
 	void call ( std::function<double(double)> );
 	void call ( std::vector<std::function<double(double)>> funcs);

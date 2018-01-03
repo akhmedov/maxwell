@@ -28,6 +28,16 @@ Manager::Manager (std::size_t threads)
 
 //=============================================================================
 
+void Manager::reset ()
+{
+	this->data_left = 0;
+	this->total_data = 0;
+	this->argument.clear();
+	// this->result.clear();
+}
+
+//=============================================================================
+
 void Manager::progress_bar (bool status)
 {
 	this->print_progtess = status;

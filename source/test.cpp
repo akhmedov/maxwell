@@ -1,3 +1,11 @@
+//
+//  test.cpp
+//  Maxwell
+//
+//  Created by Rolan Akhmedov on 27.05.17.
+//  Copyright © 2017 Rolan Akhmedov. All rights reserved.
+//
+
 #include "test.hpp"
 
 using namespace std;
@@ -221,10 +229,7 @@ bool Test::monte_carlo_vector ()
 	limits.push_back(make_pair(0,1));
 
 	MonteCarlo distr = MonteCarlo (3000, limits );
-
 	std::valarray<double> val = distr.random_array();
-	/* for (auto i : val) cout << i << ' ';
-	cout << endl; */
 
 	return false;
 }
@@ -251,7 +256,6 @@ bool Test::monte_carlo_integral ()
 	double volume = 8 * integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
-	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 	return error < 1 ? true : false;
 }
 
@@ -275,8 +279,6 @@ bool Test::monte_carlo_improper ()
 	MonteCarlo integral = MonteCarlo(10e8, limits);
 	double volume = integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
-
-	// cout << volume << ' ' << int_func() << ' ' << error << '%' << endl;
 
 	return error < 10 ? true : false;
 }
@@ -304,7 +306,6 @@ bool Test::imptoper_int_bessel ()
 	double simpson = I.value(0, bais, func);
 	double error_s = 100 * abs(simpson-int_func()) / int_func();
 
-	// cout << error_s << ' ' << error_mc << endl;
 	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
 }
 

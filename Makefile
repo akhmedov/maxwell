@@ -7,10 +7,13 @@
 #
 
 CXX = gcc
-CXX_FLAGS = $(if ${DEBUG},-Wall -Wextra -Wformat=2 -Wold-style-definition,)
-CXX_FLAGS += $(if ${PDISK_LINEAR_INT},-DNUMERIC_PDISK_LINEAR_INT,) 
 CXX_LIB = -lstdc++ -lm -pthread 
 CXX_STD = -std=c++14 -O2
+
+CXX_FLAGS = $(if ${DEBUG},-Wall -Wextra -Wformat=2 -Wold-style-definition,)
+CXX_FLAGS += $(if ${PDISK_LINEAR_INT},-DNUMERIC_PDISK_LINEAR_INT,)
+CXX_FLAGS += $(if ${AUW_NOICE},-DAUW_NOICE,)
+CXX_FLAGS += $(if ${MGW_NOICE},-DMGW_NOICE,)
 
 PROJECT_DIR = $(shell pwd)
 SOURCES = $(wildcard source/*.cpp)
@@ -36,16 +39,18 @@ list:
 	-o -name '.gitignore' -o -name 'Makefile' | xargs wc -l
 
 help:
-	@echo "Make goals list and its perpous:"
+	@echo "List of make's goals and its perpous:"
 	@echo "  maxwell - realize build (default goal)"
 	@echo "  test    - build for unit, integration and manual testing"
 	@echo "  clean   - clean build dirictory"
 	@echo "  list    - list project tree"
 	@echo "  help    - print this menu"
 	@echo ""
-	@echo "Avalible envitoment non-zero variables:"
+	@echo "Avalible envitoment define variables:"
+	@echo "  DEBUG            - all compiler warnings and debug optput (logger)"
 	@echo "  PDISK_LINEAR_INT - numerical integration for linear problem"
-	@echo "  DEBUG            - more compiler optons"
+	@echo "  AUW_NOICE        - aditive uniform white noise as noise_engine (AGWN is default)"
+	@echo "  MGW_NOICE        - multiplic gauss white noise as noise_engine (AGWN is default)"
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build

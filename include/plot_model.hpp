@@ -14,6 +14,7 @@
 #include "manager.hpp"
 #include "integral.hpp"
 #include "config.hpp"
+#include "noise.hpp"
 
 #include <vector>
 #include <functional>
@@ -22,7 +23,7 @@
 
 struct PlotModel {
 	PlotModel (Config* global_conf);
-	enum Name { Ex_from_ct = 1, Hy_from_ct };
+	enum Name { Ex_from_ct = 1, Hy_from_ct, Ex_from_ct_rho };
 	void call (const Name& model_name);
 private:
 	Config* global_conf;

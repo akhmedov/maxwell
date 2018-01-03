@@ -18,6 +18,7 @@ CLI::CLI (Config* conf)
 		"INT",
 		"FLOAT",
 		"PATH",
+		"PAIR", /* FLOAT,FLOAT */
 		"EVENT" /* FLOAT:FLOAT,FLOAT:FLOAT,FLOAT,FLOAT */
 	};
 
@@ -179,8 +180,6 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 	if (!param.compare("--cylindric")) {
 		std::vector<std::string> wp = CLI::split(arg,',');
 
-		std::cout << "test" << std::endl;
-
 		if (CLI::is_range_value(wp[0])) {
 			std::vector<std::string> vt = CLI::split(wp[0],':');
 			this->global_conf->receiver_vt(std::stod(vt[0]), std::stod(vt[1]), std::stod(vt[2]));
@@ -233,6 +232,13 @@ bool CLI::is_int ( const std::string& literal )
 	strtol(literal.c_str(), &p, 10);
 
 	return (*p == 0);
+}
+
+bool CLI::is_pair (const std::string& literal)
+{
+	std::vector<std::string> pair = CLI::split(literal, ',');
+	if (pair.size() != 2) return false;
+	return CLI::is_float(pair[0]) && CLI::is_float(pair[1]);
 }
 
 bool CLI::is_path (const std::string& literal)
@@ -343,7 +349,7 @@ void CLI::print_help () const
 	std::cout << "usage: maxwell [--version] [--help] [--conf <posix_path>]" << std::endl;
 	std::cout << "               [--shape <type>] [--duration <float>] [<MODEL> <model_num>]" << std::endl;
 	std::cout << "               [--magnitude <float>] [--radius <float>] [--kerr <float>]" << std::endl;
-	std::cout << "               [--mur <float>] [--epsr <float>] [--noise <percent>]" << std::endl;
+	std::cout << "               [--mur <float>] [--epsr <float>] [--noise <percent,percent>]" << std::endl;
 	std::cout << "               [<SYSTEM> <float:float:float,float,float,float>]" << std::endl;
 
 	std::cout << std::endl;
@@ -389,7 +395,7 @@ void CLI::print_help () const
 void CLI::print_arguments () const
 {
 	std::cout << std::boolalpha;
-	std::cout << "Configuration of runtime... --------------------------------------------" << std::endl;
+	std::cout << "Configuration of runtime..." << std::endl;
 	
 	auto t = this->global_conf->receiver_vt(); 
 	auto x = this->global_conf->receiver_rho(); 
@@ -410,13 +416,22 @@ void CLI::print_arguments () const
 	std::cout << "Relative epsilon: " << this->global_conf->plane_disk_epsr() << std::endl;
 	std::cout << "Relative mu: " << this->global_conf->plane_disk_mur() << std::endl;
 	std::cout << "Kerr medium coefficient: " << this->global_conf->kerr_value() << std::endl;
-	std::cout << "Noise level (%): " << this->global_conf->noise_level() << std::endl;
+	std::cout << "Conductivity (sigma): " << 0 << std::endl;
+	
+	std::cout << "Noise level: ";
+	#ifdef AUW_NOICE 
+		std::cout << "type(AUWN)";
+	#elif MGW_NOICE
+		std::cout << "type(MGWN)";
+	#else
+		std::cout << "type(AGWN)";
+	#endif /* AUW_NOICE MGW_NOICE */
+	std::cout << ", mu(0), sigma(" << this->global_conf->noise_level() << ')' << std::endl;
 
 	std::cout << "Magnetic component terms number: " << this->global_conf->magnetic_term_num() << std::endl;
 	std::cout << "Float bitrae of GMP: " << this->global_conf->float_bitrate() << std::endl;
 	std::cout << "Calculation thread number: " << this->global_conf->thread_number() << std::endl;
-
-	std::cout << "------------------------------------------------------------------------" << std::endl;
+	std::cout << "... " << std::endl;
 }
 
 void CLI::read_config_file () const

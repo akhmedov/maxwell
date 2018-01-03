@@ -83,19 +83,21 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### BUG LIST ###
 
+- noise in Congig:: and CLI:: is only 1 param (must be AVARAGE,SIGMA) 
+- noise classes are not using ct, rho, phi, z
 - numerical linear vs analitical linear
 - refactor GnuPlot::write_commants_to_script()
 + refactor of --arg parther in main.cpp
 + refactor and restructur of main.cpp; code is not clean
 + refactor of ready_model.cpp; code copy-paste
-- refactor of manager.cpp; code copy-paste
++ refactor of manager.cpp; code copy-paste
+- refactor of manager.cpp: online sotring and wait function in get_value()
 - extract all cout, cerr and exaptions handling to a separate CLI class
 - catch illegal answers in model
-- Config conflict: Conflict::TEMS_NUM == MissileField::STATIC_TERMS_NUMBER 
++ Config conflict: Conflict::TEMS_NUM == MissileField::STATIC_TERMS_NUMBER 
 
 - warnings on GNU GCC 5.4.0 20160607
 - Makefile refactor; test and maxwell build without rm command
-- implement functionality of Calculation Manager in ready_model.cpp
 + implement functionality of Config::print_progress()
 + implement functionality of Config::plot_color_map()
 + implement functionality of Config::plot_grid()
@@ -130,12 +132,6 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 - client server calculation ability through web soket (version 1.0)
 - build configuration for Windows 10 (version 1.0)
 - implement QT plot device (version 1.0)
-
-- integration
-https://en.wikipedia.org/wiki/Simpson's_rule
-https://en.wikipedia.org/wiki/Gaussian_quadrature
-http://www.cs.rpi.edu/~flaherje/pdf/fea6.pdf
-https://www.gnu.org/software/gsl/manual
 
 ### Install gnump ###
 

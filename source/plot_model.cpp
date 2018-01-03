@@ -29,6 +29,9 @@ void PlotModel::__Ex_from_ct ()
 	float A0 = this->global_conf->plane_disk_magnitude();
 	float eps_r = this->global_conf->plane_disk_epsr();
 	float mu_r = this->global_conf->plane_disk_mur();
+	float kerr = this->global_conf->kerr_value();
+
+	/* linear soluton */
 
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
@@ -46,16 +49,39 @@ void PlotModel::__Ex_from_ct ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
+	double noise_level = this->global_conf->noise_level();
+	
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
+
+	#ifdef AUW_NOICE
+
+		#ifdef MGW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new AdditiveWhite(0,noise_level);
+		#endif /* MGW_NOICE */
+
+	#elif MGW_NOICE
+
+		#ifdef AUW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
+		#endif /* AUW_NOICE */
+
+	#else
+		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
+	#endif /* AUW_NOICE MGW_NOICE */
 
 	thead_core->call( &MissileField::electric_x, *linear );
 	std::stack<std::vector<double>> res = thead_core->get_value();
 
 	std::vector<std::pair<double, double>> plot_data;
 	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		auto point = std::make_pair(tmp[1], tmp[0]);
+		std::vector<double> pair_point = res.top(); res.pop();
+		double field = noise->value(pair_point[0],pair_point[1], rho, phi, z);
+		auto point = std::make_pair(pair_point[1], field);
 		plot_data.push_back(point);
 	}
 
@@ -67,13 +93,15 @@ void PlotModel::__Ex_from_ct ()
 		{ return i.first < j.first; }
 	);
 
+	/* kerr amendment */
+	
+
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("Ex, V/m");
 	plot->grid_on();
 	plot->cage_on();
-	// plot->set_logscale_ox(true);
 	plot->plot2d(plot_data);
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
@@ -107,10 +135,14 @@ void PlotModel::__Hy_from_ct ()
 	thead_core->call( &MissileField::magnetic_y, *linear );
 	std::stack<std::vector<double>> res = thead_core->get_value();
 
+	double noise_level = this->global_conf->noise_level();
+	Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
+
 	std::vector<std::pair<double, double>> plot_data;
 	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		auto point = std::make_pair(tmp[1], tmp[0]);
+		std::vector<double> pair_point = res.top(); res.pop();
+		double field = noise->value(pair_point[0], pair_point[1], rho, phi, z);
+		auto point = std::make_pair(pair_point[1], field);
 		plot_data.push_back(point);
 	}
 
@@ -128,7 +160,7 @@ void PlotModel::__Hy_from_ct ()
 	plot->set_oy_label("Hy, A/m");
 	plot->grid_on();
 	plot->cage_on();
-	plot->set_logscale_ox(true);
+	// plot->set_logscale_ox(true);
 	plot->plot2d(plot_data);
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
@@ -162,13 +194,36 @@ void PlotModel::__Ex_from_ct_rho ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
+	double noise_level = this->global_conf->noise_level();
+
+	#ifdef AUW_NOICE
+
+		#ifdef MGW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new AdditiveWhite(0,noise_level);
+		#endif /* MGW_NOICE */
+
+	#elif MGW_NOICE
+
+		#ifdef AUW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
+		#endif /* AUW_NOICE */
+
+	#else
+		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
+	#endif /* AUW_NOICE MGW_NOICE */
+
 	thead_core->call( &MissileField::electric_x, *linear );
 	std::stack<std::vector<double>> res = thead_core->get_value();
 
 	std::vector<std::tuple<double, double, double>> plot_data;
 	while (!res.empty()) {
 		std::vector<double> tmp = res.top(); res.pop();
-		auto point = std::make_tuple(tmp[1], tmp[2], tmp[0]);
+		double field = noise->value(tmp[0], tmp[1], tmp[2], phi, z);
+		auto point = std::make_tuple(tmp[1], tmp[2], field);
 		plot_data.push_back(point);
 	}
 

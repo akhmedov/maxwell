@@ -113,7 +113,7 @@ double MissileField::electric_rho (double ct, double rho, double phi, double z) 
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
-		std::size_t bais = 1e4;
+		std::size_t bais = 1e5;
 		Simpson I = Simpson(10*bais);
 		double r = this->R;
 		double tau = std::sqrt(vt_z.get_d());
@@ -153,7 +153,7 @@ double MissileField::electric_phi (double ct, double rho, double phi, double z) 
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
-		std::size_t bais = 1e4;
+		std::size_t bais = 1e5;
 		Simpson I = Simpson(10*bais);
 
 		double r = this->R;
