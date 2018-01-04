@@ -81,16 +81,16 @@ void GnuPlot::cage_on ( bool status)
 	this->is_plot_in_cage = status;
 }
 
-void GnuPlot::plot2d (const Plot2D<double> &matrix) 
+void GnuPlot::plot2d (const std::vector<std::vector<double>> &array) 
 {
 	this->is_3d_plot = false;
 	this->is_multi_plot = false;
 	
 	std::vector<std::string> plot_data;
-	for (auto&& point : matrix) {
+	for (auto&& point : array) {
 		std::string str_line;
-		std::string x = std::to_string(point.first).append(" ");
-		std::string y = std::to_string(point.second).append(" ");
+		std::string x = std::to_string(point[1]).append(" ");
+		std::string y = std::to_string(point[0]).append(" ");
 		str_line.append( x.append(y) );
 		plot_data.push_back(str_line);
 	}
@@ -102,7 +102,7 @@ void GnuPlot::plot2d (const Plot2D<double> &matrix)
 	std::cout.flush();
 }
 
-void GnuPlot::plot_multi (const PlotMulti<double> &arrays, const std::vector<std::string> &title) 
+void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &title) 
 {
 	this->is_3d_plot = false;
 	this->is_multi_plot = true;
@@ -124,7 +124,7 @@ void GnuPlot::plot_multi (const PlotMulti<double> &arrays, const std::vector<std
 	std::cout.flush();
 }
 
-void GnuPlot::plot3d (const Plot3D<double> &matrix)
+void GnuPlot::plot3d (const std::vector<std::vector<double>> &matrix)
 {
 	this->is_3d_plot = true;
 	this->is_multi_plot = false;
@@ -132,9 +132,9 @@ void GnuPlot::plot3d (const Plot3D<double> &matrix)
 	std::vector<std::string> plot_data;
 	for (auto&& point : matrix) {
 		std::string str_line;
-		std::string x = std::to_string(std::get<0>(point)).append(" ");
-		std::string y = std::to_string(std::get<1>(point)).append(" ");
-		std::string z = std::to_string(std::get<2>(point)).append(" ");
+		std::string x = std::to_string(point[1]).append(" ");
+		std::string y = std::to_string(point[2]).append(" ");
+		std::string z = std::to_string(point[0]).append(" ");
 		str_line.append( x.append(y).append(z) );
 		plot_data.push_back(str_line);
 	}

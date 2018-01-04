@@ -108,6 +108,7 @@ void CLI::call_handler (const std::vector<std::string>& argv) const
 			std::cout << "Error: " << argv[iter];
 			std::cout << " is not valid paramiter or argument." << std::endl;
 			std::cout << "Call --help for more detales." << std::endl;
+			return;
 		}
 	}
 

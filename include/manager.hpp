@@ -12,6 +12,7 @@
 #include "abstract_field.hpp"
 #include "uniform_disk_current.hpp"
 
+#include <set>
 #include <mutex>
 #include <stack>
 #include <thread>
@@ -22,22 +23,30 @@
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
 
+struct TimeSort {
+	bool operator() (const std::vector<double>& l_wp, const std::vector<double>& r_wp) const 
+	{ return l_wp[1] < r_wp[1]; }
+};
+
 struct Manager {
+	
 	Manager ();
 	Manager (std::size_t threads);
-	void reset ();
 	void progress_bar (bool status = true);
+	void add_argument (std::vector<double> argument);
+	std::vector<std::vector<double>> get_value ();
+
 	void call ( std::function<double(double)> );
 	void call ( std::vector<std::function<double(double)>> funcs);
 	void call ( std::function<double(double,double,double,double)> );
 	void call ( std::function<double(const AbstractField&,double,double,double,double)>, const AbstractField&);
-	void add_argument (std::vector<double> argument);
-	bool is_ready ();
-	std::stack<std::vector<double>> get_value ();
-	std::vector< std::thread > thread_list;
+
 private:
+	void reset ();
+	bool is_ready ();
+	std::vector< std::thread > thread_list;
 	std::vector< std::stack< std::vector<double> > > argument;
-	std::stack< std::vector<double> > result;
+	std::multiset< std::vector<double>, TimeSort > result;
 	std::size_t thread_number;
 	std::mutex result_write;
 	std::size_t data_left;

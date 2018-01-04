@@ -16,6 +16,7 @@
 #include "config.hpp"
 #include "noise.hpp"
 
+#include <algorithm>
 #include <vector>
 #include <functional>
 #include <tuple> // std::make_tuple

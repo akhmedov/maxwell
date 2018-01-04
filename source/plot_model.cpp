@@ -75,26 +75,12 @@ void PlotModel::__Ex_from_ct ()
 	#endif /* AUW_NOICE MGW_NOICE */
 
 	thead_core->call( &MissileField::electric_x, *linear );
-	std::stack<std::vector<double>> res = thead_core->get_value();
+	std::vector<std::vector<double>> plot_data = thead_core->get_value();
 
-	std::vector<std::pair<double, double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> pair_point = res.top(); res.pop();
-		double field = noise->value(pair_point[0],pair_point[1], rho, phi, z);
-		auto point = std::make_pair(pair_point[1], field);
-		plot_data.push_back(point);
-	}
-
-	// sort of output
-	// TODO: use std::set for online sorting
-	typedef std::pair<double, double> pair;
-	std::sort (plot_data.begin(), plot_data.end(), 
-		[] (const pair& i, const pair& j) -> bool 
-		{ return i.first < j.first; }
-	);
+	for (auto& i : plot_data)
+		i[0] += noise->value(i[0], i[1], rho, phi, z);
 
 	/* kerr amendment */
-	
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
@@ -133,26 +119,32 @@ void PlotModel::__Hy_from_ct ()
 		thead_core->add_argument( {ct,rho,phi,z} );
 
 	thead_core->call( &MissileField::magnetic_y, *linear );
-	std::stack<std::vector<double>> res = thead_core->get_value();
+	std::vector<std::vector<double>> plot_data = thead_core->get_value();
 
 	double noise_level = this->global_conf->noise_level();
-	Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
 
-	std::vector<std::pair<double, double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> pair_point = res.top(); res.pop();
-		double field = noise->value(pair_point[0], pair_point[1], rho, phi, z);
-		auto point = std::make_pair(pair_point[1], field);
-		plot_data.push_back(point);
-	}
+	#ifdef AUW_NOICE
 
-	// sort of output
-	// TODO: use std::set for online sorting
-	typedef std::pair<double, double> pair;
-	std::sort (plot_data.begin(), plot_data.end(), 
-		[] (const pair& i, const pair& j) -> bool 
-		{ return i.first < j.first; }
-	);
+		#ifdef MGW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new AdditiveWhite(0,noise_level);
+		#endif /* MGW_NOICE */
+
+	#elif MGW_NOICE
+
+		#ifdef AUW_NOICE 
+			#error Only one noise option is allowed
+		#else
+			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
+		#endif /* AUW_NOICE */
+
+	#else
+		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
+	#endif /* AUW_NOICE MGW_NOICE */
+
+	for (auto& i : plot_data)
+		i[0] += noise->value(i[0], i[1], rho, phi, z);
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
@@ -194,6 +186,9 @@ void PlotModel::__Ex_from_ct_rho ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
+	thead_core->call( &MissileField::electric_x, *linear );
+	std::vector<std::vector<double>> plot_data = thead_core->get_value();
+
 	double noise_level = this->global_conf->noise_level();
 
 	#ifdef AUW_NOICE
@@ -216,16 +211,9 @@ void PlotModel::__Ex_from_ct_rho ()
 		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
 	#endif /* AUW_NOICE MGW_NOICE */
 
-	thead_core->call( &MissileField::electric_x, *linear );
-	std::stack<std::vector<double>> res = thead_core->get_value();
+	for (auto& i : plot_data)
+		i[0] += noise->value(i[0], i[1], i[2], phi, z);
 
-	std::vector<std::tuple<double, double, double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		double field = noise->value(tmp[0], tmp[1], tmp[2], phi, z);
-		auto point = std::make_tuple(tmp[1], tmp[2], field);
-		plot_data.push_back(point);
-	}
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );

@@ -1,3 +1,4 @@
+
 //
 //  manager.cpp
 //  Maxwell
@@ -30,10 +31,11 @@ Manager::Manager (std::size_t threads)
 
 void Manager::reset ()
 {
+	// TODO: kill chiled threads
 	this->data_left = 0;
 	this->total_data = 0;
 	this->argument.clear();
-	// this->result.clear();
+	this->result.clear();
 }
 
 //=============================================================================
@@ -45,9 +47,16 @@ void Manager::progress_bar (bool status)
 
 //=============================================================================
 
-std::stack<std::vector<double>> Manager::get_value ()
+std::vector<std::vector<double>> Manager::get_value ()
 {
-	return this->result;
+	while (!this->is_ready()) { }	
+
+	auto tmp = this->result;
+	std::vector<std::vector<double>> res(tmp.size());
+	std::copy(tmp.begin(), tmp.end(), res.begin());
+	
+	this->reset();
+	return res;
 }
 
 //=============================================================================
@@ -55,8 +64,13 @@ std::stack<std::vector<double>> Manager::get_value ()
 bool Manager::is_ready ()
 {
 	bool ready = true;
-	for (auto&& i : this->argument) ready = (ready && i.empty());
-	return ready && this->result_write.try_lock();
+
+	for (auto&& i : this->argument) 
+		if (!i.empty()) ready = false;
+	for (auto&& i : this->thread_list) 
+		if (i.joinable()) ready = false;
+
+	return ready;
 }
 
 //=============================================================================
@@ -74,7 +88,6 @@ void Manager::add_argument (std::vector<double> arg)
 
 void Manager::call ( std::function<double(double)> func)
 {
-
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
 			std::vector<double> arg = this->argument[i].top();
@@ -83,7 +96,7 @@ void Manager::call ( std::function<double(double)> func)
 			arg.insert( arg.begin(), res );
 			this->result_write.lock();
 			this->data_left--;
-			this->result.push( arg );
+			this->result.insert( arg );
 			result_write.unlock();
 		}
 	};
@@ -96,7 +109,6 @@ void Manager::call ( std::function<double(double)> func)
 		i.detach();
 	}
 
-	// called = true;
 	std::size_t last_printed = 101;
 	while (!this->is_ready()) {
 		if (this->print_progtess) {
@@ -125,7 +137,7 @@ void Manager::call ( std::function<double(double,double,double,double)> func)
 			arg.insert( arg.begin(), res );
 			this->result_write.lock();
 			this->data_left--;
-			this->result.push( arg );
+			this->result.insert( arg );
 			result_write.unlock();
 		}
 	};
@@ -138,7 +150,6 @@ void Manager::call ( std::function<double(double,double,double,double)> func)
 		i.detach();
 	}
 
-	// called = true;
 	std::size_t last_printed = 101;
 	while (!this->is_ready()) {
 		if (this->print_progtess) {
@@ -172,7 +183,7 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 
 			this->result_write.lock();
 			this->data_left--;
-			this->result.push( arg );
+			this->result.insert( arg );
 			result_write.unlock();
 		}
 	};
@@ -185,7 +196,6 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 		i.detach();
 	}
 
-	// called = true;
 	std::size_t last_printed = 101;
 	while (!this->is_ready()) {
 		if (this->print_progtess) {
@@ -214,7 +224,7 @@ void Manager::call ( std::function<double(const AbstractField&,double,double,dou
 			arg.insert( arg.begin(), res );
 			this->result_write.lock();
 			this->data_left--;
-			this->result.push( arg );
+			this->result.insert( arg );
 			result_write.unlock();
 		}
 	};
@@ -226,8 +236,6 @@ void Manager::call ( std::function<double(const AbstractField&,double,double,dou
 		i = std::thread(call_thread, num++);
 		i.detach();
 	}
-
-	// called = true;
 
 	std::size_t last_printed = 101;
 	while (!this->is_ready()) {

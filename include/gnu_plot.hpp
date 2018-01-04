@@ -47,9 +47,9 @@ struct GnuPlot {
 	void grid_on (bool status = true);
 	void cage_on ( bool status = true );
 
-	void plot2d (const Plot2D<double> &array);
-	void plot_multi (const PlotMulti<double> &array, const std::vector<std::string> &title);
-	void plot3d (const Plot3D<double> &matrix);
+	void plot2d (const std::vector<std::vector<double>> &array);
+	void plot_multi (const std::vector<std::vector<double>> &array, const std::vector<std::string> &title);
+	void plot3d (const std::vector<std::vector<double>> &matrix);
 	void call_gnuplot ();
 
 	void set_colormap (const Colormap &schem);
