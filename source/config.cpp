@@ -41,6 +41,7 @@ Config::Config ()
 	this->kerr_coeff_value = 0;
 	this->is_medium_kerr = false;
 	this->noise_percent = 0;
+	this->superposition = Superposition::additive;
 
 	/* TODO: Non default options
 	this->vt_value;
@@ -216,6 +217,11 @@ void Config::noise_level (double persent)
 	this->noise_percent = persent;
 }
 
+void Config::medium_superposition (Superposition type)
+{
+	this->superposition = type;
+}
+
 /* getters */
 
 double Config::kerr_value () const
@@ -364,4 +370,9 @@ float Config::plane_disk_mur () const
 double Config::noise_level () const
 {
 	return this->noise_percent;
+}
+
+Superposition Config::medium_superposition () const
+{
+	return this->superposition;
 }

@@ -9,6 +9,7 @@
 #ifndef plot_model_hpp
 #define plot_model_hpp
 
+#include "kerr_amendment.hpp"
 #include "uniform_disk_current.hpp"
 #include "gnu_plot.hpp"
 #include "manager.hpp"
@@ -32,6 +33,9 @@ private:
 	void __Ex_from_ct ();
 	void __Hy_from_ct ();
 	void __Ex_from_ct_rho ();
+	void __Hy_from_ct_rho ();
+	void __Ex_from_ct_z ();
+	void __Hy_from_ct_z ();
 };
 
 #endif /* plot_model_hpp */

@@ -359,9 +359,10 @@ void CLI::print_help () const
 	std::cout << "        1         Ex(ct)                Ex(phi, rho, z)                 " << std::endl;
 	std::cout << "        2         Hy(ct)                Hy(phi, rho, z)                 " << std::endl;
 	std::cout << "        3         Ex(ct,rho)                                            " << std::endl;
-	std::cout << "        4         Ex(ct,z)                                              " << std::endl;
-	std::cout << "        5         Hy(ct,z)                                              " << std::endl;
-	std::cout << "        6         Hy(ct,N=1e1,1e2,1e3)                                  " << std::endl;
+	std::cout << "        4         Hy(ct,rho)                                            " << std::endl;
+	std::cout << "        5         Ex(ct,z)                                              " << std::endl;
+	std::cout << "        6         Hy(ct,z)                                              " << std::endl;
+	std::cout << "        7         Hy(ct,N=1e1,1e2,1e3)                                  " << std::endl;
 
 	std::cout << std::endl;
 	std::cout << "  <SYSTEM>        --cartesian           --cylindric                     " << std::endl;
@@ -419,15 +420,15 @@ void CLI::print_arguments () const
 	std::cout << "Kerr medium coefficient: " << this->global_conf->kerr_value() << std::endl;
 	std::cout << "Conductivity (sigma): " << 0 << std::endl;
 	
-	std::cout << "Noise level: ";
-	#ifdef AUW_NOICE 
-		std::cout << "type(AUWN)";
-	#elif MGW_NOICE
-		std::cout << "type(MGWN)";
+	#ifdef AUW_NOICE
+		std::string noise_level = "Noise level: type(WHITE_UNIFORM), power(0), mu(FIRST), sigma(SECOND)";
 	#else
-		std::cout << "type(AGWN)";
-	#endif /* AUW_NOICE MGW_NOICE */
-	std::cout << ", mu(0), sigma(" << this->global_conf->noise_level() << ')' << std::endl;
+		std::string noise_level = "Noise level: type(WHITE_GAUSS), power(0) mu(FIRST), sigma(SECOND)";
+	#endif
+	noise_level = noise_level.replace( noise_level.find("FIRST"), 5, std::to_string(0));
+	std::string noise_sigma = std::to_string(this->global_conf->noise_level());
+	noise_level = noise_level.replace( noise_level.find("SECOND"), 6, noise_sigma);
+	std::cout << noise_level << std::endl;
 
 	std::cout << "Magnetic component terms number: " << this->global_conf->magnetic_term_num() << std::endl;
 	std::cout << "Float bitrae of GMP: " << this->global_conf->float_bitrate() << std::endl;
@@ -555,6 +556,17 @@ void CLI::read_config_file () const
 
 				else if (option.find("THREAD_NUMBER") != std::string::npos) {
 					this->global_conf->thread_number(std::stof(arg));
+				}
+
+				else if (option.find("SUPERPOSITION") != std::string::npos) {
+					if (arg.find("ADDITIVE") != std::string::npos) {
+						this->global_conf->medium_superposition(Superposition::additive);
+					} else if (arg.find("MULTIPL") != std::string::npos) {
+						this->global_conf->medium_superposition(Superposition::multipl);
+					} else {
+						std::string text = "The argument is not allowed of SUPERPOSITION";
+						throw std::logic_error(text);
+					}
 				}
 			}
 		} 

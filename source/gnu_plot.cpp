@@ -89,8 +89,8 @@ void GnuPlot::plot2d (const std::vector<std::vector<double>> &array)
 	std::vector<std::string> plot_data;
 	for (auto&& point : array) {
 		std::string str_line;
-		std::string x = std::to_string(point[1]).append(" ");
-		std::string y = std::to_string(point[0]).append(" ");
+		std::string x = std::to_string(point[0]).append(" ");
+		std::string y = std::to_string(point[1]).append(" ");
 		str_line.append( x.append(y) );
 		plot_data.push_back(str_line);
 	}
@@ -188,10 +188,20 @@ void GnuPlot::write_commants_to_script (const std::vector<std::string> &plot_dat
 	script << "EOD \n";
 
 	if (this->is_3d_plot) {
-		script << "set hidden3d \n"; // pm3d
-		script << "set dgrid3d 50, 50, 50 \n";
-		script << "set style data lines \n";
-		script << "splot '$grid' using 1:2:3 with lines linecolor rgb \"black\" notitle \n";
+		if (this->color_schem == Colormap::gray) {
+			script << "set hidden3d \n"; // pm3d
+			script << "set dgrid3d 50, 50, 50 \n";
+			script << "set style data lines \n";
+			script << "splot '$grid' using 1:2:3 with lines linecolor rgb \"black\" notitle \n";
+		} else if (this->color_schem == Colormap::parula) {
+			script << "set dgrid3d 50, 50, 50 \n";
+			script << "set pm3d depthorder border linetype -1 linewidth 0.5\n";
+			script << "set style fill  transparent solid 0.65 border\n";
+			script << "set palette rgb 21,22,23\n";
+			script << "set hidden3d\n";
+			script << "splot '$grid' using 1:2:3 with pm3d notitle \n";
+		}
+
 	} else if (this->is_multi_plot) {
 
 		std::size_t curves = std::count_if(plot_data[0].begin(), plot_data[0].end(),

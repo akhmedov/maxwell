@@ -13,8 +13,6 @@
 #ifndef kerr_amendment_hpp
 #define kerr_amendment_hpp
 
-#define TERMS_NUMBER 10e3
-
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "nonlinear_medium.hpp"
@@ -32,7 +30,7 @@ struct KerrMedium : public NonlinearMedium, public Homogeneous {
 	using Homogeneous::relative_permittivity;
 	using Homogeneous::relative_permeability;
 	
-	KerrMedium (double realative_mu, double realative_eps, double chi3_electric, double sigma);
+	KerrMedium (double realative_mu, double realative_eps, double xi3, double sigma);
 	double conductivity (double ct, double z) const;
 	double relative_permittivity (double ct, double z, std::size_t term) const;
 	double relative_permeability (double ct, double z, std::size_t term) const;
@@ -41,12 +39,12 @@ private:
 	/* double eps_r;
 	double mu_r; */
 	double sigma;
-	double chi3;
+	double xi3;
 };
 
-struct KerrAmendment : public MissileField, public NonlinearField {
+struct KerrAmendment : public NonlinearField {
 
-	KerrAmendment (MissileField* field, KerrMedium* medium);
+	KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source);
 
 	double electric_rho (double ct, double rho, double phi, double z) const;
 	double electric_phi (double ct, double rho, double phi, double z) const;
@@ -64,13 +62,17 @@ protected:
 
 	double N1 (int m, double nu, double ct, double varrho, double z) const;
 	double N2 (int m, double nu, double ct, double varrho, double z) const;
-	double N3 (int m, double nu, double ct, double varrho, double z) const;
 	double N4 (int m, double nu, double ct, double varrho, double z) const;
 	double N5 (int m, double nu, double ct, double varrho, double z) const;
-	double N6 (int m, double nu, double ct, double varrho, double z) const;
 
-	double vint_bessel_011_perp (double vt, double z, double rho, double R) const;
-	double vint_bessel_001_perp (double vt, double z, double rho, double R) const;
+	double int_bessel_011_perp (double vt, double z, double rho, double R) const;
+	double int_bessel_001_perp (double vt, double z, double rho, double R) const;
+
+protected:
+	
+	MissileField* linear_field;
+	double A0;
+	double R;
 };
 
 #endif /* kerr_amendment_hpp */

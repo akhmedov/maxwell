@@ -6,7 +6,7 @@
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
-#include "test.hpp"
+#include "unit_test.hpp"
 
 using namespace std;
 
@@ -208,7 +208,7 @@ bool Test::field_getters ()
 	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
 	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
 	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
+	Test* non_linear = (Test*) new KerrAmendment(linear, medium, source);
 
 	double permittivity = non_linear->nl_medium->relative_permittivity(0,0);
 	double permeability = non_linear->nl_medium->relative_permeability(0,0);
@@ -346,7 +346,7 @@ bool Test::real_convolution ()
 	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
 	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
 	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium);
+	Test* non_linear = (Test*) new KerrAmendment(linear, medium, source);
 
 	double nonlinear_Erho = non_linear->electric_rho (2.1, 0.8, 0, 2);
 	double linear_Erho = linear->electric_rho (2.1, 0.8, 0, 2);

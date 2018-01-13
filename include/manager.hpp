@@ -20,12 +20,14 @@
 #include <functional>
 #include <iostream>
 
+typedef std::function<double(AbstractField*,double,double,double,double)> Component;
+
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
 
 struct TimeSort {
 	bool operator() (const std::vector<double>& l_wp, const std::vector<double>& r_wp) const 
-	{ return l_wp[1] < r_wp[1]; }
+	{ return l_wp[0] < r_wp[0]; }
 };
 
 struct Manager {
@@ -39,7 +41,8 @@ struct Manager {
 	void call ( std::function<double(double)> );
 	void call ( std::vector<std::function<double(double)>> funcs);
 	void call ( std::function<double(double,double,double,double)> );
-	void call ( std::function<double(const AbstractField&,double,double,double,double)>, const AbstractField&);
+	void call ( std::function<double(AbstractField*,double,double,double,double)>, AbstractField*);
+	void call ( std::vector<std::pair<Component,AbstractField*>>);
 
 private:
 	void reset ();

@@ -12,6 +12,7 @@
 #include <string>
 #include <array>
 
+enum Superposition {additive, multipl};
 enum ModelType {plot, dataset, info};
 enum ImpulseShape {rect, gauss, triangl};
 enum Colormap {gray, parula};
@@ -63,6 +64,7 @@ struct Config {
 	void kerr_value (double);
 	void kerr_medium (bool);
 	void noise_level (double);
+	void medium_superposition (Superposition);
 
 	/* getters */
 
@@ -101,6 +103,7 @@ struct Config {
 	double kerr_value () const;
 	bool kerr_medium () const;
 	double noise_level () const;
+	Superposition medium_superposition () const;
 
 private:
 
@@ -141,6 +144,7 @@ private:
 	double kerr_coeff_value;
 	bool is_medium_kerr;
 	double noise_percent;
+	Superposition superposition;
 };
 
 #endif /* config_hpp */

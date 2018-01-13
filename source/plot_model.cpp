@@ -12,9 +12,12 @@ PlotModel::PlotModel (Config* conf)
 {
 	this->global_conf = conf;
 	this->model_pointer = {
-		&PlotModel::__Ex_from_ct, 
+		&PlotModel::__Ex_from_ct,
 		&PlotModel::__Hy_from_ct,
-		&PlotModel::__Ex_from_ct_rho
+		&PlotModel::__Ex_from_ct_rho,
+		&PlotModel::__Hy_from_ct_rho,
+		&PlotModel::__Ex_from_ct_z,
+		&PlotModel::__Hy_from_ct_z
 	};
 }
 
@@ -25,22 +28,15 @@ void PlotModel::call (const PlotModel::Name& model_name)
 
 void PlotModel::__Ex_from_ct ()
 {
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
-	float kerr = this->global_conf->kerr_value();
+	double R = this->global_conf->plane_disk_radius();
+	double A0 = this->global_conf->plane_disk_magnitude();
+	double eps_r = this->global_conf->plane_disk_epsr();
+	double mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
 
-	/* linear soluton */
-
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
+	double noise_level = this->global_conf->noise_level();
 	std::size_t thread_num = this->global_conf->thread_number();
-	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
@@ -49,41 +45,45 @@ void PlotModel::__Ex_from_ct ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
-	double noise_level = this->global_conf->noise_level();
-	
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
+	Manager* thead_core = new Manager( thread_num );
+	thead_core->progress_bar( this->global_conf->print_progress() );
+
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
 
-	#ifdef AUW_NOICE
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
 
-		#ifdef MGW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new AdditiveWhite(0,noise_level);
-		#endif /* MGW_NOICE */
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->electric_x(i[0],rho,phi,z);
+			plot_data.push_back({i[0], awgn+i[4]+i[5]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->electric_x(i[0],rho,phi,z);
+			plot_data.push_back({i[0], mwgn*i[4]*i[5]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
 
-	#elif MGW_NOICE
-
-		#ifdef AUW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
-		#endif /* AUW_NOICE */
-
-	#else
-		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
-	#endif /* AUW_NOICE MGW_NOICE */
-
-	thead_core->call( &MissileField::electric_x, *linear );
-	std::vector<std::vector<double>> plot_data = thead_core->get_value();
-
-	for (auto& i : plot_data)
-		i[0] += noise->value(i[0], i[1], rho, phi, z);
-
-	/* kerr amendment */
-
-	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
+	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
+	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("Ex, V/m");
 	plot->grid_on();
@@ -94,19 +94,15 @@ void PlotModel::__Ex_from_ct ()
 
 void PlotModel::__Hy_from_ct ()
 {
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
+	double R = this->global_conf->plane_disk_radius();
+	double A0 = this->global_conf->plane_disk_magnitude();
+	double eps_r = this->global_conf->plane_disk_epsr();
+	double mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
 
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
+	double noise_level = this->global_conf->noise_level();
 	std::size_t thread_num = this->global_conf->thread_number();
-	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( this->global_conf->print_progress() ); 
 
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
@@ -115,39 +111,45 @@ void PlotModel::__Hy_from_ct ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
+	Manager* thead_core = new Manager( thread_num );
+	thead_core->progress_bar( this->global_conf->print_progress() );
+
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
 
-	thead_core->call( &MissileField::magnetic_y, *linear );
-	std::vector<std::vector<double>> plot_data = thead_core->get_value();
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	double noise_level = this->global_conf->noise_level();
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->magnetic_y(i[0],rho,phi,z);
+			plot_data.push_back({i[0], awgn+i[4]+i[5]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->magnetic_y(i[0],rho,phi,z);
+			plot_data.push_back({i[0], mwgn*i[4]*i[5]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
 
-	#ifdef AUW_NOICE
-
-		#ifdef MGW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new AdditiveWhite(0,noise_level);
-		#endif /* MGW_NOICE */
-
-	#elif MGW_NOICE
-
-		#ifdef AUW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
-		#endif /* AUW_NOICE */
-
-	#else
-		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
-	#endif /* AUW_NOICE MGW_NOICE */
-
-	for (auto& i : plot_data)
-		i[0] += noise->value(i[0], i[1], rho, phi, z);
-
-	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
+	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
+	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("Hy, A/m");
 	plot->grid_on();
@@ -163,15 +165,11 @@ void PlotModel::__Ex_from_ct_rho ()
 	float A0 = this->global_conf->plane_disk_magnitude();
 	float eps_r = this->global_conf->plane_disk_epsr();
 	float mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
 
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
+	double noise_level = this->global_conf->noise_level();
 	std::size_t thread_num = this->global_conf->thread_number();
-	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
@@ -182,41 +180,46 @@ void PlotModel::__Ex_from_ct_rho ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
+	Manager* thead_core = new Manager( thread_num );
+	thead_core->progress_bar( this->global_conf->print_progress() );
+
 	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	thead_core->call( &MissileField::electric_x, *linear );
-	std::vector<std::vector<double>> plot_data = thead_core->get_value();
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	double noise_level = this->global_conf->noise_level();
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->electric_x(i[0],i[1],phi,z);
+			plot_data.push_back({awgn+i[4]+i[5],i[0],i[1]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->electric_x(i[0],i[1],phi,z);
+			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[1]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
 
-	#ifdef AUW_NOICE
-
-		#ifdef MGW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new AdditiveWhite(0,noise_level);
-		#endif /* MGW_NOICE */
-
-	#elif MGW_NOICE
-
-		#ifdef AUW_NOICE 
-			#error Only one noise option is allowed
-		#else
-			Noise* noise = new MultiplicWhiteGaussian(0,noise_level);
-		#endif /* AUW_NOICE */
-
-	#else
-		Noise* noise = new AdditiveWhiteGaussian(0,noise_level);
-	#endif /* AUW_NOICE MGW_NOICE */
-
-	for (auto& i : plot_data)
-		i[0] += noise->value(i[0], i[1], i[2], phi, z);
-
-
-	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
+	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
+	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("rho, m");
 	plot->set_oz_label("Ex, V/m");
@@ -226,90 +229,215 @@ void PlotModel::__Ex_from_ct_rho ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-/* void ReadyModel::linear_Hy_from_ct_z (double rho, double phi)
+void PlotModel::__Hy_from_ct_rho ()
 {
-	// not tested and not used
-	float R = Config::plane_disk_radius();
-	float A0 = Config::plane_disk_magnitude();
-	float eps_r = Config::plane_disk_epsr();
-	float mu_r = Config::plane_disk_mur();
+	float R = this->global_conf->plane_disk_radius();
+	float A0 = this->global_conf->plane_disk_magnitude();
+	float eps_r = this->global_conf->plane_disk_epsr();
+	float mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
+	
+	double noise_level = this->global_conf->noise_level();
+	std::size_t thread_num = this->global_conf->thread_number();
 
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	double ct_from = this->global_conf->receiver_vt()[0];
+	double ct_step = this->global_conf->receiver_vt()[1];
+	double ct_to = this->global_conf->receiver_vt()[2];
+	double rho_from = this->global_conf->receiver_rho()[0];
+	double rho_step = this->global_conf->receiver_rho()[1];
+	double rho_to = this->global_conf->receiver_rho()[2];
+	double phi = this->global_conf->receiver_phi()[0];
+	double z = this->global_conf->receiver_z()[0];
+
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	linear->set_yterms_num( Config::magnetic_term_num() );
 
-	std::size_t thread_num = Config::thread_number();
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
 	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( Config::print_progress() );
+	thead_core->progress_bar( this->global_conf->print_progress() );
 
-	for (double z = 0; z <= 1; z += 0.01)
-		for (double ct = 0.1; ct <= 10; ct += 0.01)
+	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
+		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	thead_core->call( *linear, "magnetic_y" );
-	std::stack<std::vector<double>> res = thead_core->get_value();
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	std::vector<std::tuple<double, double, double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		auto point = std::make_tuple(tmp[1], tmp[4], tmp[0]);
-		plot_data.push_back(point);
-	}
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->magnetic_y(i[0],i[1],phi,z);
+			plot_data.push_back({awgn+i[4]+i[5],i[0],i[1]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->magnetic_y(i[0],i[1],phi,z);
+			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[1]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
 
-	GnuPlot* plot = new GnuPlot( Config::gnp_script_path() );
-	plot->set_gnuplot_bin( Config::path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("z, m");
+	plot->set_oy_label("rho, m");
 	plot->set_oz_label("Hy, A/m");
 	plot->grid_on();
 	plot->cage_on();
-	// plot->set_logscale_ox(true);
 	plot->plot3d(plot_data);
-	if ( Config::call_gnuplot() ) plot->call_gnuplot();
-} */
+	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
+}
 
-/* void ReadyModel::linear_Ex_from_ct_z (double rho, double phi)
+void PlotModel::__Ex_from_ct_z ()
 {
-	// not tested and not used
-	float R = Config::plane_disk_radius();
-	float A0 = Config::plane_disk_magnitude();
-	float eps_r = Config::plane_disk_epsr();
-	float mu_r = Config::plane_disk_mur();
+	float R = this->global_conf->plane_disk_radius();
+	float A0 = this->global_conf->plane_disk_magnitude();
+	float eps_r = this->global_conf->plane_disk_epsr();
+	float mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
+	
+	double noise_level = this->global_conf->noise_level();
+	std::size_t thread_num = this->global_conf->thread_number();
 
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	double ct_from = this->global_conf->receiver_vt()[0];
+	double ct_step = this->global_conf->receiver_vt()[1];
+	double ct_to = this->global_conf->receiver_vt()[2];
+	double rho = this->global_conf->receiver_rho()[0];
+	double phi = this->global_conf->receiver_phi()[0];
+	double z_from = this->global_conf->receiver_z()[0];
+	double z_step = this->global_conf->receiver_z()[1];
+	double z_to = this->global_conf->receiver_z()[2];
+
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	linear->set_yterms_num( Config::magnetic_term_num() );
 
-	std::size_t thread_num = Config::thread_number();
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
 	Manager* thead_core = new Manager( thread_num );
-	thead_core->progress_bar( Config::print_progress() );
+	thead_core->progress_bar( this->global_conf->print_progress() );
 
-	for (double z = 0; z <= 3; z += 0.01)
-		for (double ct = 0.1; ct <= 3; ct += 0.01)
+	for (double z = z_from; z <= z_to; z += z_step)
+		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	thead_core->call( *linear, "electric_x" );
-	std::stack<std::vector<double>> res = thead_core->get_value();
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	std::vector<std::tuple<double, double, double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		auto point = std::make_tuple(tmp[1], tmp[4], tmp[0]);
-		plot_data.push_back(point);
-	}
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->electric_x(i[0],rho,phi,i[3]);
+			plot_data.push_back({awgn+i[4]+i[5],i[0],i[3]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->electric_x(i[0],rho,phi,i[3]);
+			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[3]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
 
-	GnuPlot* plot = new GnuPlot( Config::gnp_script_path() );
-	plot->set_gnuplot_bin( Config::path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("z, m");
+	plot->set_oy_label("rho, m");
 	plot->set_oz_label("Ex, V/m");
 	plot->grid_on();
 	plot->cage_on();
 	plot->plot3d(plot_data);
-	if ( Config::call_gnuplot() ) plot->call_gnuplot();
-} */
+	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
+}
+
+void PlotModel::__Hy_from_ct_z ()
+{
+	float R = this->global_conf->plane_disk_radius();
+	float A0 = this->global_conf->plane_disk_magnitude();
+	float eps_r = this->global_conf->plane_disk_epsr();
+	float mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double sigma = 0;
+	
+	double noise_level = this->global_conf->noise_level();
+	std::size_t thread_num = this->global_conf->thread_number();
+
+	double ct_from = this->global_conf->receiver_vt()[0];
+	double ct_step = this->global_conf->receiver_vt()[1];
+	double ct_to = this->global_conf->receiver_vt()[2];
+	double rho = this->global_conf->receiver_rho()[0];
+	double phi = this->global_conf->receiver_phi()[0];
+	double z_from = this->global_conf->receiver_z()[0];
+	double z_step = this->global_conf->receiver_z()[1];
+	double z_to = this->global_conf->receiver_z()[2];
+
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+
+	NoiseField* noise = new NoiseField(0,noise_level);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+
+	Manager* thead_core = new Manager( thread_num );
+	thead_core->progress_bar( this->global_conf->print_progress() );
+
+	for (double z = z_from; z <= z_to; z += z_step)
+		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
+			thead_core->add_argument( {ct,rho,phi,z} );
+
+	std::vector<std::pair<Component,AbstractField*>> to_compute;
+	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	thead_core->call(to_compute);
+	std::vector<std::vector<double>> data = thead_core->get_value();
+
+	Superposition medium_type = this->global_conf->medium_superposition();
+	std::vector<std::vector<double>> plot_data;
+	if (medium_type == Superposition::additive) {
+		for (auto i : data) {
+			double awgn = noise->magnetic_y(i[0],rho,phi,i[3]);
+			plot_data.push_back({awgn+i[4]+i[5],i[0],i[3]});
+		}
+	} else if (medium_type == Superposition::multipl) {
+		for (auto i : data) { 
+			double mwgn = noise->magnetic_y(i[0],rho,phi,i[3]);
+			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[3]}); 
+		}
+	} else throw std::invalid_argument("This statment must not be reached!");
+
+	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
+	plot->set_colormap(this->global_conf->plot_color_map());
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("rho, m");
+	plot->set_oz_label("Hy, A/m");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot3d(plot_data);
+	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
+}
 
 /* void ReadyModel::linear_Ex_from_rho_phi (double ct, double z)
 {

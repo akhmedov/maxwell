@@ -214,14 +214,14 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 
 //=============================================================================
 
-void Manager::call ( std::function<double(const AbstractField&,double,double,double,double)> component, const AbstractField& field)
+void Manager::call ( std::function<double(AbstractField*,double,double,double,double)> component, AbstractField* field)
 {
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 			double res = component(field, arg[0], arg[1], arg[2], arg[3]);
-			arg.insert( arg.begin(), res );
+			arg.push_back(res);
 			this->result_write.lock();
 			this->data_left--;
 			this->result.insert( arg );
@@ -251,4 +251,50 @@ void Manager::call ( std::function<double(const AbstractField&,double,double,dou
 	}
 	std::cout << std::endl;
 	// std::this_thread::sleep_for(3s);
+}
+
+//=============================================================================
+
+void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
+{
+	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
+
+	auto call_thread = [&] (std::size_t i) {
+		while (!this->argument[i].empty()) {
+			std::vector<double> arg = this->argument[i].top();
+			argument[i].pop();
+
+			for (auto f : field) {
+				double res = f.first(f.second, arg[0], arg[1], arg[2], arg[3]);
+				arg.push_back(res);
+			}
+
+			this->result_write.lock();
+			this->data_left--;
+			this->result.insert( arg );
+			result_write.unlock();
+		}
+	};
+
+	this->thread_list = std::vector<std::thread>(this->thread_number);
+
+	std::size_t num = 0;
+	for (auto& i : this->thread_list) {
+		i = std::thread(call_thread, num++);
+		i.detach();
+	}
+
+	std::size_t last_printed = 101;
+	while (!this->is_ready()) {
+		if (this->print_progtess) {
+			double progress = (double) this->data_left / (double) this->total_data;
+			progress *= 100;
+			if ((std::size_t)progress != last_printed) {
+				last_printed = (std::size_t) progress;
+				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
+				std::cout.flush();
+			}
+		}
+	}
+	std::cout << std::endl;
 }

@@ -27,10 +27,10 @@ GMP_FLAGS = -I $(PROJECT_DIR)/gnump/include
 .PHONY: gnuplot gnump clean list help
 
 maxwell: $(OBJECTS)
-	@rm -f build/test.o
+	@rm -f build/unit_test.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
-test: $(OBJECTS)	
+unit_test: $(OBJECTS)	
 	@rm -f build/main.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
@@ -40,17 +40,17 @@ list:
 
 help:
 	@echo "List of make's goals and its perpous:"
-	@echo "  maxwell - realize build (default goal)"
-	@echo "  test    - build for unit, integration and manual testing"
-	@echo "  clean   - clean build dirictory"
-	@echo "  list    - list project tree"
-	@echo "  help    - print this menu"
+	@echo "  maxwell   - realize build (default goal)"
+	@echo "  unit_test - build for unit, integration and manual testing"
+	@echo "  clean     - clean build dirictory"
+	@echo "  list      - list project tree"
+	@echo "  help      - print this menu"
 	@echo ""
 	@echo "Avalible envitoment define variables:"
 	@echo "  DEBUG            - all compiler warnings and debug optput (logger)"
 	@echo "  PDISK_LINEAR_INT - numerical integration for linear problem"
-	@echo "  AUW_NOICE        - aditive uniform white noise as noise_engine (AGWN is default)"
-	@echo "  MGW_NOICE        - multiplic gauss white noise as noise_engine (AGWN is default)"
+	@echo "  UNIFORM_NOICE    - aditive uniform white noise as noise_engine (AGWN is default)"
+	@echo "  GAUSS_NOICE      - multiplic gauss white noise as noise_engine (AGWN is default)"
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build

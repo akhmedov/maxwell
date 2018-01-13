@@ -9,6 +9,7 @@
 #ifndef gnu_plot_hpp
 #define gnu_plot_hpp
 
+#include <algorithm>
 #include <iostream>
 #include <tuple>
 #include <cstdlib>

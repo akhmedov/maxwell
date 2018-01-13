@@ -73,7 +73,6 @@ struct MissileField : public LinearField {
 	double magnetic_phi (double ct, double rho, double phi, double z) const;
 	double magnetic_z (double ct, double rho, double phi, double z) const;
 
-protected:
 	static double int_bessel_001 (double vt_z, double rho, double R); // I2 in thesis.pdf
 	static double int_bessel_011 (double vt_z, double rho, double R); // I1 in thesis.pdf
 	
@@ -82,6 +81,8 @@ protected:
 	double int_lommel_011 (double ct, double rho, double z) const; // I3 in thesis.pdf
 	double int_lommel_111 (double ct, double rho, double z) const; // I5 in thesis.pdf
 	
+protected:
+
 	double A0;
 	double R;
 	std::size_t STATIC_TERMS_NUMBER = 100;

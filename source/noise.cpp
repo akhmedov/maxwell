@@ -24,7 +24,7 @@ AdditiveWhite::AdditiveWhite (double avarage_magnutude, double diviation_magnutu
 	this->generator = std::mt19937_64(this->device());
 }
 
-double AdditiveWhite::value (double filed, double ct, double rho, double phi, double z)
+double AdditiveWhite::value (double ct, double rho, double phi, double z, double filed)
 {
 	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	return filed + this->distribution(this->generator);
@@ -41,7 +41,7 @@ AdditiveWhiteGaussian::AdditiveWhiteGaussian (double avarage_magnutude, double s
 	this->generator = std::mt19937_64(this->device());
 }
 
-double AdditiveWhiteGaussian::value (double filed, double ct, double rho, double phi, double z)
+double AdditiveWhiteGaussian::value (double ct, double rho, double phi, double z, double filed)
 {
 	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	return filed + this->distribution(this->generator);
@@ -58,8 +58,53 @@ MultiplicWhiteGaussian::MultiplicWhiteGaussian (double avarage_magnutude, double
 	this->generator = std::mt19937_64(this->device());
 }
 
-double MultiplicWhiteGaussian::value (double filed, double ct, double rho, double phi, double z)
+double MultiplicWhiteGaussian::value (double ct, double rho, double phi, double z, double filed)
 {
 	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	return filed * this->distribution(this->generator);
+}
+
+//============================================================================
+
+NoiseField::NoiseField (double magnutude, double sigma)
+{
+	#ifdef UNIFORM_NOICE
+		this->radial = new AdditiveWhite(magnutude, sigma);
+		this->athimus = new AdditiveWhite(magnutude, sigma);
+		this->distance = new AdditiveWhite(magnutude, sigma);		
+	#else
+		this->radial = new AdditiveWhiteGaussian(magnutude, sigma);
+		this->athimus = new AdditiveWhiteGaussian(magnutude, sigma);
+		this->distance = new AdditiveWhiteGaussian(magnutude, sigma);
+	#endif /* UNIFORM_NOICE */
+}
+
+double NoiseField::electric_rho (double ct, double rho, double phi, double z) const
+{
+	return this->radial->value(ct, rho, phi, z);
+}
+
+double NoiseField::electric_phi (double ct, double rho, double phi, double z) const
+{
+	return this->athimus->value(ct, rho, phi, z);
+}
+
+double NoiseField::electric_z (double ct, double rho, double phi, double z) const
+{
+	return this->distance->value(ct, rho, phi, z);
+}
+
+double NoiseField::magnetic_rho (double ct, double rho, double phi, double z) const
+{
+	return this->radial->value(ct, rho, phi, z);
+}
+
+double NoiseField::magnetic_phi (double ct, double rho, double phi, double z) const
+{
+	return this->athimus->value(ct, rho, phi, z);
+}
+
+double NoiseField::magnetic_z (double ct, double rho, double phi, double z) const
+{
+	return this->distance->value(ct, rho, phi, z);
 }

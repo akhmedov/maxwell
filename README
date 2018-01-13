@@ -30,13 +30,16 @@ lux et veritas
 
 Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
-### UBUNTU INSTALL ###
+### GNU/LUNUX UBUNTU 16.04 AMD64 INSTALL ###
 
+m4         - dependences for gmp
+libx11-dev - dependences for gnuplot
+
+~ $ sudo apt-get install m4 libx11-dev
 ~ $ sudo apt-get install build-essential cmake git
-~ $ sudo apt-get install libx11-dev
-~ $ git clone https://server/maxwell.git
+~ $ git clone https://server/path/maxwell.git
 ~ $ make gnuplot gnump 
-~ $ make -j4 test
+~ $ make -j4 unit_test
 ~ $ ./build/test
 ~ $ make maxwell
 ~ $ make clean && make -j4 PDISK_LINEAR_INT=1 DEBUG=1
@@ -83,6 +86,8 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### BUG LIST ###
 
+- fix noise type configuration by precompiler define-vars
+- computation manager main thread sleep mode (efficiency?)
 - noise in Congig:: and CLI:: is only 1 param (must be AVARAGE,SIGMA) 
 - noise classes are not using ct, rho, phi, z
 - numerical linear vs analitical linear
@@ -110,6 +115,7 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### TODO LIST ###
 
+- smart pointers all over the code
 - numerical and analitic implementation of E(ct) by CLI option
 - numerical implementation of H(ct,rho) as new model 
 - Implement calculation DB
