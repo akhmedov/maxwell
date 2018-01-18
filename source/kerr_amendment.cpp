@@ -304,18 +304,18 @@ double KerrAmendment::N5 (int m, double nu, double vt, double rho, double z) con
 
 /* */
 
-double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, double R) const
+double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, double R)
 {
 	double vt_z = vt * vt - z * z;
 	double rho2 = rho * rho;
-	double R2 = this->R * this->R;
+	double R2 = R * R;
 
 	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (this->R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 
-	if (this->R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
-	if (this->R > rho + std::sqrt(vt_z)) return 0.0;
+	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
+	if (R > rho + std::sqrt(vt_z)) return 0.0;
 
 	double res = vt / rho2;
 	res *= (rho2 - R2) * (rho2 - R2) / vt_z;
@@ -324,18 +324,18 @@ double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, doub
 	return res / (2*M_PI);
 }
 
-double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, double R) const
+double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, double R)
 {
 	double vt_z = vt * vt - z * z;
 	double rho2 = rho * rho;
-	double R2 = this->R * this->R;
+	double R2 = R * R;
 
 	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (this->R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 
-	if (this->R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
-	if (this->R > rho + std::sqrt(vt_z)) return 0.0;
+	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
+	if (R > rho + std::sqrt(vt_z)) return 0.0;
 
 	double res = - vt / vt_z;
 	res *= vt_z - rho2 + R2;

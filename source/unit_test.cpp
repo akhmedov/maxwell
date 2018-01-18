@@ -355,11 +355,58 @@ bool Test::real_convolution ()
 	return false;
 }
 
+bool Test::I1_time_partder ()
+{
+	for (double rho = 0; rho <= 1.3; rho += 0.25) {
+		for (double R = 0.1; R <= 1.3; R += 0.2) {
+			for (double ct = 0.1; ct <= 1.4; ct += 0.3) {
+				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
+
+					auto I1 = [rho, R, z] (double ct) {
+						double ct_z = ct * ct - z * z;
+						return MissileField::int_bessel_011(ct_z,rho,R);
+					};
+					
+					double anal_perp = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
+					auto num_perp = Math::derivative(I1, ct);
+					std::cout << num_perp << ' ' << anal_perp << std::endl;
+					// if (num_perp != anal_perp) return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+bool Test::I2_time_partder ()
+{
+	for (double rho = 0; rho <= 1.3; rho += 0.25) {
+		for (double R = 0.1; R <= 1.3; R += 0.2) {
+			for (double ct = 0.1; ct <= 1.4; ct += 0.3) {
+				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
+
+					auto I2 = [rho, R, z] (double ct) {
+						double vt_z = ct * ct - z * z;
+						return MissileField::int_bessel_001(vt_z,rho,R); 
+					};
+					
+					double anal_perp = KerrAmendment::int_bessel_001_perp(ct,z,rho,R);
+					auto num_perp = Math::derivative(I2, ct);
+					if (num_perp != anal_perp) return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
 int main()
 {
 	cout << boolalpha;
 
-	/* cout << "Math::Test::next_prime \t\t\t"; 
+	cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -383,25 +430,33 @@ int main()
 	cout.flush();
 	cout << Test::bessel_perp() << endl;
 
-	cout << "MissileField::Test::simpson_I1 \t\t"; 
+	/* cout << "MissileField::Test::simpson_I1 \t\t"; 
 	cout.flush();
 	cout << Test::simpson_I1() << endl;
 
 	cout << "MissileField::Test::simpson_I2 \t\t"; 
 	cout.flush();
-	cout << Test::simpson_I2() << endl;
+	cout << Test::simpson_I2() << endl; */
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
 	cout << Test::field_getters() << endl;
 
-	cout << "Math::Test::monte_carlo_vector \t\t"; 
+	cout << "KerrAmendment::Test::I1_time_partder \t"; 
 	cout.flush();
-	cout << Test::monte_carlo_vector() << endl;
+	cout << Test::I1_time_partder() << endl;
+
+	cout << "KerrAmendment::Test::I2_time_partder \t"; 
+	cout.flush();
+	cout << Test::I2_time_partder() << endl;
 
 	cout << "Math::Test::monte_carlo_integral \t";
 	cout.flush();
 	cout << Test::monte_carlo_integral() << endl;
+
+	/* cout << "Math::Test::monte_carlo_vector \t\t"; 
+	cout.flush();
+	cout << Test::monte_carlo_vector() << endl;
 
 	cout << "Math::Test::monte_carlo_improper \t";
 	cout.flush();
@@ -409,15 +464,15 @@ int main()
 
 	cout << "Math::Test::imptoper_int_bessel \t";
 	cout.flush();
-	cout << Test::imptoper_int_bessel() << endl;
+	cout << Test::imptoper_int_bessel() << endl; */
 
 	cout << "Math::Test::simpson_dim \t\t"; 
 	cout.flush();
-	cout << Test::simpson_dim() << endl; */
+	cout << Test::simpson_dim() << endl;
 
-	cout << "KerrAmendment::Test::real_convolution \t";
+	/* cout << "KerrAmendment::Test::real_convolution \t";
 	cout.flush();
-	cout << Test::real_convolution() << endl;
+	cout << Test::real_convolution() << endl; */
 
 	return 0;
 }

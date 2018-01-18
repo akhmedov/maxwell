@@ -65,8 +65,8 @@ protected:
 	double N4 (int m, double nu, double ct, double varrho, double z) const;
 	double N5 (int m, double nu, double ct, double varrho, double z) const;
 
-	double int_bessel_011_perp (double vt, double z, double rho, double R) const;
-	double int_bessel_001_perp (double vt, double z, double rho, double R) const;
+	static double int_bessel_011_perp (double vt, double z, double rho, double R);
+	static double int_bessel_001_perp (double vt, double z, double rho, double R);
 
 protected:
 	

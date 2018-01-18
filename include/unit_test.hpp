@@ -40,6 +40,8 @@ struct Test : private Math, private Integral, private KerrAmendment {
 	static bool imptoper_int_bessel ();
 	static bool yacobi_pol_compare ();
 	static bool simpson_dim ();
+	static bool I1_time_partder ();
+	static bool I2_time_partder ();
 };
 
 #endif /* test_hpp */
