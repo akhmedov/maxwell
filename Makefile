@@ -24,6 +24,9 @@ OBJECTS = $(patsubst source/%.cpp, build/%.o, $(SOURCES))
 GMP_LIBS = -L $(PROJECT_DIR)/gnump/lib -lgmp -lgmpxx
 GMP_FLAGS = -I $(PROJECT_DIR)/gnump/include
 
+MYSQL_LIBS = `mysql_config --libs`
+MYSQL_FLAGS = `mysql_config --cflags`
+
 .PHONY: gnuplot gnump clean list help
 
 maxwell: $(OBJECTS)
@@ -35,7 +38,7 @@ unit_test: $(OBJECTS)
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
 
 list:
-	@find . -name '*.cpp' -o -name '*.hpp' \
+	@find . -name '*.cpp' -o -name '*.hpp' -o -name '*.sql' \
 	-o -name '.gitignore' -o -name 'Makefile' | xargs wc -l
 
 help:
@@ -55,6 +58,9 @@ help:
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build
 	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(GMP_FLAGS) -Iinclude -c $< -o $@
+
+test:
+	@echo $(MYSQL_FLAGS)
 
 gnuplot:
 	tar xf archive/gnuplot-5.0.6.tar
