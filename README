@@ -21,6 +21,9 @@ process, the system is tested on the list:
 
 ### NOTES ###
 
+пример управления точками выхода
+void MySQL::throw_error_code (int code) const
+
 lux et veritas
 
 Наука сама по себе деградирует. Чем выше уровень научного прогресса тем
@@ -32,12 +35,13 @@ Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
 
 ### GNU/LUNUX UBUNTU 16.04 AMD64 INSTALL ###
 
-m4         - dependences for gmp
-libx11-dev - dependences for gnuplot
+m4                 - dependences for gmp
+libx11-dev         - dependences for gnuplot
+libmysqlclient-dev - mysql client connector 
 
 ~ $ sudo apt-get install mysql-server
 ~ $ mysql_secure_installation
-~ $ sudo apt-get install m4 libx11-dev
+~ $ sudo apt-get install m4 libx11-dev libmysqlclient-dev
 ~ $ sudo apt-get install build-essential cmake git
 ~ $ mysql -t -u root -p < setup.sql
 ~ $ git clone https://server/path/maxwell.git
@@ -89,6 +93,7 @@ libx11-dev - dependences for gnuplot
 
 ### BUG LIST ###
 
+- config object is not updated if called from main(). Investigate?
 - fix noise type configuration by precompiler define-vars
 - computation manager main thread sleep mode (efficiency?)
 - noise in Congig:: and CLI:: is only 1 param (must be AVARAGE,SIGMA) 

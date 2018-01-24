@@ -66,6 +66,11 @@ struct Config {
 	void noise_level (double);
 	void medium_superposition (Superposition);
 
+	void mysql_hostname (std::string);
+	void mysql_username (std::string);
+	void mysql_password (std::string);
+	void mysql_database (std::string);
+
 	/* getters */
 
 	std::array<double,3> receiver_vt () const;
@@ -104,6 +109,11 @@ struct Config {
 	bool kerr_medium () const;
 	double noise_level () const;
 	Superposition medium_superposition () const;
+
+	std::string mysql_hostname () const;
+	std::string mysql_username () const;
+	std::string mysql_password () const;
+	std::string mysql_database () const;
 
 private:
 
@@ -145,6 +155,11 @@ private:
 	bool is_medium_kerr;
 	double noise_percent;
 	Superposition superposition;
+
+	std::string mysql_addr;
+	std::string mysql_user;
+	std::string mysql_pass;
+	std::string mysql_dbase;
 };
 
 #endif /* config_hpp */

@@ -9,8 +9,12 @@
 #ifndef manager_hpp
 #define manager_hpp
 
+#include "mysql_connect.hpp"
 #include "abstract_field.hpp"
 #include "uniform_disk_current.hpp"
+
+#include <typeinfo>
+#include <typeindex>
 
 #include <set>
 #include <mutex>
@@ -44,9 +48,10 @@ struct Manager {
 	void call ( std::function<double(AbstractField*,double,double,double,double)>, AbstractField*);
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
 
-private:
+protected:
 	void reset ();
 	bool is_ready ();
+
 	std::vector< std::thread > thread_list;
 	std::vector< std::stack< std::vector<double> > > argument;
 	std::multiset< std::vector<double>, TimeSort > result;
@@ -55,6 +60,17 @@ private:
 	std::size_t data_left;
 	std::size_t total_data;
 	bool print_progtess = false;
+};
+
+struct SafeManager : public Manager {
+
+	// SafeManger (Config* global);
+	SafeManager (std::size_t threads, Config* global);
+	void call ( std::vector<std::pair<Component,AbstractField*>>);
+
+private:
+
+	std::vector<MySQL*> client;
 };
 
 #endif /* manager_hpp */

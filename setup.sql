@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS maxwell_header (
 	magnitude = 1,
 	mu_r      = 1,
 	eps_r     = 1,
-	kerr_r    = 1,
+	kerr_r    = 0,
 	duration  = 0,
 	signal_type = 'rect'
 ; */
@@ -60,14 +60,14 @@ CREATE TABLE IF NOT EXISTS maxwell_data (
 	kerr	DOUBLE(20,5) DEFAULT NULL,
 	PRIMARY KEY (id),
 	FOREIGN KEY (head_id) REFERENCES maxwell_header (id) ON DELETE CASCADE,
-	CONSTRAINT UC_maxwell_data UNIQUE (ct, rho, phi, z)
+	CONSTRAINT UC_maxwell_data UNIQUE (head_id, ct, rho, phi, z)
 ) ENGINE=InnoDB;
 
 -- slave table entity example
 
 /* SELECT @problem := id FROM maxwell_header WHERE 
 radiator = 'uni_disk' AND component = 'Ex' AND radius = 1 AND 
-magnitude = 1 AND mu_r = 1 AND eps_r = 1 AND kerr_r = 1 AND 
+magnitude = 1 AND mu_r = 1 AND eps_r = 1 AND kerr_r = 0 AND 
 duration = 0 AND signal_type = 'rect'; */
 
 /* INSERT INTO maxwell_data SET

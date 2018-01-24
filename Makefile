@@ -31,11 +31,11 @@ MYSQL_FLAGS = `mysql_config --cflags`
 
 maxwell: $(OBJECTS)
 	@rm -f build/unit_test.o
-	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
 
 unit_test: $(OBJECTS)	
 	@rm -f build/main.o
-	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) -o build/$@
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
 
 list:
 	@find . -name '*.cpp' -o -name '*.hpp' -o -name '*.sql' \
@@ -57,10 +57,7 @@ help:
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build
-	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(GMP_FLAGS) -Iinclude -c $< -o $@
-
-test:
-	@echo $(MYSQL_FLAGS)
+	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(MYSQL_FLAGS) $(GMP_FLAGS) -Iinclude -c $< -o $@
 
 gnuplot:
 	tar xf archive/gnuplot-5.0.6.tar

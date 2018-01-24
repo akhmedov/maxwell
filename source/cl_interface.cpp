@@ -568,6 +568,22 @@ void CLI::read_config_file () const
 						throw std::logic_error(text);
 					}
 				}
+
+				else if (option.find("MYSQL_HOSTNAME") != std::string::npos) {
+					this->global_conf->mysql_hostname(arg);
+				}
+
+				else if (option.find("MYSQL_USERNAME") != std::string::npos) {
+					this->global_conf->mysql_username(arg);
+				}
+
+				else if (option.find("MYSQL_PASSWORD") != std::string::npos) {
+					this->global_conf->mysql_password(arg);
+				}
+
+				else if (option.find("MYSQL_DATABASE") != std::string::npos) {
+					this->global_conf->mysql_database(arg);
+				}
 			}
 		} 
 	}

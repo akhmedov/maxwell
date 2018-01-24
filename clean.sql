@@ -12,4 +12,5 @@
 -- delete all values related to problem
 -- DELETE FROM maxwell_header WHERE radius = 1;
 
+USE maxwell;
 DELETE FROM maxwell_header;

@@ -43,6 +43,11 @@ Config::Config ()
 	this->noise_percent = 0;
 	this->superposition = Superposition::additive;
 
+	this->mysql_addr  = "localhoast";
+	this->mysql_user  = "maxwell";
+	this->mysql_pass  = "maxwell";
+	this->mysql_dbase = "maxwell";
+
 	/* TODO: Non default options
 	this->vt_value;
 	this->rho_value;
@@ -222,6 +227,26 @@ void Config::medium_superposition (Superposition type)
 	this->superposition = type;
 }
 
+void Config::mysql_hostname (std::string text)
+{
+	this->mysql_addr = text;
+}
+
+void Config::mysql_username (std::string text)
+{
+	this->mysql_user = text;
+}
+
+void Config::mysql_password (std::string text)
+{
+	this->mysql_pass = text;
+}
+
+void Config::mysql_database (std::string text)
+{
+	this->mysql_dbase = text;
+}
+
 /* getters */
 
 double Config::kerr_value () const
@@ -375,4 +400,24 @@ double Config::noise_level () const
 Superposition Config::medium_superposition () const
 {
 	return this->superposition;
+}
+
+std::string Config::mysql_hostname () const
+{
+	return this->mysql_addr;
+}
+
+std::string Config::mysql_username () const
+{
+	return this->mysql_user;
+}
+
+std::string Config::mysql_password () const
+{
+	return this->mysql_pass;
+}
+
+std::string Config::mysql_database () const
+{
+	return this->mysql_dbase;
 }

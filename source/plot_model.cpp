@@ -120,14 +120,15 @@ void PlotModel::__Hy_from_ct ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	// Manager* thead_core = new Manager( thread_num );
+	SafeManager* thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
 	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
 	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
 	thead_core->call(to_compute);
@@ -135,17 +136,21 @@ void PlotModel::__Hy_from_ct ()
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
+
+	/* if (medium_type == Superposition::additive) {
 		for (auto i : data) {
 			double awgn = noise->magnetic_y(i[0],rho,phi,z);
-			plot_data.push_back({i[0], awgn+i[4]+i[5]});
+			plot_data.push_back({i[0], i[4]+i[5]+i[6]});
 		}
 	} else if (medium_type == Superposition::multipl) {
 		for (auto i : data) { 
 			double mwgn = noise->magnetic_y(i[0],rho,phi,z);
-			plot_data.push_back({i[0], mwgn*i[4]*i[5]}); 
+			plot_data.push_back({i[0], i[4]*i[5]*i[6]}); 
 		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+	} else throw std::invalid_argument("This statment must not be reached!"); */
+
+	for (auto i : data)
+		plot_data.push_back({i[0], i[4]+i[5]+i[6]});
 
 	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
 	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
