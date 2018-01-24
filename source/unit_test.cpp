@@ -430,13 +430,13 @@ int main()
 	cout.flush();
 	cout << Test::bessel_perp() << endl;
 
-	/* cout << "MissileField::Test::simpson_I1 \t\t"; 
+	cout << "MissileField::Test::simpson_I1 \t\t"; 
 	cout.flush();
 	cout << Test::simpson_I1() << endl;
 
 	cout << "MissileField::Test::simpson_I2 \t\t"; 
 	cout.flush();
-	cout << Test::simpson_I2() << endl; */
+	cout << Test::simpson_I2() << endl;
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
