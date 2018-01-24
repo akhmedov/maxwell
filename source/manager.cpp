@@ -22,6 +22,8 @@ Manager::Manager ()
 
 Manager::Manager (std::size_t threads)
 {
+	this->data_left = 0;
+	this->total_data = 0;
 	this->thread_number = threads;
 	for (std::size_t iter = 0; iter < this->thread_number; iter++)
 		this->argument.push_back( std::stack<std::vector<double>>() );
@@ -131,14 +133,17 @@ void Manager::call ( std::function<double(double,double,double,double)> func)
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+
 			std::vector<double> arg = this->argument[i].top();
-			argument[i].pop();
+			this->argument[i].pop();
+
 			double res = func(arg[0], arg[1], arg[2], arg[3]);
 			arg.insert( arg.begin(), res );
+
 			this->result_write.lock();
 			this->data_left--;
 			this->result.insert( arg );
-			result_write.unlock();
+			this->result_write.unlock();
 		}
 	};
 
@@ -177,7 +182,6 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 
 			for (auto f : funcs) {
 				double res = f(arg.front());
-				// arg.insert( arg.begin(), res );
 				arg.push_back(res);
 			}
 
