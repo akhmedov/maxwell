@@ -106,7 +106,7 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 		this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 		this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;
 		mysql_free_result(serch_result);
-	
+
 	} else {
 
 		std::string insert_point = MySQL::INSERT_POINT;
@@ -131,10 +131,9 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 			this->linear   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
 			this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 			this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;
-			mysql_free_result(serch_result);
+			// mysql_free_result(serch_result);
 		} else throw std::logic_error("Internal maxwell error in MySQL module");
 	}
-
 }
 
 void MySQL::reset_noise () const
@@ -155,6 +154,7 @@ void MySQL::reconnect () const
 
 void MySQL::throw_error_code (int code)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(20));
 	std::string message = "Connection esteblished. Error code: ";
 	switch (code) {
 		case 0: return;
@@ -167,6 +167,9 @@ void MySQL::throw_error_code (int code)
 MySQL::~MySQL ()
 {
 	mysql_close(this->connection);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	delete this->global_config;
+	delete this->connection;
 }
 
 //=======================================================================================
@@ -249,9 +252,9 @@ void MySQL::set_noise (double value)
 
 double MySQL::get_value(const std::type_info& type) const
 {
-	if (type == typeid(NoiseField)) {
+	/* if (type == typeid(NoiseField)) {
 		return this->get_noise();
-	} else if (type == typeid(MissileField)) {
+	} else */ if (type == typeid(MissileField)) {
 		return this->get_linear();
 	} else if (type == typeid(KerrAmendment)) {
 		return this->get_kerr();
@@ -263,10 +266,10 @@ double MySQL::get_value(const std::type_info& type) const
 
 void MySQL::set_value(const std::type_info& type, double value)
 {
-	if (type == typeid(NoiseField)) {
+	/* if (type == typeid(NoiseField)) {
 		this->set_noise(value);
 		return;
-	} else if (type == typeid(MissileField)) {
+	} else */ if (type == typeid(MissileField)) {
 		this->set_linear(value);
 		return;
 	} else if (type == typeid(KerrAmendment)) {

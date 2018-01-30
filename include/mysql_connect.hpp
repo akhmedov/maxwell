@@ -17,6 +17,8 @@
 #include <iostream>
 
 #include <mysql.h>
+#include <thread>
+#include <chrono>
 #include <typeinfo> // typeid()
 #include <cmath> // NAN
 #include <regex> // std::replace()

@@ -67,6 +67,7 @@ struct SafeManager : public Manager {
 	// SafeManger (Config* global);
 	SafeManager (std::size_t threads, Config* global);
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
+	~SafeManager ();
 
 private:
 
