@@ -44,6 +44,7 @@ struct Config {
 	void plot_baund_cage (bool);
 	void call_gnuplot (bool);
 	void display_params (bool);
+	void reset_noise (bool);
 
 	void plot_color_map (Colormap);
 	void plot_device (PlotDev);
@@ -88,6 +89,7 @@ struct Config {
 	bool plot_baund_cage () const;
 	bool call_gnuplot () const;
 	bool display_params () const;
+	bool reset_noise () const;
 
 	Colormap plot_color_map () const;
 	PlotDev plot_device () const;
@@ -134,6 +136,7 @@ private:
 	bool plot_bcage_value;
 	bool call_gnuplot_value;
 	bool display_params_value;
+	/* bool reset_noise_opt; */
 
 	Colormap plot_cmap_value;
 	PlotDev device_value;

@@ -314,10 +314,14 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 SafeManager::SafeManager (std::size_t threads, Config* gl_config) 
 : Manager(threads), client()
 {
-	for (std::size_t c = 0; c < threads; c++)
-		this->client.push_back(new MySQL(gl_config));
+	for (std::size_t c = 0; c < threads; c++) {
+		MySQL* thread_client = new MySQL(gl_config);
+		/* if (gl_config->reset_noise()) thread_client->reset_noise(); */
+		this->client.push_back(thread_client);
+	}
 
-	std::cout << "MySQL client is connected to " << this->client[0]->get_hostname() << std::endl;
+	std::cout << "MySQL client is connected to " << this->client[0]->get_hostname();
+	std::cout << "... Done." << std::endl;
 }
 
 void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)

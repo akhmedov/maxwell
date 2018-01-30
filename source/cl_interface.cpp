@@ -52,7 +52,8 @@ CLI::CLI (Config* conf)
 
 	this->unar_cmd = {
 		{"--help"},
-		{"--version"}
+		{"--version"} /*,
+		{"--renoise"} */
 	};
 }
 
@@ -211,6 +212,9 @@ void CLI::update_config (const std::string& param) const
 
 	if (!param.compare("--version"))
 		this->global_conf->version_opt(true);
+
+	/* if (!param.compare("--renoise"))
+		this->global_conf->reset_noise(true); */
 }
 
 bool CLI::is_float ( const std::string& literal )
@@ -318,7 +322,9 @@ bool CLI::is_event (const std::string& literal)
 	if (is_floats) {
 		double phi = std::stod(world_point[2]);
 		if (phi >= 0 && phi <= 360) return true;
-	} else return false;
+	}
+
+	return false;
 }
 
 std::vector<std::string> CLI::split (const std::string& literal, char separator)
@@ -347,6 +353,8 @@ void CLI::print_version () const
 
 void CLI::print_help () const
 {
+	// [--renoise] 
+
 	std::cout << "usage: maxwell [--version] [--help] [--conf <posix_path>]" << std::endl;
 	std::cout << "               [--shape <type>] [--duration <float>] [<MODEL> <model_num>]" << std::endl;
 	std::cout << "               [--magnitude <float>] [--radius <float>] [--kerr <float>]" << std::endl;

@@ -29,6 +29,7 @@ struct MySQL {
 
 	MySQL (Config* global_config);
 	std::string get_hostname() const;
+	void reset_noise () const;
 	void select_point (double ct, double rho, double phi, double z);
 	~MySQL ();
 
@@ -73,6 +74,7 @@ private:
 	static const std::string UPDATE_LINEAR;
 	static const std::string UPDATE_SQUARE;
 	static const std::string UPDATE_KERR;
+	static const std::string RESET_NOISE;
 };
 
 #endif /* mysql_connect_hpp */

@@ -12,6 +12,7 @@ const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_hea
 const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = 0, signal_type = 'rect';";
 const std::string MySQL::SELECT_POINT      = "SELECT id,noise,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
 const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
+const std::string MySQL::RESET_NOISE       = "UPDATE maxwell.maxwell_data SET noise   = NULL   WHERE head_id = $POINT;";
 const std::string MySQL::UPDATE_NOISE      = "UPDATE maxwell.maxwell_data SET noise   = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_LINEAR     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_SQUARE     = "UPDATE maxwell.maxwell_data SET square  = $VALUE WHERE id = $POINT;";
@@ -134,6 +135,12 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 		} else throw std::logic_error("Internal maxwell error in MySQL module");
 	}
 
+}
+
+void MySQL::reset_noise () const
+{
+	std::string reset_noise = MySQL::RESET_NOISE;
+	reset_noise = std::regex_replace(reset_noise, std::regex("\\$POINT"), std::to_string(this->point_id));
 }
 
 std::string MySQL::get_hostname() const

@@ -20,6 +20,7 @@ Config::Config ()
 	this->plot_grid_value = true;
 	this->plot_bcage_value = true;
 	this->display_params_value = true;
+	// this->reset_noise_opt = false;
 
 	this->plot_cmap_value = Colormap::gray;
 	this->device_value = PlotDev::x11;
@@ -141,6 +142,11 @@ void Config::display_params (bool option)
 {
 	this->display_params_value = option;
 }
+
+/* void Config::reset_noise (bool option)
+{
+	this->reset_noise_opt = option;
+} */
 
 void Config::plot_color_map (Colormap plot_color)
 {
@@ -323,6 +329,11 @@ bool Config::plot_baund_cage () const
 {
 	return this->plot_bcage_value;
 }
+
+/* bool Config::reset_noise () const
+{
+	return this->reset_noise_opt;
+} */
 
 Colormap Config::plot_color_map () const
 {
