@@ -13,6 +13,7 @@
 #include <gmpxx.h>
 
 #include <cfloat> // size_t
+#include <iomanip> // std::fixed std::setprecision(4)
 #include <iostream> // cout cerr
 #include <string> // compare (==)
 #include <vector>

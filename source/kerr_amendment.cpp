@@ -317,11 +317,14 @@ double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, doub
 	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
 	if (R > rho + std::sqrt(vt_z)) return 0.0;
 
-	double res = vt / rho2;
-	res *= (rho2 - R2) * (rho2 - R2) / vt_z;
-	res /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
-	res /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
-	return res / (2*M_PI);
+	double first = (rho2 - R2) * (rho2 - R2) / vt_z;
+	first /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
+	first /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
+
+	double second = 2 * (rho2 + R2) - vt_z;
+	second /= std::sqrt(4*rho2*R2 - (vt_z - rho2 - R2)*(vt_z - rho2 - R2));
+
+	return vt * (first - second) / (2*M_PI*rho);
 }
 
 double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, double R)

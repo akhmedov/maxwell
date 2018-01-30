@@ -357,24 +357,39 @@ bool Test::real_convolution ()
 
 bool Test::I1_time_partder ()
 {
-	for (double rho = 0; rho <= 1.3; rho += 0.25) {
+	/* for (double rho = 0; rho <= 1.3; rho += 0.25) {
 		for (double R = 0.1; R <= 1.3; R += 0.2) {
 			for (double ct = 0.1; ct <= 1.4; ct += 0.3) {
 				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
 
 					auto I1 = [rho, R, z] (double ct) {
-						double ct_z = ct * ct - z * z;
-						return MissileField::int_bessel_011(ct_z,rho,R);
+						double vt_z = std::sqrt(ct * ct - z * z);
+						return MissileField::int_bessel_011(vt_z,rho,R);
 					};
 					
 					double anal_perp = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
 					auto num_perp = Math::derivative(I1, ct);
+					std::cout << std::fixed << std::setprecision(4);
+					std::cout << ct << ' ' << rho << ' ' << z << ' ' << R << ' '; 
 					std::cout << num_perp << ' ' << anal_perp << std::endl;
 					// if (num_perp != anal_perp) return false;
 				}
 			}
 		}
-	}
+	} */
+
+	double ct = 0.4, rho = 0.25, z = 0.31, R = 0.1;
+
+	auto I1 = [rho, R, z] (double ct) {
+		double vt_z = std::sqrt(ct * ct - z * z);
+		return MissileField::int_bessel_011(vt_z,rho,R);
+	};
+
+	double anal_perp = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
+	double num_perp  = Math::derivative(I1, ct);
+
+	std::cout << std::fixed << std::setprecision(4);
+	std::cout << num_perp << ' ' << anal_perp << std::endl;
 
 	return true;
 }
@@ -387,7 +402,7 @@ bool Test::I2_time_partder ()
 				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
 
 					auto I2 = [rho, R, z] (double ct) {
-						double vt_z = ct * ct - z * z;
+						double vt_z = std::sqrt(ct * ct - z * z);
 						return MissileField::int_bessel_001(vt_z,rho,R); 
 					};
 					
@@ -406,7 +421,7 @@ int main()
 {
 	cout << boolalpha;
 
-	cout << "Math::Test::next_prime \t\t\t"; 
+	/* cout << "Math::Test::next_prime \t\t\t"; 
 	cout.flush();
 	cout << Test::next_prime() << endl;
 
@@ -440,7 +455,7 @@ int main()
 
 	cout << "KerrAmendment::Test::field_getters \t"; 
 	cout.flush();
-	cout << Test::field_getters() << endl;
+	cout << Test::field_getters() << endl; */
 
 	cout << "KerrAmendment::Test::I1_time_partder \t"; 
 	cout.flush();
