@@ -38,7 +38,7 @@ MySQL::MySQL(Config* gl_config)
 
 	std::string problem_id = MySQL::SELECT_PROBLEM_ID;
 	problem_id = std::regex_replace(problem_id, std::regex("\\$RADIATOR_TYPE"), "uni_disk");
-	problem_id = std::regex_replace(problem_id, std::regex("\\$FIELD_COMP"), "Ex");
+	problem_id = std::regex_replace(problem_id, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_config->field_component()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_config->plane_disk_radius()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_config->plane_disk_magnitude()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
@@ -59,13 +59,13 @@ MySQL::MySQL(Config* gl_config)
 
 		std::string insert_problem = MySQL::INSERT_PROBLEM;
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$RADIATOR_TYPE"), "uni_disk");
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$FIELD_COMP"), "Ex");
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_config->field_component()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_config->plane_disk_radius()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_config->plane_disk_magnitude()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));
-		
+
 		error_code = mysql_query(this->connection, insert_problem.c_str());
 		MySQL::throw_error_code(error_code);
 
@@ -162,6 +162,22 @@ void MySQL::throw_error_code (int code)
 		default: message += std::to_string(code);
 	}
 	throw std::logic_error(message);
+}
+
+std::string MySQL::to_string(const FieldComponent& type)
+{
+	switch (type) {
+		case 0: return "Ex";
+		case 1: return "Ey";
+		case 2: return "Ez";
+		case 3: return "Ephi";
+		case 4: return "Erho";
+		case 5: return "Hx";
+		case 6: return "Hy";
+		case 7: return "Hz";
+		case 8: return "Hphi";
+		case 9: return "Hrho";
+	}
 }
 
 MySQL::~MySQL ()

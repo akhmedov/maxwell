@@ -142,8 +142,11 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 		} else throw std::logic_error("Only rect shape is implemented!");
 	}
 
-	if (!param.compare("--plot"))
+	if (!param.compare("--plot")) {
 		this->global_conf->plot_model(std::stoi(arg));
+		FieldComponent comp = (FieldComponent) std::stoi(arg);
+		this->global_conf->field_component(comp);
+	}
 
 	if (!param.compare("--data"))
 		throw std::logic_error("Dataset models are not implemented!");

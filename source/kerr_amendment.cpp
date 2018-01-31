@@ -59,61 +59,31 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPl
 double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
 {
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-50) return 0;
+	if (kerr < 1e-10) return 0;
 
-	/* double eps0 = NonlinearMedium::EPS0;
+	double eps0 = NonlinearMedium::EPS0;
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
 	double mu0 = NonlinearMedium::MU0;
 	double mu_r = this->nl_medium->relative_permeability(vt,z);
 	double velocity = NonlinearMedium::C / (eps_r * mu_r);
 	double em_relation = mu0 * mu_r / eps0 * eps_r;
 	double A0 = this->A0;
-	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128; */
+	double R = this->R;
+	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
 
-	/* Monte-Carlo Inegration 
-	auto field = [this, rho, phi, z] (double vt) {
+	/* next section is not correct for arbirtaty inhomogenious medium */ 
+	mpf_class vt_z = mpf_class(vt * vt);
+	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
+	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
+	if (vt_z.get_d() <= 0) return 0;
 
-		auto mode = [this, vt, rho, phi, z] (int m, double varrho, double z_perp, double vt_perp, double nu) {
-			double mu_r = nl_medium->relative_permeability(vt,z);
-			double sqrt_eps0 = std::sqrt(NonlinearMedium::EPS0);
-			double G = this->riemann(nu, vt_perp - vt, z_perp - z);
-			double res = std::cos(m * phi);
-			res *= m * G * jn(m, nu * rho);
-			res /= rho * std::sqrt(nu);
-			res *= varrho * this->im_modal_source(m,nu,vt,varrho,z);
-			return res * mu_r / sqrt_eps0;
-		};
+	auto field = [R, rho, phi, z] (double vt) {
 
-		auto modes_sum = [this, vt, rho, phi, z, mode] (double varrho, double z_perp, double vt_perp, double nu) {
-			double sum = 0;
-			sum += mode(-1, varrho, z_perp, vt_perp, nu);
-			sum += mode(1, varrho, z_perp, vt_perp, nu);
-			sum += mode(-3, varrho, z_perp, vt_perp, nu);
-			sum += mode(3, varrho, z_perp, vt_perp, nu);
-			return sum;
-		};
-
-		std::vector<std::pair<double,double>> limits;
-		limits.push_back(std::make_pair(0,10e3));
-		limits.push_back(std::make_pair(0,10e3));
-		limits.push_back(std::make_pair(0,10e3));
-		limits.push_back(std::make_pair(0,10e3));
-		MonteCarlo integral = MonteCarlo(10e8, limits);
-		return integral.value(modes_sum);
-	};
-
-	return coeff * Math::derivative(field,vt); */
-
-	/* auto field = [this, rho, phi, z] (double vt) {
-
-		auto mode = [this, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
-			double mu_r = nl_medium->relative_permeability(vt,z);
-			double sqrt_eps0 = std::sqrt(NonlinearMedium::EPS0);
-			double G = this->riemann(nu, vt_perp - vt, z_perp - z);
-			double res = std::cos(m * phi);
-			res *= m * G * jn(m, nu * rho);
-			res /= rho * std::sqrt(nu);
-			res *= rho_perp * this->im_modal_source(m,nu,vt,rho_perp,z);
+		auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
+			double res = m * std::cos(m * phi);
+			res *= rho ? jn(m, nu * rho) / rho * nu : 0.5;
+			res *= KerrAmendment::riemann(nu, vt_perp - vt, z_perp - z);
+			res *= KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
 			return res;
 		};
 
@@ -135,17 +105,62 @@ double KerrAmendment::electric_rho (double vt, double rho, double phi, double z)
 		return integral.value(modes_sum);
 	};
 
-	return coeff * Math::derivative(field,vt); */
-
-	throw std::logic_error("KerrAmendment::electric_rho is not implemented");
+	return coeff * Math::derivat3(field,vt);
 }
 
 double KerrAmendment::electric_phi (double vt, double rho, double phi, double z) const
 {
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-50) return 0;
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	throw std::logic_error("KerrAmendment::electric_phi is not implemented");
+	if (kerr < 1e-10) return 0;
+
+	double eps0 = NonlinearMedium::EPS0;
+	double eps_r = this->nl_medium->relative_permittivity(vt,z);
+	double mu0 = NonlinearMedium::MU0;
+	double mu_r = this->nl_medium->relative_permeability(vt,z);
+	double velocity = NonlinearMedium::C / (eps_r * mu_r);
+	double em_relation = mu0 * mu_r / eps0 * eps_r;
+	double A0 = this->A0;
+	double R = this->R;
+	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
+
+	/* next section is not correct for arbirtaty inhomogenious medium */ 
+	mpf_class vt_z = mpf_class(vt * vt);
+	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
+	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
+	if (vt_z.get_d() <= 0) return 0;
+
+	auto field = [R, rho, phi, z] (double vt) {
+
+		auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
+			/* double res = m * std::cos(m * phi);
+			res *= jn(m, nu * rho) * KerrAmendment::riemann(nu, vt_perp - vt, z_perp - z);
+			res /= rho * std::sqrt(nu);
+			res *= rho_perp * KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
+			return res; */
+			throw std::logic_error("KerrAmendment::electric_phi is not implemented");
+			return 0.0;
+		};
+
+		auto modes_sum = [mode] (double rho_perp, double z_perp, double vt_perp, double nu) {
+			double sum = 0;
+			sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
+			sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
+			sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
+			sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
+			return sum;
+		};
+
+		std::vector< std::tuple<double,std::size_t,double> > limits;
+		limits.push_back(std::make_tuple(0, 4e3, 1e3)); // rho_perp
+		limits.push_back(std::make_tuple(0, 40, 2));    // z_perp
+		limits.push_back(std::make_tuple(0, 40, 2));    // vt_perp
+		limits.push_back(std::make_tuple(0, 40, 2)); 	// nu_perp
+		SimpsonMultiDim integral = SimpsonMultiDim(limits);
+		return integral.value(modes_sum);
+	};
+
+	return coeff * Math::derivat3(field,vt);
+	
 }
 
 double KerrAmendment::electric_z (double vt, double rho, double phi, double z) const
@@ -180,7 +195,7 @@ double KerrAmendment::magnetic_z (double vt, double rho, double phi, double z) c
 
 /* */
 
-double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
+double KerrAmendment::riemann (double nu, double vt_diff, double z_diff)
 { 
 	double distance = vt_diff * vt_diff - z_diff * z_diff;
 	if (distance > 0) distance = std::sqrt(distance);
@@ -190,64 +205,49 @@ double KerrAmendment::riemann (double nu, double vt_diff, double z_diff) const
 }
 
 
-double KerrAmendment::im_modal_source_sum (double nu, double vt, double rho, double z) const
+
+
+double KerrAmendment::im_modal_source_sum (double R, double nu, double vt, double rho, double z)
 {
-	double terms = 0;
-
-	terms -= 3 * KerrAmendment::N1(-1,nu,vt,rho,z);
-	terms -= 1 * KerrAmendment::N2(-1,nu,vt,rho,z);
-	terms += 3 * KerrAmendment::N4(-1,nu,vt,rho,z);
-	terms += 1 * KerrAmendment::N5(-1,nu,vt,rho,z);
-
-	terms -= 3 * KerrAmendment::N1( 1,nu,vt,rho,z);
-	terms -= 1 * KerrAmendment::N2( 1,nu,vt,rho,z);
-	terms -= 3 * KerrAmendment::N4( 1,nu,vt,rho,z);
-	terms -= 1 * KerrAmendment::N5( 1,nu,vt,rho,z);
-
-	terms -= 1 * KerrAmendment::N1(-3,nu,vt,rho,z);
-	terms += 1 * KerrAmendment::N2(-3,nu,vt,rho,z);
-	terms -= 1 * KerrAmendment::N4(-3,nu,vt,rho,z);
-	terms += 1 * KerrAmendment::N5(-3,nu,vt,rho,z);
-
-	terms += 1 * KerrAmendment::N1( 3,nu,vt,rho,z);
-	terms += 1 * KerrAmendment::N2( 3,nu,vt,rho,z);
-	terms -= 1 * KerrAmendment::N4( 3,nu,vt,rho,z);
-	terms += 1 * KerrAmendment::N5( 3,nu,vt,rho,z);
+	double mode_m3 = KerrAmendment::im_modal_source(R,-3,nu,vt,rho,z);
+	double mode_m1 = KerrAmendment::im_modal_source(R,-1,nu,vt,rho,z);
+	double mode_p1 = KerrAmendment::im_modal_source(R, 1,nu,vt,rho,z);
+	double mode_p3 = KerrAmendment::im_modal_source(R, 3,nu,vt,rho,z);
 	
-	return terms;
+	return mode_m3 + mode_m1 + mode_p1 + mode_p3;
 }
 
-double KerrAmendment::im_modal_source (int m, double nu, double vt, double rho, double z) const
+double KerrAmendment::im_modal_source (double R, int m, double nu, double vt, double rho, double z)
 {
 	double terms = 0;
 
 	switch (m) {
 		case -1: { 
-			terms -= 3 * KerrAmendment::N1(-1,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N2(-1,nu,vt,rho,z);
-			terms += 3 * KerrAmendment::N4(-1,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5(-1,nu,vt,rho,z);
+			terms += 3 * KerrAmendment::N1(R,-1,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N2(R,-1,nu,vt,rho,z);
+			terms += 3 * KerrAmendment::N4(R,-1,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N5(R,-1,nu,vt,rho,z);
 			break;
 		}
 		case 1: {
-			terms -= 3 * KerrAmendment::N1( 1,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N2( 1,nu,vt,rho,z);
-			terms -= 3 * KerrAmendment::N4( 1,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N5( 1,nu,vt,rho,z);
+			terms += 3 * KerrAmendment::N1(R, 1,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N2(R, 1,nu,vt,rho,z);
+			terms -= 3 * KerrAmendment::N4(R, 1,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N5(R, 1,nu,vt,rho,z);
 			break; 
 		}
 		case -3: {
-			terms -= 1 * KerrAmendment::N1(-3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N2(-3,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N4(-3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5(-3,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N1(R,-3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N2(R,-3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N4(R,-3,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N5(R,-3,nu,vt,rho,z);
 			break; 
 		}
 		case 3: { 
-			terms += 1 * KerrAmendment::N1( 3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N2( 3,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N4( 3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5( 3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N1(R, 3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N2(R, 3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N4(R, 3,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N5(R, 3,nu,vt,rho,z);
 			break; 
 		}
 
@@ -257,52 +257,52 @@ double KerrAmendment::im_modal_source (int m, double nu, double vt, double rho, 
 	return terms;
 }
 
-double KerrAmendment::N1 (int m, double nu, double vt, double rho, double z) const
+double KerrAmendment::N1 (double R, int m, double nu, double vt, double rho, double z)
 {
-	double vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = this->linear_field->int_bessel_011(vt_z, rho, this->R);
-	double i1_perp = this->int_bessel_011_perp(vt, z, rho, this->R);
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 
-	return jn(m, nu*rho) * i1 * i1 * i1_perp;
+	return 3 * m * jn(m, nu*rho) * i1 * i1 * i1_perp;
 }
 
-double KerrAmendment::N2 (int m, double nu, double vt, double rho, double z) const
+double KerrAmendment::N2 (double R, int m, double nu, double vt, double rho, double z)
 {
-	double vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = this->linear_field->int_bessel_011(vt_z, rho, this->R);
-	double i2 = this->linear_field->int_bessel_001(vt_z, rho, this->R);
-	double i1_perp = this->int_bessel_011_perp(vt, z, rho, this->R);
-	double i2_perp = this->int_bessel_001_perp(vt, z, rho, this->R);
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
+	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
-	return (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
+	return -m * (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
 }
 
-double KerrAmendment::N4 (int m, double nu, double vt, double rho, double z) const
+double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, double z)
 {
-	double vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = this->linear_field->int_bessel_011(vt_z, rho, this->R);
-	double i2 = this->linear_field->int_bessel_001(vt_z, rho, this->R);
-	double i1_perp = this->int_bessel_011_perp(vt, z, rho, this->R);
-	double i2_perp = this->int_bessel_001_perp(vt, z, rho, this->R);
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
+	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 	double bessel_diff = jn(m-1, rho*nu) - jn(m+1, rho*nu);
 
-	return (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp) * bessel_diff / 2;
+	return -1.5 * nu * rho * bessel_diff * (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp);
 }
 
-double KerrAmendment::N5 (int m, double nu, double vt, double rho, double z) const
+double KerrAmendment::N5 (double R, int m, double nu, double vt, double rho, double z)
 {
-	double vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = this->linear_field->int_bessel_011(vt_z, rho, this->R);
-	double i2 = this->linear_field->int_bessel_001(vt_z, rho, this->R);
-	double i1_perp = this->int_bessel_011_perp(vt, z, rho, this->R);
-	double i2_perp = this->int_bessel_001_perp(vt, z, rho, this->R);
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
+	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 	double bessel_diff = jn(m-1,rho*nu) - jn(m+1,rho*nu);
 	double imult_perp = i1 * (i2_perp - i1_perp) + 2 * i1_perp * (i2 - i1);
 
-	return imult_perp * bessel_diff / 2;
+	return -1.5 * nu * rho * bessel_diff * imult_perp;
 }
 
-/* */
+/* partial derivatives of I1 and I2 by time */
 
 double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, double R)
 {
@@ -318,13 +318,13 @@ double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, doub
 	if (R > rho + std::sqrt(vt_z)) return 0.0;
 
 	double first = (rho2 - R2) * (rho2 - R2) / vt_z;
-	first /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
-	first /= std::sqrt( (rho+R)*(rho+R) - vt*vt + z*z );
+	first /= std::sqrt( (rho+R)*(rho+R) - vt_z );
+	first /= std::sqrt( vt_z - (rho-R)*(rho-R) );
 
 	double second = 2 * (rho2 + R2) - vt_z;
 	second /= std::sqrt(4*rho2*R2 - (vt_z - rho2 - R2)*(vt_z - rho2 - R2));
 
-	return vt * (first - second) / (2*M_PI*rho);
+	return vt * (first - second) / (2*M_PI*rho2);
 }
 
 double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, double R)

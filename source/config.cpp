@@ -26,7 +26,7 @@ Config::Config ()
 	this->device_value = PlotDev::x11;
 
 	this->ppath_gnuplot_value = "gnuplot";
-	this->ppath_gnp_value = "maxwell.gmp";
+	this->ppath_gnp_value = "maxwell.gnp";
 	this->ppath_maxwell_config = "maxwell.conf";
 
 	this->h_terms_value = 100;
@@ -43,6 +43,9 @@ Config::Config ()
 	this->is_medium_kerr = false;
 	this->noise_percent = 0;
 	this->superposition = Superposition::additive;
+	
+	// working_component must not be default!!!
+	// this->working_component = FieldComponnt::Ex;
 
 	this->mysql_addr  = "localhoast";
 	this->mysql_user  = "maxwell";
@@ -233,6 +236,21 @@ void Config::medium_superposition (Superposition type)
 	this->superposition = type;
 }
 
+void Config::field_component (std::size_t model_num)
+{
+	switch (model_num) {
+		case 1: this->working_component = FieldComponent::Ex; break;
+		case 2: this->working_component = FieldComponent::Hy; break;
+		case 3: this->working_component = FieldComponent::Ex; break;
+		case 4: this->working_component = FieldComponent::Hy; break;
+		case 5: this->working_component = FieldComponent::Ex; break;
+		case 6: this->working_component = FieldComponent::Hy; break;
+		case 7: this->working_component = FieldComponent::Hy; break;
+		default: throw std::logic_error("This model number is not implemnted in Config::field_component()");
+
+	};
+}
+
 void Config::mysql_hostname (std::string text)
 {
 	this->mysql_addr = text;
@@ -411,6 +429,11 @@ double Config::noise_level () const
 Superposition Config::medium_superposition () const
 {
 	return this->superposition;
+}
+
+FieldComponent Config::field_component () const
+{
+	return this->working_component;
 }
 
 std::string Config::mysql_hostname () const

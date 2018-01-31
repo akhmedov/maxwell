@@ -1,13 +1,13 @@
 //
-//  test.hpp
+//  unit_test.hpp
 //  Maxwell
 //
 //  Created by Rolan Akhmedov on 08.07.17.
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
-#ifndef test_hpp
-#define test_hpp
+#ifndef unit_test_hpp
+#define unit_test_hpp
 
 #include <gmp.h>
 #include <gmpxx.h>
@@ -25,7 +25,7 @@
 #include "uniform_disk_current.hpp"
 #include "kerr_amendment.hpp"
 
-struct Test : private Math, private Integral, private KerrAmendment {
+struct UnitTest : private Math, private Integral, private KerrAmendment {
 	static bool next_prime ();
 	static bool binom_prod ();
 	static bool bessel_perp ();
@@ -45,4 +45,4 @@ struct Test : private Math, private Integral, private KerrAmendment {
 	static bool I2_time_partder ();
 };
 
-#endif /* test_hpp */
+#endif /* unit_test_hpp */

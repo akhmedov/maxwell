@@ -1,5 +1,5 @@
 //
-//  test.cpp
+//  unit_test.cpp
 //  Maxwell
 //
 //  Created by Rolan Akhmedov on 27.05.17.
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool Test::next_prime()
+bool UnitTest::next_prime()
 {
 	const vector<size_t> prime_list = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 
 		41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 
@@ -52,7 +52,7 @@ bool Test::next_prime()
 	return true;
 }
 
-bool Test::binom_prod ()
+bool UnitTest::binom_prod ()
 {
 	for (size_t n = 1; n <= 30; n++) {
 		for (size_t m = 0; m <= n; m++) {
@@ -66,7 +66,7 @@ bool Test::binom_prod ()
 	return true;
 }
 
-bool Test::yacobi_pol_property ()
+bool UnitTest::yacobi_pol_property ()
 {
 	double eps = 10e-6;
 
@@ -99,7 +99,7 @@ bool Test::yacobi_pol_property ()
 	return true;
 }
 
-bool Test::yacobi_pol_compare ()
+bool UnitTest::yacobi_pol_compare ()
 {
 	double eps = 10e-4;
 
@@ -115,7 +115,7 @@ bool Test::yacobi_pol_compare ()
 	return true;
 }
 
-bool Test::bessel_perp ()
+bool UnitTest::bessel_perp ()
 {
 	auto f = [] (double x) { return j0(x); } ;
 	auto f_perp = [] (double x) { return -j1(x); } ;
@@ -123,7 +123,7 @@ bool Test::bessel_perp ()
 	size_t iterator = 0;
 	double error = 0;
 	for (double arg = -5; arg < 5; arg += 10e-5) {
-		error = abs( f_perp(arg) - Math::derivative(f,arg) );
+		error = abs( f_perp(arg) - Math::derivat4(f,arg) );
 		iterator++;
 	}
 
@@ -131,7 +131,7 @@ bool Test::bessel_perp ()
 	else return true;
 }
 
-bool Test::simpson_I1 ()
+bool UnitTest::simpson_I1 ()
 {
 
 	for (double a = 0.1; a <= 0.6; a += 0.5) {
@@ -161,7 +161,7 @@ bool Test::simpson_I1 ()
 	return true;
 }
 
-bool Test::simpson_I2 ()
+bool UnitTest::simpson_I2 ()
 {
 	for (double a = 0.1; a <= 0.6; a += 0.5) {
 		for (double b = 0.1; b <= 0.6; b += 0.5) {
@@ -188,7 +188,7 @@ bool Test::simpson_I2 ()
 	return true;
 }
 
-bool Test::invers_sqrt ()
+bool UnitTest::invers_sqrt ()
 {
 	double val = 2;
 	double sqr = Math::inv_sqrt (val);
@@ -196,7 +196,7 @@ bool Test::invers_sqrt ()
 	return true;
 }
 
-bool Test::field_getters ()
+bool UnitTest::field_getters ()
 {
 	double radius = 3.14159;
 	double magnitude = 2.7;
@@ -208,7 +208,7 @@ bool Test::field_getters ()
 	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
 	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
 	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium, source);
+	UnitTest* non_linear = (UnitTest*) new KerrAmendment(linear, medium, source);
 
 	double permittivity = non_linear->nl_medium->relative_permittivity(0,0);
 	double permeability = non_linear->nl_medium->relative_permeability(0,0);
@@ -222,7 +222,7 @@ bool Test::field_getters ()
 	return true;
 }
 
-bool Test::monte_carlo_vector ()
+bool UnitTest::monte_carlo_vector ()
 {
 	vector<pair<double,double>> limits;
 	limits.push_back(make_pair(0,1));
@@ -234,7 +234,7 @@ bool Test::monte_carlo_vector ()
 	return false;
 }
 
-bool Test::monte_carlo_integral ()
+bool UnitTest::monte_carlo_integral ()
 {
 	double radius = 1;
 
@@ -259,7 +259,7 @@ bool Test::monte_carlo_integral ()
 	return error < 1 ? true : false;
 }
 
-bool Test::monte_carlo_improper ()
+bool UnitTest::monte_carlo_improper ()
 {
 	double a = 1, b = 1;
 
@@ -283,7 +283,7 @@ bool Test::monte_carlo_improper ()
 	return error < 10 ? true : false;
 }
 
-bool Test::imptoper_int_bessel ()
+bool UnitTest::imptoper_int_bessel ()
 {
 	double a = 2;
 
@@ -309,7 +309,7 @@ bool Test::imptoper_int_bessel ()
 	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
 }
 
-bool Test::simpson_dim ()
+bool UnitTest::simpson_dim ()
 {
 	auto func = [] (double w, double x, double y, double z) {
 		return w * x * y * z;
@@ -334,7 +334,7 @@ bool Test::simpson_dim ()
 	return true;
 }
 
-bool Test::real_convolution ()
+bool UnitTest::real_convolution ()
 {
 	double radius = 1;
 	double magnitude = 100;
@@ -346,7 +346,7 @@ bool Test::real_convolution ()
 	UniformPlainDisk* source = new UniformPlainDisk(radius, magnitude);
 	KerrMedium* medium = new KerrMedium(mu_r, eps_r, chi, sigma);
 	MissileField* linear = new MissileField(source, medium);
-	Test* non_linear = (Test*) new KerrAmendment(linear, medium, source);
+	UnitTest* non_linear = (UnitTest*) new KerrAmendment(linear, medium, source);
 
 	double nonlinear_Erho = non_linear->electric_rho (2.1, 0.8, 0, 2);
 	double linear_Erho = linear->electric_rho (2.1, 0.8, 0, 2);
@@ -355,9 +355,9 @@ bool Test::real_convolution ()
 	return false;
 }
 
-bool Test::I1_time_partder ()
+bool UnitTest::I1_time_partder ()
 {
-	/* for (double rho = 0; rho <= 1.3; rho += 0.25) {
+	for (double rho = 0; rho <= 1.3; rho += 0.25) {
 		for (double R = 0.1; R <= 1.3; R += 0.2) {
 			for (double ct = 0.1; ct <= 1.4; ct += 0.3) {
 				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
@@ -367,34 +367,23 @@ bool Test::I1_time_partder ()
 						return MissileField::int_bessel_011(vt_z,rho,R);
 					};
 					
-					double anal_perp = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
-					auto num_perp = Math::derivative(I1, ct);
-					std::cout << std::fixed << std::setprecision(4);
-					std::cout << ct << ' ' << rho << ' ' << z << ' ' << R << ' '; 
-					std::cout << num_perp << ' ' << anal_perp << std::endl;
-					// if (num_perp != anal_perp) return false;
+					double anal = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
+					auto num3 = Math::derivat3(I1, ct);
+					auto num4 = Math::derivat4(I1, ct);
+
+					double error3 = anal ? std::abs(anal - num3) / anal : 0;
+					double error4 = anal ? std::abs(anal - num4) / anal : 0;
+					if (100*error3 > 10) return false;
+					if (100*error4 > 5) return false;
 				}
 			}
 		}
-	} */
-
-	double ct = 0.4, rho = 0.25, z = 0.31, R = 0.1;
-
-	auto I1 = [rho, R, z] (double ct) {
-		double vt_z = std::sqrt(ct * ct - z * z);
-		return MissileField::int_bessel_011(vt_z,rho,R);
-	};
-
-	double anal_perp = KerrAmendment::int_bessel_011_perp(ct,z,rho,R);
-	double num_perp  = Math::derivative(I1, ct);
-
-	std::cout << std::fixed << std::setprecision(4);
-	std::cout << num_perp << ' ' << anal_perp << std::endl;
+	}
 
 	return true;
 }
 
-bool Test::I2_time_partder ()
+bool UnitTest::I2_time_partder ()
 {
 	for (double rho = 0; rho <= 1.3; rho += 0.25) {
 		for (double R = 0.1; R <= 1.3; R += 0.2) {
@@ -406,9 +395,14 @@ bool Test::I2_time_partder ()
 						return MissileField::int_bessel_001(vt_z,rho,R); 
 					};
 					
-					double anal_perp = KerrAmendment::int_bessel_001_perp(ct,z,rho,R);
-					auto num_perp = Math::derivative(I2, ct);
-					if (num_perp != anal_perp) return false;
+					double anal = KerrAmendment::int_bessel_001_perp(ct,z,rho,R);
+					auto num3 = Math::derivat3(I2, ct);
+					auto num4 = Math::derivat4(I2, ct);
+
+					double error3 = anal ? std::abs(anal - num3) / anal : 0;
+					double error4 = anal ? std::abs(anal - num4) / anal : 0;
+					if (100*error3 > 10) return false;
+					if (100*error4 > 5) return false;
 				}
 			}
 		}
@@ -421,73 +415,73 @@ int main()
 {
 	cout << boolalpha;
 
-	/* cout << "Math::Test::next_prime \t\t\t"; 
+	cout << "Math::UnitTest::next_prime \t\t\t"; 
 	cout.flush();
-	cout << Test::next_prime() << endl;
+	cout << UnitTest::next_prime() << endl;
 
-	cout << "Math::Test::binom_prod \t\t\t"; 
+	cout << "Math::UnitTest::binom_prod \t\t\t"; 
 	cout.flush();
-	cout << Test::binom_prod() << endl;
+	cout << UnitTest::binom_prod() << endl;
 
-	cout << "Math::Test::yacobi_pol_property \t"; 
+	cout << "Math::UnitTest::yacobi_pol_property \t\t"; 
 	cout.flush();
-	cout << Test::yacobi_pol_property() << endl;
+	cout << UnitTest::yacobi_pol_property() << endl;
 
-	cout << "Math::Test::yacobi_pol_compare \t\t"; 
+	cout << "Math::UnitTest::yacobi_pol_compare \t\t"; 
 	cout.flush();
-	cout << Test::yacobi_pol_compare() << endl;
+	cout << UnitTest::yacobi_pol_compare() << endl;
 
-	cout << "Math::Test::invers_sqrt \t\t"; 
+	/* cout << "Math::UnitTest::invers_sqrt \t\t\t"; 
 	cout.flush();
-	cout << Test::invers_sqrt() << endl;
+	cout << UnitTest::invers_sqrt() << endl; */
 
-	cout << "Math::Test::deridative \t\t\t";
+	cout << "MissileField::UnitTest::simpson_I1 \t\t"; 
 	cout.flush();
-	cout << Test::bessel_perp() << endl;
+	cout << UnitTest::simpson_I1() << endl;
 
-	cout << "MissileField::Test::simpson_I1 \t\t"; 
+	cout << "MissileField::UnitTest::simpson_I2 \t\t"; 
 	cout.flush();
-	cout << Test::simpson_I1() << endl;
+	cout << UnitTest::simpson_I2() << endl;
 
-	cout << "MissileField::Test::simpson_I2 \t\t"; 
+	cout << "Math::UnitTest::simpson_dim \t\t\t"; 
 	cout.flush();
-	cout << Test::simpson_I2() << endl;
+	cout << UnitTest::simpson_dim() << endl;
 
-	cout << "KerrAmendment::Test::field_getters \t"; 
+	cout << "KerrAmendment::UnitTest::field_getters \t\t"; 
 	cout.flush();
-	cout << Test::field_getters() << endl; */
+	cout << UnitTest::field_getters() << endl;
 
-	cout << "KerrAmendment::Test::I1_time_partder \t"; 
+	cout << "Math::UnitTest::deridative \t\t\t";
 	cout.flush();
-	cout << Test::I1_time_partder() << endl;
+	cout << UnitTest::bessel_perp() << endl;
 
-	cout << "KerrAmendment::Test::I2_time_partder \t"; 
+	cout << "KerrAmendment::UnitTest::I1_time_partder \t"; 
 	cout.flush();
-	cout << Test::I2_time_partder() << endl;
+	cout << UnitTest::I1_time_partder() << endl;
 
-	cout << "Math::Test::monte_carlo_integral \t";
+	cout << "KerrAmendment::UnitTest::I2_time_partder \t"; 
 	cout.flush();
-	cout << Test::monte_carlo_integral() << endl;
+	cout << UnitTest::I2_time_partder() << endl;
 
-	/* cout << "Math::Test::monte_carlo_vector \t\t"; 
+	/* cout << "Math::UnitTest::monte_carlo_integral \t";
 	cout.flush();
-	cout << Test::monte_carlo_vector() << endl;
+	cout << UnitTest::monte_carlo_integral() << endl;
 
-	cout << "Math::Test::monte_carlo_improper \t";
+	cout << "Math::UnitTest::monte_carlo_vector \t\t"; 
 	cout.flush();
-	cout << Test::monte_carlo_improper() << endl;
+	cout << UnitTest::monte_carlo_vector() << endl;
 
-	cout << "Math::Test::imptoper_int_bessel \t";
+	cout << "Math::UnitTest::monte_carlo_improper \t";
 	cout.flush();
-	cout << Test::imptoper_int_bessel() << endl; */
+	cout << UnitTest::monte_carlo_improper() << endl;
 
-	cout << "Math::Test::simpson_dim \t\t"; 
+	cout << "Math::UnitTest::imptoper_int_bessel \t";
 	cout.flush();
-	cout << Test::simpson_dim() << endl;
+	cout << UnitTest::imptoper_int_bessel() << endl; */
 
-	/* cout << "KerrAmendment::Test::real_convolution \t";
+	/* cout << "KerrAmendment::UnitTest::real_convolution \t";
 	cout.flush();
-	cout << Test::real_convolution() << endl; */
+	cout << UnitTest::real_convolution() << endl; */
 
 	return 0;
 }

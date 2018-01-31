@@ -229,9 +229,14 @@ float Math::inv_sqrt (float x)
 	return x;
 }
 
-double Math::derivative ( std::function<double(double)> f, double x )
+double Math::derivat3 ( std::function<double(double)> f, double x )
 {
-	// TODO: make a part of config file
-	double h = 10e-14;
+	double h = DERIVATIVE_STEP;
 	return (f(x+h) - f(x-h)) / (2*h);
+}
+
+double Math::derivat4 ( std::function<double(double)> f, double x )
+{
+	double h = DERIVATIVE_STEP;
+	return ( f(x-2*h) - 8*f(x-h) + 8*f(x+h) - f(x+2*h) ) / (12*h);
 }

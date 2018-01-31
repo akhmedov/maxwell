@@ -54,7 +54,8 @@ void PlotModel::__Ex_from_ct ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	// Manager* thead_core = new Manager( thread_num );
+	SafeManager* thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)

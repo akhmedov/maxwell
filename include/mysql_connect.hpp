@@ -53,6 +53,7 @@ struct MySQL {
 protected:
 
 	static void throw_error_code (int code);
+	static std::string to_string(const FieldComponent& type);
 	void reconnect () const;
 
 private:

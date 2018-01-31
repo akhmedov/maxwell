@@ -18,14 +18,14 @@ USE maxwell;
 CREATE TABLE IF NOT EXISTS maxwell_header (
 	id			BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
 	radiator	ENUM('uni_disk', 'grad_disk', 'radial_disk') NOT NULL,
-	component	ENUM('Ex','Ey','Ez','Hx','Hy','Hz') NOT NULL,
+	component	ENUM('Ex', 'Ey', 'Ez', 'Ephi', 'Erho', 'Hx', 'Hy', 'Hz', 'Hphi', 'Hrho') NOT NULL,
 	radius		DOUBLE(20,5) NOT NULL,
 	magnitude	DOUBLE(20,5) NOT NULL,
 	mu_r		DOUBLE(20,5) NOT NULL,
 	eps_r		DOUBLE(20,5) NOT NULL,
 	kerr_r		DOUBLE(20,5) NOT NULL,
 	duration	DOUBLE(20,5) NOT NULL,
-	--noise 	DOUBLE(20,5) NOT NULL,
+	/* noise 	DOUBLE(20,5) NOT NULL, */
 	signal_type	ENUM('turn_on','turn_off','rect','gauss','triangle') NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT UC_maxwell_header UNIQUE (radiator, component, radius, 
@@ -71,8 +71,9 @@ radiator = 'uni_disk' AND component = 'Ex' AND radius = 1 AND
 magnitude = 1 AND mu_r = 1 AND eps_r = 1 AND kerr_r = 0 AND 
 duration = 0 AND signal_type = 'rect'; */
 
+-- head_id = LAST_INSERT_ID(),
+
 /* INSERT INTO maxwell_data SET
-	-- head_id = LAST_INSERT_ID(),
 	head_id	= @problem,
 	ct		= 0,
 	rho		= 0,

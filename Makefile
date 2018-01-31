@@ -31,10 +31,17 @@ MYSQL_FLAGS = `mysql_config --cflags`
 
 maxwell: $(OBJECTS)
 	@rm -f build/unit_test.o
+	@rm -f build/plot_test.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
 
-unit_test: $(OBJECTS)	
+unit_test: $(OBJECTS)
 	@rm -f build/main.o
+	@rm -f build/plot_test.o
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
+
+plot_test: $(OBJECTS)
+	@rm -f build/main.o
+	@rm -f build/unit_test.o
 	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
 
 list:
@@ -74,4 +81,4 @@ gnump:
 	rm -fr $(PROJECT_DIR)/gmp-6.1.2
 
 clean:
-	rm -f build/*.o *.gnp build/maxwell build/test
+	rm -f build/*.o *.gnp build/maxwell build/unit_test build/plot_test

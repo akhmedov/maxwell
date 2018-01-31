@@ -17,6 +17,7 @@ enum ModelType {plot, dataset, info};
 enum ImpulseShape {rect, gauss, triangl};
 enum Colormap {gray, parula};
 enum PlotDev {x11, term};
+enum FieldComponent {Ex, Ey, Ez, Ephi, Erho, Hx, Hy, Hz, Hphi, Hrho};
 
 struct Config {
 
@@ -66,6 +67,7 @@ struct Config {
 	void kerr_medium (bool);
 	void noise_level (double);
 	void medium_superposition (Superposition);
+	void field_component (std::size_t model_num);
 
 	void mysql_hostname (std::string);
 	void mysql_username (std::string);
@@ -111,6 +113,7 @@ struct Config {
 	bool kerr_medium () const;
 	double noise_level () const;
 	Superposition medium_superposition () const;
+	FieldComponent field_component () const;
 
 	std::string mysql_hostname () const;
 	std::string mysql_username () const;
@@ -158,6 +161,7 @@ private:
 	bool is_medium_kerr;
 	double noise_percent;
 	Superposition superposition;
+	FieldComponent working_component;
 
 	std::string mysql_addr;
 	std::string mysql_user;

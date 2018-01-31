@@ -32,6 +32,13 @@ using PlotMulti = std::vector<std::vector<T>>;
 template <typename T> 
 using Plot3D = std::vector<std::tuple<T, T, T>>;
 
+/*
+-- Data structure for GnuPlot:: module 
+-- plot2d     item: x f
+-- plot3d     item: x y f
+-- plot_multi item: x y f1 f2 f3 ...
+*/
+
 struct GnuPlot {
 	GnuPlot (std::string filename);
 	void set_gnuplot_bin (std::string filename);

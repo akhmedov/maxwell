@@ -208,11 +208,11 @@ void GnuPlot::write_commants_to_script (const std::vector<std::string> &plot_dat
 			[] (char c) { return std::isspace(c); }
 		) - 1;
 
-		// std::cout << "CURVES NUMBER: " << curves << std::endl;
-
-		script << "set for [i=1:" << std::to_string(curves) << "] linetype i dt i \n";
-		for (std::size_t i = 1; i <= curves; i++)
-			script << "set style line " << std::to_string(i) << " lt " << std::to_string(i) << " lc rgb \"black\" lw 1 \n";
+		if (this->color_schem == Colormap::gray) {
+			script << "set for [i=1:" << std::to_string(curves) << "] linetype i dt i \n";
+			for (std::size_t i = 1; i <= curves; i++)
+				script << "set style line " << std::to_string(i) << " lt " << std::to_string(i) << " lc rgb \"black\" lw 1 \n";
+		}
 
 		std::string plot_conf = "'$grid' using 1:COLUMN";
 		std::string options = " with lines ls STYLE title \"LABLE\"";

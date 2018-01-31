@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <functional>
 
+#define DERIVATIVE_STEP 1e-10;
+
 typedef std::pair<std::size_t,std::size_t> Binom;
 
 struct Math {
@@ -35,7 +37,8 @@ struct Math {
 	static std::size_t product (std::size_t first, std::size_t second);
 	static double divide (std::size_t one, std::size_t two);
 	static float inv_sqrt (float arg);
-	static double derivative ( std::function<double(double)>, double arg );
+	static double derivat3 ( std::function<double(double)>, double arg );
+	static double derivat4 ( std::function<double(double)>, double arg );
 protected:
 	static std::size_t next_prime(std::size_t prime, std::size_t search_limit);
 	static std::size_t binom_prod (std::size_t n, std::size_t m);
