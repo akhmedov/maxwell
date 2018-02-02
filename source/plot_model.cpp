@@ -62,9 +62,11 @@ void PlotModel::__Ex_from_ct ()
 		thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
+	if (this->global_conf->kerr_medium()) {
+		to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
+	}
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -129,9 +131,9 @@ void PlotModel::__Hy_from_ct ()
 		thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -200,9 +202,9 @@ void PlotModel::__Ex_from_ct_rho ()
 			thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
+	to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -270,9 +272,9 @@ void PlotModel::__Hy_from_ct_rho ()
 			thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -340,9 +342,9 @@ void PlotModel::__Ex_from_ct_z ()
 			thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&MissileField::electric_x, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::electric_x, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
+	to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -410,9 +412,9 @@ void PlotModel::__Hy_from_ct_z ()
 			thead_core->add_argument( {ct,rho,phi,z} );
 
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&NoiseField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&MissileField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&KerrAmendment::magnetic_y, non_linear));
+	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
+	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 

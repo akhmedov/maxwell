@@ -9,6 +9,10 @@
 #ifndef plot_test_hpp
 #define plot_test_hpp
 
+#ifndef UNUSED
+#define UNUSED(expr) do { (void)(expr); } while (0)
+#endif
+
 #include "config.hpp"
 #include "gnu_plot.hpp"
 #include "phys_math.hpp"

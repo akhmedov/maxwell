@@ -240,3 +240,28 @@ double Math::derivat4 ( std::function<double(double)> f, double x )
 	double h = DERIVATIVE_STEP;
 	return ( f(x-2*h) - 8*f(x-h) + 8*f(x+h) - f(x+2*h) ) / (12*h);
 }
+
+double Math::lommel (std::size_t terms, int order, double W, double Z)
+{
+	if (Z < 1e-10) throw std::invalid_argument("Z=0 is not allowed in Math::lommel(term,n,W,Z)");
+
+	const auto minus_one = mpf_class(-1).get_mpf_t();
+	mpf_class res = mpf_class(0);
+	mpf_class step_coeff, step_bessel, step_res;
+	mpf_class gmp_W = W, gmp_Z = Z;
+
+	for (std::size_t m = 0; m < terms; m++) {
+		mpf_pow_ui(step_res.get_mpf_t(), minus_one, m);
+		
+		mpf_div(step_coeff.get_mpf_t(), gmp_W.get_mpf_t(), gmp_Z.get_mpf_t());
+		mpf_pow_ui(step_coeff.get_mpf_t(), step_coeff.get_mpf_t(), order+2*m);
+		mpf_mul(step_res.get_mpf_t(),step_res.get_mpf_t(),step_coeff.get_mpf_t());
+		
+		step_bessel = mpf_class(jn(order+2*m, Z));
+		mpf_mul(step_res.get_mpf_t(),step_res.get_mpf_t(),step_bessel.get_mpf_t());
+		
+		mpf_add(res.get_mpf_t(),res.get_mpf_t(),step_res.get_mpf_t());
+	}
+
+	return res.get_d();
+}

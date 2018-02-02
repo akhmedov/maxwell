@@ -170,9 +170,10 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 		this->global_conf->plane_disk_mur(std::stod(arg));
 
 	if (!param.compare("--kerr")) {
-		if (std::stod(arg) != 0) 
+		if (std::stod(arg) != 0) {
 			this->global_conf->kerr_medium(true);
-		this->global_conf->kerr_value(std::stod(arg));
+			this->global_conf->kerr_value(std::stod(arg));
+		}
 	}
 
 	if (!param.compare("--noise"))

@@ -56,111 +56,79 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPl
 	this->R = source->get_disk_radius();
 }
 
-double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
+double KerrAmendment::electric_x (double vt, double rho, double phi, double z) const
 {
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-10) return 0;
-
 	double eps0 = NonlinearMedium::EPS0;
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
 	double mu0 = NonlinearMedium::MU0;
 	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double velocity = NonlinearMedium::C / (eps_r * mu_r);
 	double em_relation = mu0 * mu_r / eps0 * eps_r;
 	double A0 = this->A0;
 	double R = this->R;
-	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
-
-	/* next section is not correct for arbirtaty inhomogenious medium */ 
+	double coeff = kerr / eps_r / mu_r * A0 * A0 * A0 * em_relation * em_relation / 128;
+	
 	mpf_class vt_z = mpf_class(vt * vt);
 	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	if (vt_z.get_d() <= 0) return 0;
 
-	auto field = [R, rho, phi, z] (double vt) {
-
-		auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
-			double res = m * std::cos(m * phi);
-			res *= rho ? jn(m, nu * rho) / rho * nu : 0.5;
-			res *= KerrAmendment::riemann(nu, vt_perp - vt, z_perp - z);
-			res *= KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
-			return res;
-		};
-
-		auto modes_sum = [mode] (double rho_perp, double z_perp, double vt_perp, double nu) {
-			double sum = 0;
-			sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
-			sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
-			sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
-			sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
-			return sum;
-		};
-
-		std::vector< std::tuple<double,std::size_t,double> > limits;
-		limits.push_back(std::make_tuple(0, 4e3, 1e3)); // rho_perp
-		limits.push_back(std::make_tuple(0, 40, 2));    // z_perp
-		limits.push_back(std::make_tuple(0, 40, 2));    // vt_perp
-		limits.push_back(std::make_tuple(0, 40, 2)); 	// nu_perp
-		SimpsonMultiDim integral = SimpsonMultiDim(limits);
-		return integral.value(modes_sum);
+	auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
+		double vect_rho = m * std::cos(phi) * std::cos(m * phi);
+		vect_rho *= rho ? jn(m, nu * rho) / rho * nu : 0.5;
+		double vect_phi = 0.5 * std::sin(phi) * std::sin(m * phi);
+		vect_phi *= jn(m-1, nu * rho) - jn(m+1, nu * rho);
+		return (vect_rho + vect_phi) * KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
 	};
 
-	return coeff * Math::derivat3(field,vt);
+	/* auto mode_delta = [mode,phi,z,vt] (double nu, double vt_perp, double rho_perp) {
+		double casual = 0;
+		double sum = 0;
+		double z_perp = vt - vt_perp + z;
+		sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
+		sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
+		sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
+		sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
+		return sum * j0(nu * std::sqrt(casual));
+	}; */
+
+	auto mode_step = [mode,phi,z,vt] (double nu, double vt_perp, double rho_perp, double z_perp) {
+		double casual = 0;
+		double sum = 0;
+		sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
+		sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
+		sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
+		sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
+		return sum * j0(nu * std::sqrt(casual));
+	};
+
+	/* std::vector< std::tuple<double,std::size_t,double> > limits_delta;
+	limits_delta.push_back(std::make_tuple(0, NU_POINTS, 1e3));
+	limits_delta.push_back(std::make_tuple(0, VT_POINTS, 2)); 
+	limits_delta.push_back(std::make_tuple(0, PHO_POINTS, 2));
+	SimpsonMultiDim int_delta = SimpsonMultiDim(limits_delta); */
+
+	std::vector< std::tuple<double,std::size_t,double> > limits_setp;
+	limits_setp.push_back(std::make_tuple(0, NU_POINTS, 1e3));
+	limits_setp.push_back(std::make_tuple(0, VT_POINTS, 2)); 
+	limits_setp.push_back(std::make_tuple(0, PHO_POINTS, 2));
+	limits_setp.push_back(std::make_tuple(0, Z_POINTS, 2));
+	SimpsonMultiDim int_step = SimpsonMultiDim(limits_setp);
+
+	throw std::logic_error("KerrAmendment::electric_x is not implemented");
+	// return coeff * (int_delta.value(mode_delta) + int_step.value(mode_step));
+}
+
+double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
+{
+	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
+	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
 double KerrAmendment::electric_phi (double vt, double rho, double phi, double z) const
 {
-	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-10) return 0;
-
-	double eps0 = NonlinearMedium::EPS0;
-	double eps_r = this->nl_medium->relative_permittivity(vt,z);
-	double mu0 = NonlinearMedium::MU0;
-	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double velocity = NonlinearMedium::C / (eps_r * mu_r);
-	double em_relation = mu0 * mu_r / eps0 * eps_r;
-	double A0 = this->A0;
-	double R = this->R;
-	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
-
-	/* next section is not correct for arbirtaty inhomogenious medium */ 
-	mpf_class vt_z = mpf_class(vt * vt);
-	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
-	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (vt_z.get_d() <= 0) return 0;
-
-	auto field = [R, rho, phi, z] (double vt) {
-
-		auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
-			/* double res = m * std::cos(m * phi);
-			res *= jn(m, nu * rho) * KerrAmendment::riemann(nu, vt_perp - vt, z_perp - z);
-			res /= rho * std::sqrt(nu);
-			res *= rho_perp * KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
-			return res; */
-			throw std::logic_error("KerrAmendment::electric_phi is not implemented");
-			return 0.0;
-		};
-
-		auto modes_sum = [mode] (double rho_perp, double z_perp, double vt_perp, double nu) {
-			double sum = 0;
-			sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
-			sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
-			sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
-			sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
-			return sum;
-		};
-
-		std::vector< std::tuple<double,std::size_t,double> > limits;
-		limits.push_back(std::make_tuple(0, 4e3, 1e3)); // rho_perp
-		limits.push_back(std::make_tuple(0, 40, 2));    // z_perp
-		limits.push_back(std::make_tuple(0, 40, 2));    // vt_perp
-		limits.push_back(std::make_tuple(0, 40, 2)); 	// nu_perp
-		SimpsonMultiDim integral = SimpsonMultiDim(limits);
-		return integral.value(modes_sum);
-	};
-
-	return coeff * Math::derivat3(field,vt);
-	
+	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
+	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
 double KerrAmendment::electric_z (double vt, double rho, double phi, double z) const
@@ -172,24 +140,18 @@ double KerrAmendment::electric_z (double vt, double rho, double phi, double z) c
 double KerrAmendment::magnetic_rho (double vt, double rho, double phi, double z) const
 {
 	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-50) return 0;
 	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
 double KerrAmendment::magnetic_phi (double vt, double rho, double phi, double z) const
 {
 	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-50) return 0;
 	throw std::logic_error("KerrAmendment::magnetic_phi is not implemented");
 }
 
 double KerrAmendment::magnetic_z (double vt, double rho, double phi, double z) const
 {
 	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
-	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	if (kerr < 1e-50) return 0;
 	throw std::logic_error("KerrAmendment::magnetic_z is not implemented");
 }
 
@@ -203,9 +165,6 @@ double KerrAmendment::riemann (double nu, double vt_diff, double z_diff)
 
 	return j0(nu * distance);
 }
-
-
-
 
 double KerrAmendment::im_modal_source_sum (double R, double nu, double vt, double rho, double z)
 {
@@ -274,7 +233,7 @@ double KerrAmendment::N2 (double R, int m, double nu, double vt, double rho, dou
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
-	return -m * (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
+	return -m * jn(m, nu*rho) * (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
 }
 
 double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, double z)
@@ -310,9 +269,11 @@ double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, doub
 	double rho2 = rho * rho;
 	double R2 = R * R;
 
-	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
-	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#ifdef DEBUG
+		if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
+		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#endif /* DEBUG */
 
 	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
 	if (R > rho + std::sqrt(vt_z)) return 0.0;
@@ -333,9 +294,11 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	double rho2 = rho * rho;
 	double R2 = R * R;
 
-	if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
-	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#ifdef DEBUG
+		if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
+		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#endif /* DEBUG */
 
 	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
 	if (R > rho + std::sqrt(vt_z)) return 0.0;

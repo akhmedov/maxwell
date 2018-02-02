@@ -13,6 +13,11 @@
 #ifndef kerr_amendment_hpp
 #define kerr_amendment_hpp
 
+#define NU_POINTS  2e3
+#define VT_POINTS  20
+#define PHO_POINTS 20
+#define Z_POINTS   20
+
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "nonlinear_medium.hpp"
@@ -45,6 +50,7 @@ private:
 struct KerrAmendment : public NonlinearField {
 
 	KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source);
+	double electric_x (double ct, double rho, double phi, double z) const;
 
 	double electric_rho (double ct, double rho, double phi, double z) const;
 	double electric_phi (double ct, double rho, double phi, double z) const;

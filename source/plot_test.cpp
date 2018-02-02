@@ -18,7 +18,7 @@ int main()
 	std::cout << "numeric_perp(omega = 1) " << std::endl;
 	PlotTest::numeric_perp(); */
 
-	/* std::cout << std::endl << "PlotTest::";
+	std::cout << std::endl << "PlotTest::";
 	std::cout << "I1_time_partder(rho = 0.5, z = 0.6, R = 1) " << std::endl;
 	PlotTest::I1_time_partder (0.5,0.6);
 	
@@ -44,11 +44,11 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "I2_time_partder(rho = 0.5, z = 1.21, R = 0.1) " << std::endl;
-	PlotTest::I2_time_partder (2,1,0.1); */
+	PlotTest::I2_time_partder (2,1,0.1);
 
-	std::cout << std::endl << "PlotTest::";
+	/* std::cout << std::endl << "PlotTest::";
 	std::cout << "kerr_undeintegral( ct'=0, rho'=0, phi'=0, z'=0, R=1) " << std::endl;
-	PlotTest::kerr_ammend_undeintegral (0,0,0,0);
+	PlotTest::kerr_ammend_undeintegral (0,0,0,0); */
 }
 
 void PlotTest::set_options ()
@@ -73,7 +73,7 @@ void PlotTest::numeric_perp(double omega)
 		double num3 = Math::derivat3(sin, omega * x);
 		double num4 = Math::derivat4(sin, omega * x);
 
-		line = {omega*x, sin(omega*x), anal, num3};
+		line = {omega*x, sin(omega*x), anal, num3, num4};
 		plot_data.push_back(line);
 		line.clear();
 	}
@@ -95,6 +95,7 @@ void PlotTest::numeric_perp(double omega)
 
 void PlotTest::I1_I2_versus (double rho, double z, double R)
 {
+	UNUSED(rho); UNUSED(z); UNUSED(R);
 	throw std::logic_error("PlotTest::I1_I2_versus() is not implemented");
 }
 
@@ -176,5 +177,6 @@ void PlotTest::kerr_ammend_undeintegral (double ct_perp,
 										 double z_perp, 
 										 double R)
 {
+	UNUSED(ct_perp); UNUSED(phi_perp); UNUSED(rho_perp); UNUSED(z_perp); UNUSED(R);
 	throw std::logic_error("Not implemented!");
 }

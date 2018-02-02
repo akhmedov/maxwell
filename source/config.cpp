@@ -63,42 +63,42 @@ Config::Config ()
 
 void Config::receiver_vt (double value)
 {
-	this->vt_value = {value, value, value};
+	this->vt_value = {{value, value, value}};
 }
 
 void Config::receiver_rho (double value)
 {
-	this->rho_value = {value, value, value};
+	this->rho_value = {{value, value, value}};
 }
 
 void Config::receiver_phi (double value)
 {
-	this->phi_value = {value, value, value};
+	this->phi_value = {{value, value, value}};
 }
 
 void Config::receiver_z (double value)
 {
-	this->z_value = {value, value, value};
+	this->z_value = {{value, value, value}};
 }
 
 void Config::receiver_vt (double from, double step, double to)
 {
-	this->vt_value = {from, step, to};
+	this->vt_value = {{from, step, to}};
 }
 
 void Config::receiver_rho (double from, double step, double to)
 {
-	this->rho_value = {from, step, to};
+	this->rho_value = {{from, step, to}};
 }
 
 void Config::receiver_phi (double from, double step, double to)
 {
-	this->phi_value = {from, step, to};
+	this->phi_value = {{from, step, to}};
 }
 
 void Config::receiver_z (double from, double step, double to)
 {
-	this->z_value = {from, step, to};
+	this->z_value = {{from, step, to}};
 }
 
 void Config::version_opt (bool option)

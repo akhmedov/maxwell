@@ -12,6 +12,10 @@
 #include <gmp.h>
 #include <gmpxx.h>
 
+#ifndef UNUSED
+#define UNUSED(expr) do { (void)(expr); } while (0)
+#endif
+
 #include <cfloat> // size_t
 #include <iomanip> // std::fixed std::setprecision(4)
 #include <iostream> // cout cerr

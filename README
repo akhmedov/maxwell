@@ -80,7 +80,8 @@ libmysqlclient-dev - mysql client connector
 
 ### TEST LIST ###
 
-- numerical derivative test of derivative of I1 and I2
+- Math::lommel test
++ numerical derivative test of derivative of I1 and I2
 - manual test on maxwell.conf
 - caclucaliton manager vs single stream test
 + I1 I3 I4 I5 test on Integral::simpson() method
@@ -88,7 +89,7 @@ libmysqlclient-dev - mysql client connector
 
 ### UPDATE LIST FOR c++17 STANDART
 
-- use std::vatiant in Config:: class for receiver evants
+- use std::variant in Config:: class for receiver evants
 - use std::filsistems::exists() for file check in CLI:: and Manager::
 
 ### BUG LIST ###
@@ -124,15 +125,15 @@ libmysqlclient-dev - mysql client connector
 
 ### TODO LIST ###
 
+- numerics implementaion if Hy(ct,r) in linear medium
 - smart pointers all over the code
-- numerical and analitic implementation of E(ct) by CLI option
-- numerical implementation of H(ct,rho) as new model 
-- Implement calculation DB
++ numerical and analitic implementation of E(ct) by CLI option
++ Implement calculation DB
 - Implement logger class
 - LIST ALL tested methods next to respount include
-- implement make help option in Makefile
++ implement make help option in Makefile
 + gnuplot font size
-- refactor of void Manager::call (AbstractField, string)
++ refactor of void Manager::call (AbstractField, string)
 + add THREAD_NUMBER option to maxwell.conf
 + calculation manager progress bar
 + configuration file for global paramiters

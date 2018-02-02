@@ -239,6 +239,7 @@ bool UnitTest::monte_carlo_integral ()
 	double radius = 1;
 
 	auto func = [] (double rho, double phi, double theta) {
+		UNUSED(phi);
 		return rho * rho * sin(theta);
 	};
 

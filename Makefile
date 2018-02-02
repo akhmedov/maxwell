@@ -10,7 +10,7 @@ CXX = gcc
 CXX_LIB = -lstdc++ -lm -pthread 
 CXX_STD = -std=c++14 -O2
 
-CXX_FLAGS = $(if ${DEBUG},-Wall -Wextra -Wformat=2 -Wold-style-definition,)
+CXX_FLAGS = $(if ${DEBUG},-Wall -Wextra -Wformat=2 -Wold-style-definition -DDEBUG,)
 CXX_FLAGS += $(if ${PDISK_LINEAR_INT},-DNUMERIC_PDISK_LINEAR_INT,)
 CXX_FLAGS += $(if ${AUW_NOICE},-DAUW_NOICE,)
 CXX_FLAGS += $(if ${MGW_NOICE},-DMGW_NOICE,)

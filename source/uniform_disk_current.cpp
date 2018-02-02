@@ -290,9 +290,11 @@ double MissileField::static_magnitude (double rho, double phi, double z, double 
 
 double MissileField::int_bessel_001 (double sqrt_vt_z, double rho, double R)
 {
-	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
-	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#ifdef DEBUG
+		if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
+		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#endif /* DEBUG */
 
 	if (rho == 0) {
 		if (R < sqrt_vt_z) return 0;
@@ -313,10 +315,12 @@ double MissileField::int_bessel_001 (double sqrt_vt_z, double rho, double R)
 
 double MissileField::int_bessel_011 (double sqrt_vt_z, double rho, double R)
 {	
-	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
-	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
-	
+	#ifdef DEBUG
+		if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
+		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
+	#endif /* DEBUG */
+
 	if (rho == 0) {
 		if (R < sqrt_vt_z) return 0;
 		if (R == sqrt_vt_z) return 0.25;

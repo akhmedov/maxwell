@@ -92,6 +92,7 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 	select_point = std::regex_replace(select_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
 	select_point = std::regex_replace(select_point, std::regex("\\$DISTANCE"), std::to_string(z));
 
+
 	int error_code = mysql_query(this->connection, select_point.c_str());
 	MySQL::throw_error_code(error_code);
 
@@ -101,7 +102,7 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 	if (serch_row != NULL) {
 
 		this->point_id = std::stod(serch_row[0]);
-		this->noise    = serch_row[1] ? std::stod(serch_row[1]) : NAN;
+		this->noise    = /* serch_row[1] ? std::stod(serch_row[1]) : */ NAN;
 		this->linear   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
 		this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 		this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;
@@ -127,7 +128,7 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 
 		if (serch_row != NULL) {
 			this->point_id = std::stod(serch_row[0]);
-			this->noise    = serch_row[1] ? std::stod(serch_row[1]) : NAN;
+			this->noise    = /* serch_row[1] ? std::stod(serch_row[1]) : */ NAN;
 			this->linear   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
 			this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 			this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;

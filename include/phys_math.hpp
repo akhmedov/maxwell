@@ -39,6 +39,7 @@ struct Math {
 	static float inv_sqrt (float arg);
 	static double derivat3 ( std::function<double(double)>, double arg );
 	static double derivat4 ( std::function<double(double)>, double arg );
+	static double lommel (std::size_t terms, int order, double W, double Z);
 protected:
 	static std::size_t next_prime(std::size_t prime, std::size_t search_limit);
 	static std::size_t binom_prod (std::size_t n, std::size_t m);
