@@ -6,6 +6,10 @@
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
+#ifndef UNUSED
+#define UNUSED(expr) do { (void)(expr); } while ( false )
+#endif
+
 #ifndef integral_hpp
 #define integral_hpp
 
@@ -24,30 +28,37 @@ struct Integral { };
 
 struct Simpson : public Integral {
 	Simpson (std::size_t terms);
-	double value (double from, double to, std::function<double(double)> f) const;
+	double value (double from, double to, const std::function<double(double)> &f) const;
 private:
 	const std::size_t quadr_terms;
 };
 
 struct SimpsonMultiDim : public Integral {
 	SimpsonMultiDim ( const vector_tuple_did &limits );
-	double value (const std::function<double(double,double,double,double)> &func) const;
+	double value (const std::function<double(double,double,double)> &func) const;
+	double value_complex (const std::function<double(double,double,double)> &func);
+	void second_max (const std::function<double(double)> &func);
+	void second_min (const std::function<double(double)> &func);
+	void thead_max  (const std::function<double(double,double)> &func);
+	void thead_min  (const std::function<double(double,double)> &func);
 private:
-	const double w_min;
-	const std::size_t w_terms;
-	const double w_max;
 
-	const double x_min;
-	const std::size_t x_terms;
-	const double x_max;
+	std::function<double(double)> second_max_lambda;
+	std::function<double(double)> second_min_lambda;
+	std::function<double(double,double)> thead_max_lambda;
+	std::function<double(double,double)> thead_min_lambda;
 
-	const double y_min;
-	const std::size_t y_terms;
-	const double y_max;
+	double x_min;
+	std::size_t x_terms;
+	double x_max;
 
-	const double z_min;
-	const std::size_t z_terms;
-	const double z_max;
+	double y_min;
+	std::size_t y_terms;
+	double y_max;
+
+	double z_min;
+	std::size_t z_terms;
+	double z_max;
 };
 
 struct MonteCarlo : public Integral {

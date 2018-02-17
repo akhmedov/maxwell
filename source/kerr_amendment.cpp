@@ -73,50 +73,41 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	if (vt_z.get_d() <= 0) return 0;
 
-	auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double vt_perp, double nu) {
-		double vect_rho = m * std::cos(phi) * std::cos(m * phi);
-		vect_rho *= rho ? jn(m, nu * rho) / rho * nu : 0.5;
-		double vect_phi = 0.5 * std::sin(phi) * std::sin(m * phi);
+	auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double nu) {
+		double vect_rho = std::cos(phi) * std::cos(m * phi);
+		double vect_phi = std::sin(phi) * std::sin(m * phi);
+		vect_rho *= jn(m-1, nu * rho) + jn(m+1, nu * rho);
 		vect_phi *= jn(m-1, nu * rho) - jn(m+1, nu * rho);
-		return (vect_rho + vect_phi) * KerrAmendment::im_modal_source(R,m,nu,vt,rho_perp,z);
+		double delta_int = KerrAmendment::im_modal_source(R,m,nu,vt-z+z_perp,rho_perp,z);
+		
+		auto step_int = [R, m, vt, z, nu, rho_perp, z_perp] (double vt_perp) {
+			double delta_vt = vt-vt_perp;
+			double delta_z = z-z_perp;
+			double source_perp = KerrAmendment::im_modal_source(R,m,nu,vt_perp,rho_perp,z_perp);
+			double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z); 
+			return nu * nu * (vt-vt_perp) * (jn(0,nu * casual) + jn(2,nu * casual)) * source_perp / 2;
+		};
+
+		Simpson tau_int = Simpson(40);
+		return (vect_rho + vect_phi) * (delta_int - tau_int.value(0, 2*R, step_int));
 	};
 
-	/* auto mode_delta = [mode,phi,z,vt] (double nu, double vt_perp, double rho_perp) {
-		double casual = 0;
+	auto mode_sum = [mode] (double nu, double rho_perp, double z_perp) {
 		double sum = 0;
-		double z_perp = vt - vt_perp + z;
-		sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
-		sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
-		sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
-		sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
-		return sum * j0(nu * std::sqrt(casual));
-	}; */
-
-	auto mode_step = [mode,phi,z,vt] (double nu, double vt_perp, double rho_perp, double z_perp) {
-		double casual = 0;
-		double sum = 0;
-		sum += mode(-1, rho_perp, z_perp, vt_perp, nu);
-		sum += mode( 1, rho_perp, z_perp, vt_perp, nu);
-		sum += mode(-3, rho_perp, z_perp, vt_perp, nu);
-		sum += mode( 3, rho_perp, z_perp, vt_perp, nu);
-		return sum * j0(nu * std::sqrt(casual));
+		sum += mode(-1, rho_perp, z_perp, nu);
+		sum += mode( 1, rho_perp, z_perp, nu);
+		sum += mode(-3, rho_perp, z_perp, nu);
+		sum += mode( 3, rho_perp, z_perp, nu);
+		return sum;
 	};
 
-	/* std::vector< std::tuple<double,std::size_t,double> > limits_delta;
-	limits_delta.push_back(std::make_tuple(0, NU_POINTS, 1e3));
-	limits_delta.push_back(std::make_tuple(0, VT_POINTS, 2)); 
-	limits_delta.push_back(std::make_tuple(0, PHO_POINTS, 2));
-	SimpsonMultiDim int_delta = SimpsonMultiDim(limits_delta); */
+	std::vector< std::tuple<double,std::size_t,double> > limits;
+	limits.push_back(std::make_tuple(0, NU_POINTS, 1e3));
+	limits.push_back(std::make_tuple(0, PHO_POINTS, 2));
+	limits.push_back(std::make_tuple(0, Z_POINTS, 2));
+	SimpsonMultiDim multi = SimpsonMultiDim(limits);
 
-	std::vector< std::tuple<double,std::size_t,double> > limits_setp;
-	limits_setp.push_back(std::make_tuple(0, NU_POINTS, 1e3));
-	limits_setp.push_back(std::make_tuple(0, VT_POINTS, 2)); 
-	limits_setp.push_back(std::make_tuple(0, PHO_POINTS, 2));
-	limits_setp.push_back(std::make_tuple(0, Z_POINTS, 2));
-	SimpsonMultiDim int_step = SimpsonMultiDim(limits_setp);
-
-	throw std::logic_error("KerrAmendment::electric_x is not implemented");
-	// return coeff * (int_delta.value(mode_delta) + int_step.value(mode_step));
+	return - coeff * multi.value(mode_sum);
 }
 
 double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
@@ -184,29 +175,29 @@ double KerrAmendment::im_modal_source (double R, int m, double nu, double vt, do
 		case -1: { 
 			terms += 3 * KerrAmendment::N1(R,-1,nu,vt,rho,z);
 			terms += 1 * KerrAmendment::N2(R,-1,nu,vt,rho,z);
-			terms += 3 * KerrAmendment::N4(R,-1,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5(R,-1,nu,vt,rho,z);
+			terms += 3 * KerrAmendment::N3(R,-1,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N4(R,-1,nu,vt,rho,z);
 			break;
 		}
 		case 1: {
 			terms += 3 * KerrAmendment::N1(R, 1,nu,vt,rho,z);
 			terms += 1 * KerrAmendment::N2(R, 1,nu,vt,rho,z);
-			terms -= 3 * KerrAmendment::N4(R, 1,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N5(R, 1,nu,vt,rho,z);
+			terms -= 3 * KerrAmendment::N3(R, 1,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N4(R, 1,nu,vt,rho,z);
 			break; 
 		}
 		case -3: {
 			terms += 1 * KerrAmendment::N1(R,-3,nu,vt,rho,z);
 			terms -= 1 * KerrAmendment::N2(R,-3,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N4(R,-3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5(R,-3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N3(R,-3,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N4(R,-3,nu,vt,rho,z);
 			break; 
 		}
 		case 3: { 
 			terms -= 1 * KerrAmendment::N1(R, 3,nu,vt,rho,z);
 			terms -= 1 * KerrAmendment::N2(R, 3,nu,vt,rho,z);
-			terms -= 1 * KerrAmendment::N4(R, 3,nu,vt,rho,z);
-			terms += 1 * KerrAmendment::N5(R, 3,nu,vt,rho,z);
+			terms -= 1 * KerrAmendment::N3(R, 3,nu,vt,rho,z);
+			terms += 1 * KerrAmendment::N4(R, 3,nu,vt,rho,z);
 			break; 
 		}
 
@@ -233,10 +224,10 @@ double KerrAmendment::N2 (double R, int m, double nu, double vt, double rho, dou
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
-	return -m * jn(m, nu*rho) * (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
+	return m * jn(m, nu*rho) * (i2-i1) * (i1_perp*(i2-i1) + 2*i1*(i2_perp-i1_perp));
 }
 
-double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, double z)
+double KerrAmendment::N3 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
 	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
@@ -248,7 +239,7 @@ double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, dou
 	return -1.5 * nu * rho * bessel_diff * (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp);
 }
 
-double KerrAmendment::N5 (double R, int m, double nu, double vt, double rho, double z)
+double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
 	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
@@ -258,7 +249,7 @@ double KerrAmendment::N5 (double R, int m, double nu, double vt, double rho, dou
 	double bessel_diff = jn(m-1,rho*nu) - jn(m+1,rho*nu);
 	double imult_perp = i1 * (i2_perp - i1_perp) + 2 * i1_perp * (i2 - i1);
 
-	return -1.5 * nu * rho * bessel_diff * imult_perp;
+	return -0.5 * nu * rho * bessel_diff * i1 * imult_perp;
 }
 
 /* partial derivatives of I1 and I2 by time */

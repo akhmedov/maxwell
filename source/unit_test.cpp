@@ -312,27 +312,28 @@ bool UnitTest::imptoper_int_bessel ()
 
 bool UnitTest::simpson_dim ()
 {
-	auto func = [] (double w, double x, double y, double z) {
-		return w * x * y * z;
+	double radius = 1;
+
+	auto func = [] (double rho, double phi, double theta) {
+		UNUSED(phi);
+		return rho * rho * sin(theta);
 	};
 
-	auto anal = [] () {
-		return 16.0;
+	auto int_func = [radius] () {
+		double R3 = radius * radius * radius;
+		return 4 * M_PI * R3 / 3;
 	};
 
-	vector< tuple<double,size_t,double> > limits;
-	limits.push_back(make_tuple(0, 70, 2));
-	limits.push_back(make_tuple(0, 70, 2));
-	limits.push_back(make_tuple(0, 70, 2));
-	limits.push_back(make_tuple(0, 70, 2));
+	vector<tuple<double,size_t,double>> limits;
+	limits.push_back( make_tuple(0,200,radius) );
+	limits.push_back( make_tuple(0,200,M_PI_2) );
+	limits.push_back( make_tuple(0,200,M_PI_2) );
+
 	SimpsonMultiDim integral = SimpsonMultiDim(limits);
-	double numeric = integral.value(func);
+	double volume = 8 * integral.value(func);
+	double error = 100 * abs(volume-int_func()) / int_func();
 
-	double diff = abs(numeric - anal());
-	double error = 100 * diff / anal();
-
-	if (error >= 5) return false;
-	return true;
+	return error < 1 ? true : false;
 }
 
 bool UnitTest::real_convolution ()
