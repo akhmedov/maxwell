@@ -23,7 +23,8 @@
 
 struct PlotTest : private Math, private Integral, private KerrAmendment {
 
-	static void numeric_perp(double omega = 1);
+	static void I1_numeric_integral (std::size_t points = 1e4, double limits = 1e5);
+	static void numeric_perp (double omega = 1);
 	static void I1_I2_versus (double rho, double z, double R = 1);
 	static void I1_time_partder (double rho, double z, double R = 1);
 	static void I2_time_partder (double rho, double z, double R = 1);

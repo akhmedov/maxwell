@@ -62,14 +62,13 @@ struct KerrAmendment : public NonlinearField {
 
 protected:
 
-	static double im_modal_source_sum (double R, double nu, double ct, double rho_perp, double z);
-	static double im_modal_source (double R, int m, double nu, double ct, double rho_perp, double z);
-	static double riemann (double nu, double vt_diff, double z_diff); 
+	static double x_trans (int m, double nu, double rho, double phi);
 
-	static double N1 (double R, int m, double nu, double ct, double varrho, double z);
-	static double N2 (double R, int m, double nu, double ct, double varrho, double z);
-	static double N4 (double R, int m, double nu, double ct, double varrho, double z);
-	static double N5 (double R, int m, double nu, double ct, double varrho, double z);
+	static double N_sum (double R, int m, double nu, double ct, double rho_perp, double z); 
+	static double N1    (double R, int m, double nu, double ct, double varrho, double z);
+	static double N2    (double R, int m, double nu, double ct, double varrho, double z);
+	static double N3    (double R, int m, double nu, double ct, double varrho, double z);
+	static double N4    (double R, int m, double nu, double ct, double varrho, double z);
 
 	static double int_bessel_011_perp (double vt, double z, double rho, double R);
 	static double int_bessel_001_perp (double vt, double z, double rho, double R);

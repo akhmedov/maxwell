@@ -59,52 +59,51 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPl
 double KerrAmendment::electric_x (double vt, double rho, double phi, double z) const
 {
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	double eps0 = NonlinearMedium::EPS0;
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
-	double mu0 = NonlinearMedium::MU0;
 	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double em_relation = mu0 * mu_r / eps0 * eps_r;
-	double A0 = this->A0;
+	double em_relation = NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r;
+	double coeff = kerr * this->A0 * this->A0 * this->A0 * em_relation * em_relation / 128;
 	double R = this->R;
-	double coeff = kerr / eps_r / mu_r * A0 * A0 * A0 * em_relation * em_relation / 128;
-	
-	mpf_class vt_z = mpf_class(vt * vt);
-	mpf_div(vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
-	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (vt_z.get_d() <= 0) return 0;
 
-	auto mode = [R, vt, rho, phi, z] (int m, double rho_perp, double z_perp, double nu) {
-		double vect_rho = std::cos(phi) * std::cos(m * phi);
-		double vect_phi = std::sin(phi) * std::sin(m * phi);
-		vect_rho *= jn(m-1, nu * rho) + jn(m+1, nu * rho);
-		vect_phi *= jn(m-1, nu * rho) - jn(m+1, nu * rho);
-		double delta_int = KerrAmendment::im_modal_source(R,m,nu,vt-z+z_perp,rho_perp,z);
-		
-		auto step_int = [R, m, vt, z, nu, rho_perp, z_perp] (double vt_perp) {
+	auto mode_sum = [R, vt, rho, phi, z] (double nu, double rho_perp, double z_perp) {
+
+		double vt_perp = vt - z + z_perp;
+		if (vt_perp <= 0) return 0.0;
+
+		double delta_sum = 0;
+		delta_sum += KerrAmendment::x_trans(-1, nu, rho, phi) *
+					 KerrAmendment::N_sum(R,-1,nu,vt_perp,rho_perp,z_perp);
+		delta_sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
+					 KerrAmendment::N_sum(R, 1,nu,vt_perp,rho_perp,z_perp);
+		delta_sum += KerrAmendment::x_trans(-3, nu, rho, phi) *
+					 KerrAmendment::N_sum(R,-3,nu,vt_perp,rho_perp,z_perp);
+		delta_sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
+					 KerrAmendment::N_sum(R, 3,nu,vt_perp,rho_perp,z_perp);
+
+		auto step_sum = [R, vt, rho, phi, z, nu, rho_perp, z_perp] (double vt_perp) {
 			double delta_vt = vt-vt_perp;
 			double delta_z = z-z_perp;
-			double source_perp = KerrAmendment::im_modal_source(R,m,nu,vt_perp,rho_perp,z_perp);
 			double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z); 
-			return nu * nu * (vt-vt_perp) * (jn(0,nu * casual) + jn(2,nu * casual)) * source_perp / 2;
+			double sum = 0;
+			sum += KerrAmendment::x_trans(-1, nu, rho, phi) *
+				   KerrAmendment::N_sum(R,-1,nu,vt_perp,rho_perp,z_perp);
+			sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, 1,nu,vt_perp,rho_perp,z_perp);
+			sum += KerrAmendment::x_trans(-3, nu, rho, phi) *
+				   KerrAmendment::N_sum(R,-3,nu,vt_perp,rho_perp,z_perp);
+			sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, 3,nu,vt_perp,rho_perp,z_perp);
+			return sum * nu * nu * delta_vt * (jn(0,nu * casual) + jn(2,nu * casual)) / 2;
 		};
 
-		Simpson tau_int = Simpson(40);
-		return (vect_rho + vect_phi) * (delta_int - tau_int.value(0, 2*R, step_int));
-	};
-
-	auto mode_sum = [mode] (double nu, double rho_perp, double z_perp) {
-		double sum = 0;
-		sum += mode(-1, rho_perp, z_perp, nu);
-		sum += mode( 1, rho_perp, z_perp, nu);
-		sum += mode(-3, rho_perp, z_perp, nu);
-		sum += mode( 3, rho_perp, z_perp, nu);
-		return sum;
+		Simpson tau_int = Simpson(vt_perp * 50);
+		return delta_sum - tau_int.value(0, vt_perp, step_sum);
 	};
 
 	std::vector< std::tuple<double,std::size_t,double> > limits;
-	limits.push_back(std::make_tuple(0, NU_POINTS, 1e3));
-	limits.push_back(std::make_tuple(0, PHO_POINTS, 2));
-	limits.push_back(std::make_tuple(0, Z_POINTS, 2));
+	limits.push_back(std::make_tuple(0, 500, 50));
+	limits.push_back(std::make_tuple(0, 2*R * 50, 2*R));
+	limits.push_back(std::make_tuple(0, z * 50, z));
 	SimpsonMultiDim multi = SimpsonMultiDim(limits);
 
 	return - coeff * multi.value(mode_sum);
@@ -148,26 +147,16 @@ double KerrAmendment::magnetic_z (double vt, double rho, double phi, double z) c
 
 /* */
 
-double KerrAmendment::riemann (double nu, double vt_diff, double z_diff)
-{ 
-	double distance = vt_diff * vt_diff - z_diff * z_diff;
-	if (distance > 0) distance = std::sqrt(distance);
-	else std::invalid_argument("Interval is not legal!");
-
-	return j0(nu * distance);
-}
-
-double KerrAmendment::im_modal_source_sum (double R, double nu, double vt, double rho, double z)
+double KerrAmendment::x_trans (int m, double nu, double rho, double phi)
 {
-	double mode_m3 = KerrAmendment::im_modal_source(R,-3,nu,vt,rho,z);
-	double mode_m1 = KerrAmendment::im_modal_source(R,-1,nu,vt,rho,z);
-	double mode_p1 = KerrAmendment::im_modal_source(R, 1,nu,vt,rho,z);
-	double mode_p3 = KerrAmendment::im_modal_source(R, 3,nu,vt,rho,z);
-	
-	return mode_m3 + mode_m1 + mode_p1 + mode_p3;
+	double vect_rho = std::cos(phi) * std::cos(m * phi);
+	double vect_phi = std::sin(phi) * std::sin(m * phi);
+	vect_rho *= jn(m-1, nu * rho) + jn(m+1, nu * rho);
+	vect_phi *= jn(m-1, nu * rho) - jn(m+1, nu * rho);
+	return vect_rho + vect_phi;
 }
 
-double KerrAmendment::im_modal_source (double R, int m, double nu, double vt, double rho, double z)
+double KerrAmendment::N_sum (double R, int m, double nu, double vt, double rho, double z)
 {
 	double terms = 0;
 

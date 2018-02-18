@@ -14,11 +14,9 @@ int main()
 {
 	PlotTest::set_options();
 
-	/* std::cout << std::endl << "PlotTest::";
-	std::cout << "numeric_perp(omega = 1) " << std::endl;
-	PlotTest::numeric_perp(); */
+	/* DERIVATIVE OF I1 AND I2 */
 
-	std::cout << std::endl << "PlotTest::";
+	/* std::cout << std::endl << "PlotTest::";
 	std::cout << "I1_time_partder(rho = 0.5, z = 0.6, R = 1) " << std::endl;
 	PlotTest::I1_time_partder (0.5,0.6);
 	
@@ -44,11 +42,25 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "I2_time_partder(rho = 0.5, z = 1.21, R = 0.1) " << std::endl;
-	PlotTest::I2_time_partder (2,1,0.1);
+	PlotTest::I2_time_partder (2,1,0.1); */
 
-	/* std::cout << std::endl << "PlotTest::";
-	std::cout << "kerr_undeintegral( ct'=0, rho'=0, phi'=0, z'=0, R=1) " << std::endl;
-	PlotTest::kerr_ammend_undeintegral (0,0,0,0); */
+	/* I1 NUMERICAL INTEGRAL WITH N POINTS */
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
+	PlotTest::I1_numeric_integral(1e3,1e2);
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
+	PlotTest::I1_numeric_integral(1e3,1e1);
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
+	PlotTest::I1_numeric_integral(1e2,1e1);
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
+	PlotTest::I1_numeric_integral(2e1,2e1);
 }
 
 void PlotTest::set_options ()
@@ -56,6 +68,43 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+void PlotTest::I1_numeric_integral (std::size_t points, double limit)
+{
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+
+	double a = 1, b = 0.5;
+
+	for (double c = 0; c < 2; c += 0.05) {
+
+		auto f = [a, b, c] (double x) {
+			if (b == 0) return a * 0.5 * j1(a*x) * j0(c*x);
+			if (x == 0) return 0.0;
+			return a * j1(a*x) * j1(b*x) * j0(c*x) / (x * b);
+		};
+
+		double anal = MissileField::int_bessel_011(c, b, a);
+		Simpson I = Simpson(points);
+		double numerics = I.value(0, limit, f);
+
+		line = {c, anal, numerics};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::parula);
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("");
+	plot->grid_on();
+	plot->cage_on();
+	std::vector<std::string> title = {"analitical integral",
+									  "numerical aproximathin"};
+	plot->plot_multi(plot_data, title);
+	plot->call_gnuplot();
 }
 
 void PlotTest::numeric_perp(double omega)
@@ -90,7 +139,7 @@ void PlotTest::numeric_perp(double omega)
 									  "3th order aproximathin",
 									  "4th order aproximathin"};
 	plot->plot_multi(plot_data, title);
-	plot->call_gnuplot();	
+	plot->call_gnuplot();
 }
 
 void PlotTest::I1_I2_versus (double rho, double z, double R)
