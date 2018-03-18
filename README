@@ -94,12 +94,11 @@ libmysqlclient-dev - mysql client connector
 
 ### BUG LIST ###
 
++ phi select query in data base
 - mysql connection on Linux; bad_typeid(), race_condition, database NULL fill 
 - config object is not updated if called from main(). Investigate?
 - fix noise type configuration by precompiler define-vars
 - computation manager main thread sleep mode (efficiency?)
-- noise in Congig:: and CLI:: is only 1 param (must be AVARAGE,SIGMA) 
-- noise classes are not using ct, rho, phi, z
 - numerical linear vs analitical linear
 - refactor GnuPlot::write_commants_to_script()
 + refactor of --arg parther in main.cpp
@@ -125,6 +124,7 @@ libmysqlclient-dev - mysql client connector
 
 ### TODO LIST ###
 
+- secure culculation flag
 - numerics implementaion if Hy(ct,r) in linear medium
 - smart pointers all over the code
 + numerical and analitic implementation of E(ct) by CLI option
@@ -143,6 +143,7 @@ libmysqlclient-dev - mysql client connector
 + add function GnuPlot::multi_plot2d()
 - add function GnuPlot::animation_plot2d()
 - add function GnuPlot::animation_plot3d()
+- noise field  AbstuctField::WightAdditiveGaussNoise() 
 
 - call gnuplot from enter point without system() call (version 1.0)
 - client server calculation ability through web soket (version 1.0)

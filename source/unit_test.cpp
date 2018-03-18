@@ -310,7 +310,67 @@ bool UnitTest::imptoper_int_bessel ()
 	return (error_s < 1 ? true : false) && (error_mc < 4 ? true : false);
 }
 
-bool UnitTest::simpson_dim ()
+bool UnitTest::simpson2d ()
+{
+	double radius = 1;
+
+	auto func = [] (double rho, double phi) {
+		UNUSED(phi);
+		return rho;
+	};
+
+	double etalon = M_PI * radius * radius;
+
+	vector<tuple<double,size_t,double>> limits;
+	limits.push_back( make_tuple(0,300,radius) );
+	limits.push_back( make_tuple(0,300,M_PI_2) );
+
+	Simpson2D integral = Simpson2D(limits);
+	double square = 4 * integral.value(func);
+	double error = 100 * abs(square-etalon) / etalon;
+
+	return error < 1 ? true : false;
+}
+
+bool UnitTest::simpson2d_line ()
+{
+	double a = 2;
+	double terms = 400;
+	auto func = [] (double x, double y) { return x * y; };
+
+	Simpson2D_line integral = Simpson2D_line();
+	integral.first_limit(0, terms, a);
+	auto min_y = [] (double x) { return 0; };
+	auto max_y = [] (double x) { return x; };
+	integral.second_limit(min_y, terms, max_y);
+
+	double res = integral.value(func);
+	double error = 100 * abs(res-2) / 2;
+	return error < 1 ? true : false;
+}
+
+bool UnitTest::simpson2d_line2 ()
+{
+	double radius = 1;
+	double terms = 300;
+
+	auto func = [] (double rho, double phi) {
+		UNUSED(phi);
+		return rho;
+	};
+
+	Simpson2D_line integral = Simpson2D_line();
+	integral.first_limit(0, terms, radius);
+	auto min_y = [] (double x) { return 0;      };
+	auto max_y = [] (double x) { return M_PI_2; };
+	integral.second_limit(min_y, terms, max_y);
+
+	double res = 4 * integral.value(func);
+	double error = 100 * abs(res-M_PI) / M_PI;
+	return error < 1 ? true : false;
+}
+
+bool UnitTest::simpson3d ()
 {
 	double radius = 1;
 
@@ -329,7 +389,7 @@ bool UnitTest::simpson_dim ()
 	limits.push_back( make_tuple(0,200,M_PI_2) );
 	limits.push_back( make_tuple(0,200,M_PI_2) );
 
-	SimpsonMultiDim integral = SimpsonMultiDim(limits);
+	Simpson3D integral = Simpson3D(limits);
 	double volume = 8 * integral.value(func);
 	double error = 100 * abs(volume-int_func()) / int_func();
 
@@ -445,9 +505,21 @@ int main()
 	cout.flush();
 	cout << UnitTest::simpson_I2() << endl;
 
-	cout << "Math::UnitTest::simpson_dim \t\t\t"; 
+	cout << "Math::UnitTest::simpson2d \t\t\t"; 
 	cout.flush();
-	cout << UnitTest::simpson_dim() << endl;
+	cout << UnitTest::simpson2d() << endl;
+
+	cout << "Math::UnitTest::simpson2d_line \t\t\t"; 
+	cout.flush();
+	cout << UnitTest::simpson2d_line() << endl;
+
+	cout << "Math::UnitTest::simpson2d_line2 \t\t"; 
+	cout.flush();
+	cout << UnitTest::simpson2d_line2() << endl;
+
+	cout << "Math::UnitTest::simpson3d \t\t\t"; 
+	cout.flush();
+	cout << UnitTest::simpson3d() << endl;
 
 	cout << "KerrAmendment::UnitTest::field_getters \t\t"; 
 	cout.flush();

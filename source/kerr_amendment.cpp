@@ -8,6 +8,8 @@
 
 #include "kerr_amendment.hpp"
 
+/* Nonlinear medium */
+
 KerrMedium::KerrMedium (double realative_mu, double realative_eps, double kerr, double conduct) 
 : Homogeneous(realative_mu, realative_eps) 
 {
@@ -46,7 +48,58 @@ double KerrMedium::relative_permeability (double ct, double z, std::size_t term)
 	}
 }
 
-/* */
+/* Nonlinear ammendmend */
+
+double KerrAmendment::current_x (double vt, double rho, double phi, double z) const
+{
+	const double current_rho = this->current_rho(vt,rho,phi,z);
+	const double current_phi = this->current_phi(vt,rho,phi,z);
+	return current_rho * std::cos(phi) - current_phi * std::sin(phi);
+}
+
+double KerrAmendment::current_rho (double vt, double rho, double phi, double z) const
+{
+	double eps_r = this->nl_medium->relative_permittivity(vt,z);
+	double mu_r = this->nl_medium->relative_permeability(vt,z);
+	double em_relation = std::sqrt(NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r);
+	double A3 = this->A0 * this->A0 * this->A0;
+
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
+	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
+
+	double mult1 = i1_perp * (i2 - i1);
+	double mult2 = i1 * (i2_perp - i1_perp);
+
+	double coeff = A3 * em_relation * em_relation * em_relation / 8;
+	double cos3sin0 = 3 * i1 * i1 * i1_perp * std::cos(phi) * std::cos(phi) * std::cos(phi);
+	double cos1sin2 = (i2 - i1) * (mult1 + 2 * mult2) * std::cos(phi) * std::sin(phi) * std::sin(phi);
+	return coeff * (cos3sin0 + cos1sin2);
+}
+
+double KerrAmendment::current_phi (double vt, double rho, double phi, double z) const
+{
+	double eps_r = this->nl_medium->relative_permittivity(vt,z);
+	double mu_r = this->nl_medium->relative_permeability(vt,z);
+	double em_relation = std::sqrt(NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r);
+	double A3 = this->A0 * this->A0 * this->A0;
+
+	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
+	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
+	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
+
+	double mult1 = i1_perp * (i2 - i1);
+	double mult2 = i1 * (i2_perp - i1_perp);
+
+	double coeff = A3 * em_relation * em_relation * em_relation / 8;
+	double cos0sin3 = 3 * (i2 - i1) * (i2 - i1) * (i2_perp - i1_perp) * std::sin(phi) * std::sin(phi) * std::sin(phi);
+	double cos2sin1 = i1 * (2 * mult1 + mult2) * std::cos(phi) * std::cos(phi) * std::sin(phi);
+	return - coeff * (cos0sin3 + cos2sin1);
+}
 
 KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source)
 : NonlinearField(field, medium) 
@@ -58,54 +111,77 @@ KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPl
 
 double KerrAmendment::electric_x (double vt, double rho, double phi, double z) const
 {
+	double vt_z = vt - z;
+	if (z == 0) return 0;
+	if (vt_z < 1e-9) return 0;
+
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
 	double mu_r = this->nl_medium->relative_permeability(vt,z);
 	double em_relation = NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r;
 	double coeff = kerr * this->A0 * this->A0 * this->A0 * em_relation * em_relation / 128;
-	double R = this->R;
+	double R = this->R; 
 
-	auto mode_sum = [R, vt, rho, phi, z] (double nu, double rho_perp, double z_perp) {
+	auto mode_sum = [R, vt, rho, phi, z] (double rho_perp, double z_perp) {
+		
+		double max_vt = vt - z + z_perp; // grater then zero
 
-		double vt_perp = vt - z + z_perp;
-		if (vt_perp <= 0) return 0.0;
-
-		double delta_sum = 0;
-		delta_sum += KerrAmendment::x_trans(-1, nu, rho, phi) *
-					 KerrAmendment::N_sum(R,-1,nu,vt_perp,rho_perp,z_perp);
-		delta_sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
-					 KerrAmendment::N_sum(R, 1,nu,vt_perp,rho_perp,z_perp);
-		delta_sum += KerrAmendment::x_trans(-3, nu, rho, phi) *
-					 KerrAmendment::N_sum(R,-3,nu,vt_perp,rho_perp,z_perp);
-		delta_sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
-					 KerrAmendment::N_sum(R, 3,nu,vt_perp,rho_perp,z_perp);
-
-		auto step_sum = [R, vt, rho, phi, z, nu, rho_perp, z_perp] (double vt_perp) {
-			double delta_vt = vt-vt_perp;
-			double delta_z = z-z_perp;
-			double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z); 
+		auto delta_sum = [R, vt, rho, phi, z, max_vt, rho_perp, z_perp] (double nu) {
 			double sum = 0;
-			sum += KerrAmendment::x_trans(-1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R,-1,nu,vt_perp,rho_perp,z_perp);
+			sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, -1, nu, max_vt, rho_perp, z_perp);
 			sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 1,nu,vt_perp,rho_perp,z_perp);
-			sum += KerrAmendment::x_trans(-3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R,-3,nu,vt_perp,rho_perp,z_perp);
+				   KerrAmendment::N_sum(R, 1, nu, max_vt, rho_perp, z_perp);
+			sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, -3, nu, max_vt, rho_perp, z_perp);
 			sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 3,nu,vt_perp,rho_perp,z_perp);
-			return sum * nu * nu * delta_vt * (jn(0,nu * casual) + jn(2,nu * casual)) / 2;
+				   KerrAmendment::N_sum(R, 3, nu, max_vt, rho_perp, z_perp);
+			return sum;
 		};
 
-		Simpson tau_int = Simpson(vt_perp * 50);
-		return delta_sum - tau_int.value(0, vt_perp, step_sum);
+		auto step_sum = [R, vt, rho, phi, z, rho_perp, z_perp] (double nu, double vt_perp) {
+			double delta_vt = vt - vt_perp;
+			double delta_z = z - z_perp;
+			if (delta_vt - delta_z <= 0) return 0.0;
+			double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z);
+			double bessel = jn(0,nu * casual) + jn(2,nu * casual); 
+			double sum = 0;
+			sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, -1, nu, vt_perp, rho_perp, z_perp);
+			sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, 1, nu, vt_perp, rho_perp, z_perp);
+			sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, -3, nu, vt_perp, rho_perp, z_perp);
+			sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
+				   KerrAmendment::N_sum(R, 3, nu, vt_perp, rho_perp, z_perp);
+			return sum * nu * nu * delta_vt * bessel / 2;
+		};
+
+		double max_nu1 = 10 * std::abs(rho - rho_perp);
+		double step_pints_nu = 7 * (rho + rho_perp) + 2;
+		Simpson nu_int = Simpson(step_pints_nu * max_nu1);
+
+		Simpson2D_line tau_nu_int = Simpson2D_line();
+		tau_nu_int.first_limit(0, 50, max_vt);
+		auto min_nu2 = [] (double vt_perp) { 
+			return 0; 
+		};
+		auto max_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) { 
+			return 10 * std::abs(rho - rho_perp - std::sqrt(vt - vt_perp - z + z_perp)); 
+		};
+		tau_nu_int.second_limit(min_nu2, 700, max_nu2);
+		
+		double first = nu_int.value(0, max_nu1, delta_sum);
+		if (std::isnan(first)) first = 0;
+		double second = tau_nu_int.value(step_sum);
+		if (std::isnan(second)) second = 0;
+		return first - second;
 	};
 
 	std::vector< std::tuple<double,std::size_t,double> > limits;
-	limits.push_back(std::make_tuple(0, 500, 50));
-	limits.push_back(std::make_tuple(0, 2*R * 50, 2*R));
-	limits.push_back(std::make_tuple(0, z * 50, z));
-	SimpsonMultiDim multi = SimpsonMultiDim(limits);
-
+	limits.push_back(std::make_tuple(0, 50, 2*R));
+	limits.push_back(std::make_tuple(0, 50, 2*R));
+	Simpson2D multi = Simpson2D(limits);
 	return - coeff * multi.value(mode_sum);
 }
 
@@ -158,6 +234,11 @@ double KerrAmendment::x_trans (int m, double nu, double rho, double phi)
 
 double KerrAmendment::N_sum (double R, int m, double nu, double vt, double rho, double z)
 {
+	if ( vt   == 0 ) return 0.0;
+	if ( z    == 0 ) return 0.0;
+	if ( nu   == 0 ) return 0.0; // becouse math
+	if ( rho  == 0 ) return 0.0; // becouse derivative
+	if ( vt-z <= 0 ) return 0.0; // casuality princip
 	double terms = 0;
 
 	switch (m) {
@@ -248,12 +329,10 @@ double KerrAmendment::int_bessel_011_perp (double vt, double z, double rho, doub
 	double vt_z = vt * vt - z * z;
 	double rho2 = rho * rho;
 	double R2 = R * R;
-
-	#ifdef DEBUG
-		if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
-		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
-	#endif /* DEBUG */
+ 
+	if (vt_z < 0) throw std::invalid_argument("ct-z < 0 is not legal!");
+	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 
 	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
 	if (R > rho + std::sqrt(vt_z)) return 0.0;
@@ -274,11 +353,9 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	double rho2 = rho * rho;
 	double R2 = R * R;
 
-	#ifdef DEBUG
-		if (vt_z <= 0) throw std::invalid_argument("ct-z <= 0 is not legal");
-		if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
-		if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
-	#endif /* DEBUG */
+	if (vt_z < 0) throw std::invalid_argument("ct-z < 0 is not legal!");
+	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
+	if (R <= 0) throw std::invalid_argument("R <= 0 is not legal");
 
 	if (R < std::abs(rho - std::sqrt(vt_z))) return 0.0;
 	if (R > rho + std::sqrt(vt_z)) return 0.0;

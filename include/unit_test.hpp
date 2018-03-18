@@ -35,6 +35,8 @@ struct UnitTest : private Math, private Integral, private KerrAmendment {
 	static bool bessel_perp ();
 	static bool simpson_I1 ();
 	static bool simpson_I2 ();
+	static bool simpson2d ();
+	static bool simpson3d ();
 	static bool invers_sqrt ();
 	static bool field_getters ();
 	static bool real_convolution ();
@@ -44,9 +46,10 @@ struct UnitTest : private Math, private Integral, private KerrAmendment {
 	static bool monte_carlo_improper ();
 	static bool imptoper_int_bessel ();
 	static bool yacobi_pol_compare ();
-	static bool simpson_dim ();
 	static bool I1_time_partder ();
 	static bool I2_time_partder ();
+	static bool simpson2d_line ();
+	static bool simpson2d_line2 ();
 };
 
 #endif /* unit_test_hpp */

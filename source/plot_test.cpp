@@ -46,7 +46,7 @@ int main()
 
 	/* I1 NUMERICAL INTEGRAL WITH N POINTS */
 
-	std::cout << std::endl << "PlotTest::";
+	/* std::cout << std::endl << "PlotTest::";
 	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
 	PlotTest::I1_numeric_integral(1e3,1e2);
 
@@ -60,7 +60,13 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "I1_numeric_integral(1e3,1e2) " << std::endl;
-	PlotTest::I1_numeric_integral(2e1,2e1);
+	PlotTest::I1_numeric_integral(2e1,2e1); */
+
+	/* NONLINEAR ELECTRIC CURRENT DISTRIBUTION J' */
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "nonlinear_current(phi=0,z=0) " << std::endl;
+	PlotTest::nonlinear_current(3.14159,0.5);
 }
 
 void PlotTest::set_options ()
@@ -68,6 +74,45 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+void PlotTest::nonlinear_current (double phi, double z)
+{
+	double R = 1;
+	double eps_r = 1;
+	double mu_r = 1;
+	double xi3 = 0;
+	// double inv_em_relation = NonlinearMedium::EPS0 * eps_r / NonlinearMedium::MU0 * mu_r;
+	double A0 = 2;//* inv_em_relation;
+
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, 0);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, linear_medium);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	std::vector<std::vector<double>> plot_data;
+
+	for (double rho = 0.0; rho <= 1.5; rho += 0.01) {
+		for (double ct = 0.4; ct <= 1.5; ct += 0.01) {
+			if (ct - z <= 0) {
+				plot_data.push_back({0,ct,rho});
+			} else {
+				double j1 = non_linear->current_x(ct,rho,phi,z);
+				plot_data.push_back({j1,ct,rho});
+			}
+		}
+	}
+
+	GnuPlot* plot = new GnuPlot(PlotTest::global_conf->gnp_script_path());
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	// plot->set_colormap(Colormap::parula);
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("rho, m");
+	plot->set_oz_label("");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot3d(plot_data);
+	plot->call_gnuplot();
 }
 
 void PlotTest::I1_numeric_integral (std::size_t points, double limit)

@@ -52,8 +52,8 @@ CLI::CLI (Config* conf)
 
 	this->unar_cmd = {
 		{"--help"},
-		{"--version"} /*,
-		{"--renoise"} */
+		{"--version"},
+		{"--safe"}
 	};
 }
 
@@ -199,7 +199,10 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 		double rad = M_PI / 180;
 		if (CLI::is_range_value(wp[2])) {
 			std::vector<std::string> phi = CLI::split(wp[2],':');
-			this->global_conf->receiver_phi(rad*std::stod(phi[0]), rad*std::stod(phi[1]), rad*std::stod(phi[2]));
+			double rad0 = rad*std::stod(phi[0]); rad0 = roundf(rad0 * 100000) / 100000;
+			double rad1 = rad*std::stod(phi[1]); rad1 = roundf(rad1 * 100000) / 100000;
+			double rad2 = rad*std::stod(phi[2]); rad2 = roundf(rad2 * 100000) / 100000;
+			this->global_conf->receiver_phi(rad0,rad1,rad2);
 		} else this->global_conf->receiver_phi(rad*std::stod(wp[2]));
 
 		if (CLI::is_range_value(wp[3])) {
@@ -217,8 +220,8 @@ void CLI::update_config (const std::string& param) const
 	if (!param.compare("--version"))
 		this->global_conf->version_opt(true);
 
-	/* if (!param.compare("--renoise"))
-		this->global_conf->reset_noise(true); */
+	if (!param.compare("--safe"))
+		this->global_conf->safe_mode(true);
 }
 
 bool CLI::is_float ( const std::string& literal )
@@ -359,7 +362,7 @@ void CLI::print_help () const
 {
 	// [--renoise] 
 
-	std::cout << "usage: maxwell [--version] [--help] [--conf <posix_path>]" << std::endl;
+	std::cout << "usage: maxwell [--version] [--help] [--safe] [--conf <posix_path>]" << std::endl;
 	std::cout << "               [--shape <type>] [--duration <float>] [<MODEL> <model_num>]" << std::endl;
 	std::cout << "               [--magnitude <float>] [--radius <float>] [--kerr <float>]" << std::endl;
 	std::cout << "               [--mur <float>] [--epsr <float>] [--noise <percent,percent>]" << std::endl;
@@ -445,7 +448,15 @@ void CLI::print_arguments () const
 	std::cout << "Magnetic component terms number: " << this->global_conf->magnetic_term_num() << std::endl;
 	std::cout << "Float bitrae of GMP: " << this->global_conf->float_bitrate() << std::endl;
 	std::cout << "Calculation thread number: " << this->global_conf->thread_number() << std::endl;
-	std::cout << "... " << std::endl;
+	
+	if (this->global_conf->safe_mode()) {
+		std::string server = this->global_conf->mysql_username() + "@" + this->global_conf->mysql_hostname(); 
+		std::cout << "MySQL client will try to connect to " << server << "..." << std::endl;
+	} else {
+		std::cout << "No data base conection." << std::endl;
+		std::cout << "Use --safe flag to store progress on hard drive." << std::endl;
+	}
+	std::cout << "..." << std::endl;
 }
 
 void CLI::read_config_file () const

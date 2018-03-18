@@ -31,12 +31,8 @@ struct MySQL {
 
 	MySQL (Config* global_config);
 	std::string get_hostname() const;
-	void reset_noise () const;
 	void select_point (double ct, double rho, double phi, double z);
 	~MySQL ();
-
-	double get_noise () const;
-	void set_noise (double value);
 
 	double get_linear () const;
 	void set_linear (double value);
@@ -63,7 +59,7 @@ private:
 	Config* global_config;
 	MYSQL* connection;
 
-	double noise;
+	// double noise;
 	double linear;
 	double square;
 	double kerr;

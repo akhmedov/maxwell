@@ -10,10 +10,8 @@
 
 const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_header WHERE radiator = '$RADIATOR_TYPE' AND component = '$FIELD_COMP' AND radius = $RADIUS_VAL AND magnitude = $MAGNITUDE_VAL AND mu_r = $MUR_VAL AND eps_r = $EPSR_VAL AND kerr_r = $KERR_VAL AND duration = 0 AND signal_type = 'rect';";
 const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = 0, signal_type = 'rect';";
-const std::string MySQL::SELECT_POINT      = "SELECT id,noise,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
+const std::string MySQL::SELECT_POINT      = "SELECT id,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
 const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
-const std::string MySQL::RESET_NOISE       = "UPDATE maxwell.maxwell_data SET noise   = NULL   WHERE head_id = $POINT;";
-const std::string MySQL::UPDATE_NOISE      = "UPDATE maxwell.maxwell_data SET noise   = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_LINEAR     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_SQUARE     = "UPDATE maxwell.maxwell_data SET square  = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_KERR       = "UPDATE maxwell.maxwell_data SET kerr    = $VALUE WHERE id = $POINT;";
@@ -92,7 +90,6 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 	select_point = std::regex_replace(select_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
 	select_point = std::regex_replace(select_point, std::regex("\\$DISTANCE"), std::to_string(z));
 
-
 	int error_code = mysql_query(this->connection, select_point.c_str());
 	MySQL::throw_error_code(error_code);
 
@@ -102,10 +99,9 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 	if (serch_row != NULL) {
 
 		this->point_id = std::stod(serch_row[0]);
-		this->noise    = /* serch_row[1] ? std::stod(serch_row[1]) : */ NAN;
-		this->linear   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
-		this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
-		this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;
+		this->linear   = serch_row[1] ? std::stod(serch_row[1]) : NAN;
+		this->square   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
+		this->kerr     = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 		mysql_free_result(serch_result);
 
 	} else {
@@ -119,28 +115,38 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 
 		error_code = mysql_query(this->connection, insert_point.c_str());
 		MySQL::throw_error_code(error_code);
-
 		mysql_free_result(serch_result);
-		error_code = mysql_query(this->connection, select_point.c_str());
+
+		/* error_code = mysql_query(this->connection, select_point.c_str());
 		MySQL::throw_error_code(error_code);
 		serch_result = mysql_store_result(this->connection);
 		serch_row = mysql_fetch_row(serch_result);
 
 		if (serch_row != NULL) {
 			this->point_id = std::stod(serch_row[0]);
-			this->noise    = /* serch_row[1] ? std::stod(serch_row[1]) : */ NAN;
-			this->linear   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
-			this->square   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
-			this->kerr     = serch_row[4] ? std::stod(serch_row[4]) : NAN;
-			// mysql_free_result(serch_result);
-		} else throw std::logic_error("Internal maxwell error in MySQL module");
-	}
-}
+			this->linear   = serch_row[1] ? std::stod(serch_row[1]) : NAN;
+			this->square   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
+			this->kerr     = serch_row[3] ? std::stod(serch_row[3]) : NAN;
+			mysql_free_result(serch_result);
+		} else throw std::logic_error("Internal maxwell error in MySQL module"); */
 
-void MySQL::reset_noise () const
-{
-	std::string reset_noise = MySQL::RESET_NOISE;
-	reset_noise = std::regex_replace(reset_noise, std::regex("\\$POINT"), std::to_string(this->point_id));
+		/* LAST_INSERTED_ID() with multi threading and several connected cliets?
+		The ID that was generated is maintained in the server on a per-connection 
+		basis. This means that the value returned by the function to a given 
+		client is the first AUTO_INCREMENT value generated for most recent 
+		statement affecting an AUTO_INCREMENT column by that client. This value 
+		cannot be affected by other clients, even if they generate AUTO_INCREMENT 
+		values of their own. This behavior ensures that each client can retrieve 
+		its own ID without concern for the activity of other clients, and without 
+		the need for locks or transactions. So unless your inserts for multiple 
+		users would happen to be made over the same database connection, you have 
+		nothing to worry about. */
+
+		this->point_id = mysql_insert_id(this->connection);
+		this->linear   = NAN;
+		this->square   = NAN;
+		this->kerr     = NAN;
+	}
 }
 
 std::string MySQL::get_hostname() const
@@ -248,30 +254,9 @@ void MySQL::set_kerr (double value)
 
 //=======================================================================================
 
-double MySQL::get_noise () const
-{
-	return this->noise;
-}
-
-void MySQL::set_noise (double value)
-{
-	this->noise = value;
-	
-	std::string update_noise = MySQL::UPDATE_NOISE;
-	update_noise = std::regex_replace(update_noise, std::regex("\\$VALUE"), std::to_string(value));
-	update_noise = std::regex_replace(update_noise, std::regex("\\$POINT"), std::to_string(this->point_id));
-	
-	int error_code = mysql_query(this->connection, update_noise.c_str());
-	MySQL::throw_error_code(error_code);
-}
-
-//=======================================================================================
-
 double MySQL::get_value(const std::type_info& type) const
 {
-	/* if (type == typeid(NoiseField)) {
-		return this->get_noise();
-	} else */ if (type == typeid(MissileField)) {
+	if (type == typeid(MissileField)) {
 		return this->get_linear();
 	} else if (type == typeid(KerrAmendment)) {
 		return this->get_kerr();
@@ -283,10 +268,7 @@ double MySQL::get_value(const std::type_info& type) const
 
 void MySQL::set_value(const std::type_info& type, double value)
 {
-	/* if (type == typeid(NoiseField)) {
-		this->set_noise(value);
-		return;
-	} else */ if (type == typeid(MissileField)) {
+	if (type == typeid(MissileField)) {
 		this->set_linear(value);
 		return;
 	} else if (type == typeid(KerrAmendment)) {

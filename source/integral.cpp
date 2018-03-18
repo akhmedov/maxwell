@@ -15,7 +15,7 @@ Simpson::Simpson( std::size_t terms )
 
 double Simpson::value (double from, double to, const std::function<double(double)> &func) const
 {
-	if (from >= to) throw std::invalid_argument("Low bound of integral is bigger then upper.");
+	if (from >= to) return 0;
 
 	double h = (to - from) / this->quadr_terms;
 	double I = 0;
@@ -40,58 +40,69 @@ double Simpson::value (double from, double to, const std::function<double(double
 
 // =========================================================================
 
-SimpsonMultiDim::SimpsonMultiDim ( const vector_tuple_did &limits )
+
+Simpson2D_line::Simpson2D_line () { }
+
+void Simpson2D_line::first_limit (double from, std::size_t terms, double to)
+{
+	this->x_min = from;
+	this->x_terms = terms;
+	this->x_max = to;
+}
+
+void Simpson2D_line::second_limit (const std::function<double(double)> &from, std::size_t max_terms, const std::function<double(double)> &to)
+{
+	this->y_min = from;
+	this->y_max_terms = max_terms;
+	this->y_max = to;
+}
+
+double Simpson2D_line::value (const std::function<double(double,double)> &func) const
+{
+	double I = 0;
+	double x = this->x_min;
+	double hx = (this->x_max - this->x_min) / this->x_terms;
+
+	if (this->x_max <= this->x_min) return 0;
+
+	while (x <= this->x_max - hx) {
+
+		double y = this->y_min(x);
+		double hy = (this->y_max(x) - this->y_min(x)) / this->y_max_terms;
+		double Iy = 0;
+
+		if (this->y_max(x) > this->y_min(x)) {
+		
+			while (y <= this->y_max(x) - hy) {
+				Iy += func(x,y);			Iy += 4 * func(x+hx/2,y);		Iy += func(x+hx,y);
+				Iy += 4 * func(x,y+hy/2);	Iy += 16 * func(x+hx/2,y+hy/2);	Iy += 4 * func(x+hx,y+hy/2);
+				Iy += func(x,y+hy);			Iy += 4 * func(x+hx/2,y+hy);	Iy += func(x+hx,y+hy);
+				y += hy;
+			}
+
+			I += Iy * hy / 6;
+		}
+
+		x += hx;
+	}
+
+	return I * hx / 6;	
+}
+
+// =========================================================================
+
+Simpson3D::Simpson3D ( const vector_tuple_did &limits )
 : x_min(std::get<0>(limits[0])), x_terms(std::get<1>(limits[0])), x_max(std::get<2>(limits[0])),
   y_min(std::get<0>(limits[1])), y_terms(std::get<1>(limits[1])), y_max(std::get<2>(limits[1])),
   z_min(std::get<0>(limits[2])), z_terms(std::get<1>(limits[2])), z_max(std::get<2>(limits[2])) 
 { 
 	if (limits.size() != 3) 
-		throw std::invalid_argument("SimpsonMultiDim: Only 3dim is implemented!");
+		throw std::invalid_argument("Simpson3D: Only 3dim is implemented!");
 	if ( (x_min >= x_max) || (y_min >= y_max) || (z_min >= z_max) )
 		throw std::invalid_argument("Low bound of integral is bigger then upper.");
-
-	this->second_max_lambda = [this] (double x) {
-		UNUSED(x); 
-		return this->y_max; 
-	};
-	
-	this->second_min_lambda = [this] (double x) {
-		UNUSED(x);
-		return this->y_min; 
-	};
-
-	this->thead_max_lambda  = [this] (double x, double y) {
-		UNUSED(x); UNUSED(y);  
-		return this->z_max; 
-	};
-
-	this->thead_min_lambda  = [this] (double x, double y) {
-		UNUSED(x); UNUSED(y);
-		return this->z_min; 
-	};
 }
 
-void SimpsonMultiDim::second_max (const std::function<double(double)> &func)
-{
-	this->second_max_lambda = func;
-}
-
-void SimpsonMultiDim::second_min (const std::function<double(double)> &func)
-{
-	this->second_max_lambda = func;
-}
-
-void SimpsonMultiDim::thead_max  (const std::function<double(double,double)> &func)
-{
-	this->thead_max_lambda = func;
-}
-
-void SimpsonMultiDim::thead_min  (const std::function<double(double,double)> &func)
-{
-	this->thead_min_lambda = func;
-}
-
-double SimpsonMultiDim::value (const std::function<double(double,double,double)> &func) const
+double Simpson3D::value (const std::function<double(double,double,double)> &func) const
 {
 	double hx = (this->x_max - this->x_min) / this->x_terms;
 	double hy = (this->y_max - this->y_min) / this->y_terms;
@@ -197,21 +208,31 @@ double SimpsonMultiDim::value (const std::function<double(double,double,double)>
 	return total_volume / total_terms / 216.0 * I;
 }
 
-double SimpsonMultiDim::value_complex (const std::function<double(double,double,double)> &func)
+// =========================================================================
+
+Simpson2D::Simpson2D ( const vector_tuple_did &limits )
+: x_min(std::get<0>(limits[0])), x_terms(std::get<1>(limits[0])), x_max(std::get<2>(limits[0])),
+  y_min(std::get<0>(limits[1])), y_terms(std::get<1>(limits[1])), y_max(std::get<2>(limits[1])) 
+{ 
+	if (limits.size() != 2) 
+		throw std::invalid_argument("Simpson2D: Only 3dim is implemented!");
+	if ( (x_min >= x_max) || (y_min >= y_max) )
+		throw std::invalid_argument("Low bound of integral is bigger then upper.");
+}
+
+double Simpson2D::value (const std::function<double(double,double)> &func) const
 {
 	double hx = (this->x_max - this->x_min) / this->x_terms;
 	double hy = (this->y_max - this->y_min) / this->y_terms;
-	double hz = (this->z_max - this->z_min) / this->z_terms;
 
 	double total_volume = (this->x_max-this->x_min) 
-						* (this->y_max-this->y_min) 
-						* (this->z_max-this->z_min);
+						* (this->y_max-this->y_min);
 
-	double total_terms = this->x_terms * this->y_terms * this->z_terms;
+	double total_terms = this->x_terms * this->y_terms;
 	double I = 0;
 
 	std::vector<std::vector<double>> 
-	arg_grid(3, std::vector<double>
+	arg_grid(2, std::vector<double>
 			(3, 0.0));
 
 	arg_grid[0][0] = this->x_min;							// x_a
@@ -220,41 +241,28 @@ double SimpsonMultiDim::value_complex (const std::function<double(double,double,
 
 	arg_grid[1][0] = this->y_min;							// y_a
 	arg_grid[1][2] = this->y_min + hy;						// y_ab
-	arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2; // y b
-
-	arg_grid[2][0] = this->z_min;							// z_a
-	arg_grid[2][2] = this->z_min + hz;						// z_ab
-	arg_grid[2][1] = (arg_grid[2][0] + arg_grid[2][2]) / 2; // z_b
+	arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2; // y_b
 
 	// init setup for fun_grid
-	std::vector<std::vector<std::vector<double>>>
-	fun_grid(3, std::vector<std::vector<double>>
-			(3, std::vector<double>
-			(3, 0.0)));
+	std::vector<std::vector<double>>
+	fun_grid(3, std::vector<double>
+			(3, 0.0));
 
 	for (std::size_t x = 0; x < 3; x++) {
 		for (std::size_t y = 0; y < 3; y++) {
-			for (std::size_t z = 0; z < 3; z++) {
-				fun_grid[x][y][z] = func(arg_grid[0][x],
-										 arg_grid[1][y],
-										 arg_grid[2][z]);
-			}
+			fun_grid[x][y] = func(arg_grid[0][x], arg_grid[1][y]);
 		}
 	}
 
 	// init setup for c_grid
-	std::vector<std::vector<std::vector<double>>>
-	c_grid  (3, std::vector<std::vector<double>>
-			(3, std::vector<double>
-			(3, 1.0)));
+	std::vector<std::vector<double>>
+	c_grid  (3, std::vector<double>
+			(3, 1.0));
 
 	for (std::size_t x = 0; x < 3; x++) {
 		for (std::size_t y = 0; y < 3; y++) {
-			for (std::size_t z = 0; z < 3; z++) {
-				if (x == 1) c_grid[x][y][z] *= 4.0;
-				if (y == 1) c_grid[x][y][z] *= 4.0;
-				if (z == 1) c_grid[x][y][z] *= 4.0;
-			}
+			if (x == 1) c_grid[x][y] *= 4.0;
+			if (y == 1) c_grid[x][y] *= 4.0;
 		}
 	}
 
@@ -263,48 +271,28 @@ double SimpsonMultiDim::value_complex (const std::function<double(double,double,
 		arg_grid[1][0] = this->y_min;
 		arg_grid[1][2] = this->y_min + hy;
 		arg_grid[1][1] = (arg_grid[1][0] + arg_grid[1][2]) / 2;
-		this->y_max = this->second_max_lambda(arg_grid[1][0]); // UPD: y_max
-		this->y_min = this->second_min_lambda(arg_grid[1][0]); // UPD: y_min
 		
 		while (arg_grid[1][2] <= this->y_max) {
 
-			arg_grid[2][0] = this->z_min;
-			arg_grid[2][2] = this->z_min + hz;
-			arg_grid[2][1] = (arg_grid[2][0] + arg_grid[2][2]) / 2;
-			this->z_max = this->thead_max_lambda(arg_grid[1][0], arg_grid[2][0]); // UPD: z_max
-			this->z_min = this->thead_min_lambda(arg_grid[1][0], arg_grid[2][0]); // UPD: z_min
-			
-			while (arg_grid[2][2] <= this->z_max) {
-
-				arg_grid[2][0] += hz; // UPD: z_from
-				arg_grid[2][1] += hz; // UPD: z_mid
-				arg_grid[2][2] += hz; // UPD: z_to
-
-				for (std::size_t X = 0; X < 3; X++) {
-					for (std::size_t Y = 0; Y < 3; Y++) {
-						for (std::size_t Z = 0; Z < 3; Z++) {
-							// summation of 27 terms
-							I += c_grid[X][Y][Z] * fun_grid[X][Y][Z];
-							// update fun_grid matrix
-							// TODO: not optimum
-							fun_grid[X][Y][Z] = func(arg_grid[0][X],
-													 arg_grid[1][Y],
-													 arg_grid[2][Z]);
-						}
-					}
-				}
-
-			}
 			arg_grid[1][0] += hy; // UPD: y_from
 			arg_grid[1][1] += hy; // UPD: y_mid
 			arg_grid[1][2] += hy; // UPD: y_to
+
+			for (std::size_t X = 0; X < 3; X++) {
+				for (std::size_t Y = 0; Y < 3; Y++) {
+					I += c_grid[X][Y] * fun_grid[X][Y];
+					fun_grid[X][Y] = func(arg_grid[0][X], arg_grid[1][Y]);
+				}
+			}
+
 		}
+
 		arg_grid[0][0] += hx; // UPD: x_from
 		arg_grid[0][1] += hx; // UPD: x_mid
 		arg_grid[0][2] += hx; // UPD: x_to
 	}
 
-	return total_volume / total_terms / 216.0 * I;
+	return total_volume / total_terms / 36.0 * I;
 }
 
 // =========================================================================

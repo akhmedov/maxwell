@@ -54,8 +54,9 @@ void PlotModel::__Ex_from_ct ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	// Manager* thead_core = new Manager( thread_num );
-	SafeManager* thead_core = new SafeManager( thread_num, this->global_conf );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
@@ -64,25 +65,23 @@ void PlotModel::__Ex_from_ct ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	if (this->global_conf->kerr_medium()) {
-		to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
-	}
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->electric_x(i[0],rho,phi,z);
-			plot_data.push_back({i[0], awgn+i[4]+i[5]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->electric_x(i[0],rho,phi,z);
-			plot_data.push_back({i[0], mwgn*i[4]*i[5]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({i[0], magnitude});
+	}
 
 	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
 	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
@@ -123,8 +122,9 @@ void PlotModel::__Hy_from_ct ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	// Manager* thead_core = new Manager( thread_num );
-	SafeManager* thead_core = new SafeManager( thread_num, this->global_conf );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
@@ -133,24 +133,23 @@ void PlotModel::__Hy_from_ct ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->magnetic_y(i[0],rho,phi,z);
-			plot_data.push_back({i[0], awgn+i[4]+i[5]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->magnetic_y(i[0],rho,phi,z);
-			plot_data.push_back({i[0], mwgn*i[4]*i[5]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({i[0], magnitude});
+	}
 
 	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
 	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
@@ -194,7 +193,9 @@ void PlotModel::__Ex_from_ct_rho ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
@@ -204,23 +205,23 @@ void PlotModel::__Ex_from_ct_rho ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->electric_x(i[0],i[1],phi,z);
-			plot_data.push_back({awgn+i[4]+i[5],i[0],i[1]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->electric_x(i[0],i[1],phi,z);
-			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[1]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({magnitude,i[0],i[1]});
+	}
 
 	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
 	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
@@ -264,7 +265,9 @@ void PlotModel::__Hy_from_ct_rho ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
@@ -274,23 +277,23 @@ void PlotModel::__Hy_from_ct_rho ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->magnetic_y(i[0],i[1],phi,z);
-			plot_data.push_back({awgn+i[4]+i[5],i[0],i[1]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->magnetic_y(i[0],i[1],phi,z);
-			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[1]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({magnitude,i[0],i[1]});
+	}
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
@@ -334,7 +337,9 @@ void PlotModel::__Ex_from_ct_z ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double z = z_from; z <= z_to; z += z_step)
@@ -344,29 +349,29 @@ void PlotModel::__Ex_from_ct_z ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->electric_x(i[0],rho,phi,i[3]);
-			plot_data.push_back({awgn+i[4]+i[5],i[0],i[3]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->electric_x(i[0],rho,phi,i[3]);
-			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[3]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({magnitude,i[0],i[3]});
+	}
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
 	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("rho, m");
+	plot->set_oy_label("z, m");
 	plot->set_oz_label("Ex, V/m");
 	plot->grid_on();
 	plot->cage_on();
@@ -404,7 +409,9 @@ void PlotModel::__Hy_from_ct_z ()
 	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
-	Manager* thead_core = new Manager( thread_num );
+	Manager* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double z = z_from; z <= z_to; z += z_step)
@@ -414,29 +421,29 @@ void PlotModel::__Hy_from_ct_z ()
 	std::vector<std::pair<Component,AbstractField*>> to_compute;
 	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
 	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
+	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
-	if (medium_type == Superposition::additive) {
-		for (auto i : data) {
-			double awgn = noise->magnetic_y(i[0],rho,phi,i[3]);
-			plot_data.push_back({awgn+i[4]+i[5],i[0],i[3]});
+	for (auto i : data) {
+		double magnitude;
+		switch (medium_type) {
+			case Superposition::additive:
+				magnitude = i[4]+i[5]; break;
+			case Superposition::multipl:
+				magnitude = i[4]*i[5]; break;
+			default: throw std::invalid_argument("This statment must not be reached!");
 		}
-	} else if (medium_type == Superposition::multipl) {
-		for (auto i : data) { 
-			double mwgn = noise->magnetic_y(i[0],rho,phi,i[3]);
-			plot_data.push_back({mwgn*i[4]*i[5],i[0],i[3]}); 
-		}
-	} else throw std::invalid_argument("This statment must not be reached!");
+		plot_data.push_back({magnitude,i[0],i[3]});
+	}
 
 	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
 	plot->set_colormap(this->global_conf->plot_color_map());
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("rho, m");
+	plot->set_oy_label("z, m");
 	plot->set_oz_label("Hy, A/m");
 	plot->grid_on();
 	plot->cage_on();

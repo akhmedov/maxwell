@@ -40,13 +40,13 @@ struct Manager {
 	Manager (std::size_t threads);
 	void progress_bar (bool status = true);
 	void add_argument (std::vector<double> argument);
-	std::vector<std::vector<double>> get_value ();
+	virtual std::vector<std::vector<double>> get_value ();
 
 	void call ( std::function<double(double)> );
 	void call ( std::vector<std::function<double(double)>> funcs);
 	void call ( std::function<double(double,double,double,double)> );
 	void call ( std::function<double(AbstractField*,double,double,double,double)>, AbstractField*);
-	void call ( std::vector<std::pair<Component,AbstractField*>>);
+	virtual void call ( std::vector<std::pair<Component,AbstractField*>>);
 
 protected:
 	void reset ();
@@ -66,6 +66,7 @@ struct SafeManager : public Manager {
 
 	// SafeManger (Config* global);
 	SafeManager (std::size_t threads, Config* global);
+	std::vector<std::vector<double>> get_value ();
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
 	~SafeManager ();
 

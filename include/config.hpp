@@ -46,6 +46,7 @@ struct Config {
 	void call_gnuplot (bool);
 	void display_params (bool);
 	void reset_noise (bool);
+	void safe_mode (bool);
 
 	void plot_color_map (Colormap);
 	void plot_device (PlotDev);
@@ -92,6 +93,7 @@ struct Config {
 	bool call_gnuplot () const;
 	bool display_params () const;
 	bool reset_noise () const;
+	bool safe_mode () const;
 
 	Colormap plot_color_map () const;
 	PlotDev plot_device () const;
@@ -139,7 +141,7 @@ private:
 	bool plot_bcage_value;
 	bool call_gnuplot_value;
 	bool display_params_value;
-	/* bool reset_noise_opt; */
+	bool is_safe_mode;
 
 	Colormap plot_cmap_value;
 	PlotDev device_value;

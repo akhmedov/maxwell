@@ -33,20 +33,40 @@ private:
 	const std::size_t quadr_terms;
 };
 
-struct SimpsonMultiDim : public Integral {
-	SimpsonMultiDim ( const vector_tuple_did &limits );
-	double value (const std::function<double(double,double,double)> &func) const;
-	double value_complex (const std::function<double(double,double,double)> &func);
-	void second_max (const std::function<double(double)> &func);
-	void second_min (const std::function<double(double)> &func);
-	void thead_max  (const std::function<double(double,double)> &func);
-	void thead_min  (const std::function<double(double,double)> &func);
+struct Simpson2D : public Integral {
+	Simpson2D ( const vector_tuple_did &limits );
+	double value (const std::function<double(double,double)> &func) const;
 private:
 
-	std::function<double(double)> second_max_lambda;
-	std::function<double(double)> second_min_lambda;
-	std::function<double(double,double)> thead_max_lambda;
-	std::function<double(double,double)> thead_min_lambda;
+	double x_min;
+	std::size_t x_terms;
+	double x_max;
+
+	double y_min;
+	std::size_t y_terms;
+	double y_max;
+};
+
+struct Simpson2D_line : public Integral {
+	Simpson2D_line ();
+	void first_limit (double x_min, std::size_t x_terms, double x_max);
+	void second_limit (const std::function<double(double)> &y_min, std::size_t y_max_terms, const std::function<double(double)> &y_max);
+	double value (const std::function<double(double,double)> &func) const;
+private:
+
+	double x_min;
+	std::size_t x_terms;
+	double x_max;
+
+	std::function<double(double)> y_min;
+	std::size_t y_max_terms;
+	std::function<double(double)> y_max;
+};
+
+struct Simpson3D : public Integral {
+	Simpson3D ( const vector_tuple_did &limits );
+	double value (const std::function<double(double,double,double)> &func) const;
+private:
 
 	double x_min;
 	std::size_t x_terms;

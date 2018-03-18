@@ -9,13 +9,8 @@
 #include "manager.hpp"
 
 Manager::Manager ()
-{
-	this->data_left = 0;
-	this->total_data = 0;
-	this->thread_number = std::thread::hardware_concurrency() - 1;
-	for (std::size_t iter = 0; iter < this->thread_number; iter++)
-		this->argument.push_back( std::stack<std::vector<double>>() );
-}
+: Manager(std::thread::hardware_concurrency() - 1) 
+{ }
 
 //=============================================================================
 
@@ -50,7 +45,7 @@ void Manager::progress_bar (bool status)
 
 std::vector<std::vector<double>> Manager::get_value ()
 {
-	while (!this->is_ready()) { }	
+	while (!this->is_ready()) { }
 
 	auto tmp = this->result;
 	std::vector<std::vector<double>> res(tmp.size());
@@ -305,7 +300,7 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 }
 
 //=============================================================================
-//== SafeManger =============================================================++
+//== SafeManger ===============================================================
 //=============================================================================
 
 /* SafeManager::SafeManager (Config* gl_config) 
@@ -316,12 +311,8 @@ SafeManager::SafeManager (std::size_t threads, Config* gl_config)
 {
 	for (std::size_t c = 0; c < this->thread_number; c++) {
 		MySQL* thread_client = new MySQL(gl_config);
-		/* if (gl_config->reset_noise()) thread_client->reset_noise(); */
 		this->client.push_back(thread_client);
 	}
-
-	std::cout << "MySQL client is connected to " << this->client[0]->get_hostname();
-	std::cout << "... Done." << std::endl;
 }
 
 void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)
@@ -332,7 +323,7 @@ void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)
 		while (!this->argument[i].empty()) {
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
-
+			
 			this->client[i]->select_point(arg[0], arg[1], arg[2], arg[3]);
 
 			for (auto f : field) {
@@ -380,6 +371,24 @@ void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)
 		}
 	}
 	std::cout << std::endl;
+}
+
+std::vector<std::vector<double>> SafeManager::get_value ()
+{
+	while (!this->is_ready()) { }
+
+	auto tmp = this->result;
+	std::vector<std::vector<double>> res(tmp.size());
+	std::copy(tmp.begin(), tmp.end(), res.begin());
+
+	// next section is not optimum - use for_all<for_all>
+
+	for (auto line : res)
+		for (auto item : line)
+			if (std::isnan(item)) item = 0;
+	
+	this->reset();
+	return res;
 }
 
 SafeManager::~SafeManager ()

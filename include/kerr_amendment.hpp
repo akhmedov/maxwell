@@ -20,6 +20,7 @@
 
 #include "integral.hpp"
 #include "phys_math.hpp"
+#include "linear_source.hpp"
 #include "nonlinear_medium.hpp"
 #include "nonlinear_field.hpp"
 #include "uniform_disk_current.hpp"
@@ -59,6 +60,10 @@ struct KerrAmendment : public NonlinearField {
 	double magnetic_rho (double ct, double rho, double phi, double z) const;
 	double magnetic_phi (double ct, double rho, double phi, double z) const;
 	double magnetic_z (double ct, double rho, double phi, double z) const;
+
+	double current_x (double ct, double rho, double phi, double z) const;
+	double current_rho (double ct, double rho, double phi, double z) const;
+	double current_phi (double ct, double rho, double phi, double z) const;
 
 protected:
 
