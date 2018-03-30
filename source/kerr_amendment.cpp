@@ -139,7 +139,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 			return sum;
 		};
 
-		auto step_sum = [R, vt, rho, phi, z, rho_perp, z_perp] (double nu, double vt_perp) {
+		auto step_sum = [R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp, double nu) {
 			double delta_vt = vt - vt_perp;
 			double delta_z = z - z_perp;
 			if (delta_vt - delta_z <= 0) return 0.0;
@@ -158,7 +158,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 		};
 
 		double max_nu1 = 10 * std::abs(rho - rho_perp);
-		double step_pints_nu = 7 * (rho + rho_perp) + 2;
+		double step_pints_nu = 7 * (rho + rho_perp);
 		Simpson nu_int = Simpson(step_pints_nu * max_nu1);
 
 		Simpson2D_line tau_nu_int = Simpson2D_line();

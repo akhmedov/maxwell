@@ -188,6 +188,7 @@ https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-installation-source-uni
 ~ $ mysql -t -u root -p < setup.sql
 ~ $ mysql -vvv -u root -p < clean.sql
 ~ $ mysql -u root -p 
+~ $ mysqldump -u root -p maxwell > maxwell.sql
 
 mysql> CREATE DATABASE maxwell;
 mysql> GRANT ALL PRIVILEGES ON *.* TO 'maxwell'@'localhost' IDENTIFIED BY 'maxwell';
@@ -206,3 +207,16 @@ CREATE TABLE maxwell_grand (
 );
 
 INSERT INTO maxwell ( id, name ) VALUES ( null, 'Sample data' );
+
+
+### ARCHIVE LEGEND ###
+
+ex_perp_1:
+time ./build/maxwell --safe --plot 1 --kerr 1 --cylindric 1.7:0.05:3,0,0,2
+nu_max is 4 min periods
+
+ex_perp_2:
+time ./build/maxwell --safe --plot 1 --kerr 1 --cylindric 1.7:0.05:3,0,0,2
+nu_max is 8 min periods
+
+
