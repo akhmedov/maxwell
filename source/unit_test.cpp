@@ -335,14 +335,14 @@ bool UnitTest::simpson2d ()
 bool UnitTest::simpson2d_line ()
 {
 	double a = 2;
-	double terms = 400;
 	auto func = [] (double x, double y) { return x * y; };
 
 	Simpson2D_line integral = Simpson2D_line();
-	integral.first_limit(0, terms, a);
-	auto min_y = [] (double x) { return 0; };
-	auto max_y = [] (double x) { return x; };
-	integral.second_limit(min_y, terms, max_y);
+	integral.first_limit(0, 400, a);
+	auto min_y  = [] (double x) { return 0;     };
+	auto term_y = [] (double x) { return (std::size_t) 200*x; };
+	auto max_y  = [] (double x) { return x;     };
+	integral.second_limit(min_y, term_y, max_y);
 
 	double res = integral.value(func);
 	double error = 100 * abs(res-2) / 2;
@@ -352,7 +352,6 @@ bool UnitTest::simpson2d_line ()
 bool UnitTest::simpson2d_line2 ()
 {
 	double radius = 1;
-	double terms = 300;
 
 	auto func = [] (double rho, double phi) {
 		UNUSED(phi);
@@ -360,10 +359,11 @@ bool UnitTest::simpson2d_line2 ()
 	};
 
 	Simpson2D_line integral = Simpson2D_line();
-	integral.first_limit(0, terms, radius);
-	auto min_y = [] (double x) { return 0;      };
-	auto max_y = [] (double x) { return M_PI_2; };
-	integral.second_limit(min_y, terms, max_y);
+	integral.first_limit(0, 300, radius);
+	auto min_y  = [] (double x) { return 0;      };
+	auto term_y = [] (double x) { return 300;    };
+	auto max_y  = [] (double x) { return M_PI_2; };
+	integral.second_limit(min_y, term_y, max_y);
 
 	double res = 4 * integral.value(func);
 	double error = 100 * abs(res-M_PI) / M_PI;

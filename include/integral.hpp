@@ -50,7 +50,7 @@ private:
 struct Simpson2D_line : public Integral {
 	Simpson2D_line ();
 	void first_limit (double x_min, std::size_t x_terms, double x_max);
-	void second_limit (const std::function<double(double)> &y_min, std::size_t y_max_terms, const std::function<double(double)> &y_max);
+	void second_limit (const std::function<double(double)> &y_min, const std::function<std::size_t(double)> &y_terms, const std::function<double(double)> &y_max);
 	double value (const std::function<double(double,double)> &func) const;
 private:
 
@@ -59,7 +59,7 @@ private:
 	double x_max;
 
 	std::function<double(double)> y_min;
-	std::size_t y_max_terms;
+	std::function<std::size_t(double)> y_terms;
 	std::function<double(double)> y_max;
 };
 

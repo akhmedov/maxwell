@@ -50,10 +50,12 @@ void Simpson2D_line::first_limit (double from, std::size_t terms, double to)
 	this->x_max = to;
 }
 
-void Simpson2D_line::second_limit (const std::function<double(double)> &from, std::size_t max_terms, const std::function<double(double)> &to)
+void Simpson2D_line::second_limit (const std::function<double(double)> &from, 
+								   const std::function<std::size_t(double)> &terms, 
+								   const std::function<double(double)> &to)
 {
 	this->y_min = from;
-	this->y_max_terms = max_terms;
+	this->y_terms = terms;
 	this->y_max = to;
 }
 
@@ -68,11 +70,11 @@ double Simpson2D_line::value (const std::function<double(double,double)> &func) 
 	while (x <= this->x_max - hx) {
 
 		double y = this->y_min(x);
-		double hy = (this->y_max(x) - this->y_min(x)) / this->y_max_terms;
+		double hy = (this->y_max(x) - this->y_min(x)) / this->y_terms(x);
 		double Iy = 0;
 
 		if (this->y_max(x) > this->y_min(x)) {
-		
+
 			while (y <= this->y_max(x) - hy) {
 				Iy += func(x,y);			Iy += 4 * func(x+hx/2,y);		Iy += func(x+hx,y);
 				Iy += 4 * func(x,y+hy/2);	Iy += 16 * func(x+hx/2,y+hy/2);	Iy += 4 * func(x+hx,y+hy/2);

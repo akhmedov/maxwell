@@ -211,12 +211,26 @@ INSERT INTO maxwell ( id, name ) VALUES ( null, 'Sample data' );
 
 ### ARCHIVE LEGEND ###
 
-ex_perp_1:
+nex1:
 time ./build/maxwell --safe --plot 1 --kerr 1 --cylindric 1.7:0.05:3,0,0,2
 nu_max is 4 min periods
 
-ex_perp_2:
+nex2:
 time ./build/maxwell --safe --plot 1 --kerr 1 --cylindric 1.7:0.05:3,0,0,2
 nu_max is 8 min periods
 
+nex3:
+nu_max is 10 min periods
 
+nex4:
+nu_max is 2 min periods ()
+
+nex5:
+nu_max is 5 min periods (28min)
+
+nex6:
+nu_max is 7 min periods  (78min)
+
+nex7:
+nu_max is 10 min periods
+[rho, z, vt] - 100 points

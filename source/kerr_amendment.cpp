@@ -113,7 +113,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 {
 	double vt_z = vt - z;
 	if (z == 0) return 0;
-	if (vt_z < 1e-9) return 0;
+	if (vt_z < 1e-10) return 0;
 
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
@@ -162,14 +162,19 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 		Simpson nu_int = Simpson(step_pints_nu * max_nu1);
 
 		Simpson2D_line tau_nu_int = Simpson2D_line();
-		tau_nu_int.first_limit(0, 50, max_vt);
+		tau_nu_int.first_limit(0, 100, max_vt);
 		auto min_nu2 = [] (double vt_perp) { 
 			return 0; 
 		};
-		auto max_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) { 
-			return 10 * std::abs(rho - rho_perp - std::sqrt(vt - vt_perp - z + z_perp)); 
+		auto terms_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) {
+			double period_step = 7 * std::abs(rho + rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
+			double max_nu = 10 * std::abs(rho - rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
+			return (std::size_t) (period_step * max_nu);
 		};
-		tau_nu_int.second_limit(min_nu2, 700, max_nu2);
+		auto max_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) { 
+			return 10 * std::abs(rho - rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
+		};
+		tau_nu_int.second_limit(min_nu2, terms_nu2, max_nu2);
 		
 		double first = nu_int.value(0, max_nu1, delta_sum);
 		if (std::isnan(first)) first = 0;
@@ -179,8 +184,8 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 	};
 
 	std::vector< std::tuple<double,std::size_t,double> > limits;
-	limits.push_back(std::make_tuple(0, 50, 2*R));
-	limits.push_back(std::make_tuple(0, 50, 2*R));
+	limits.push_back(std::make_tuple(0, 100, 2*R));
+	limits.push_back(std::make_tuple(0, 100, 2*R));
 	Simpson2D multi = Simpson2D(limits);
 	return - coeff * multi.value(mode_sum);
 }
