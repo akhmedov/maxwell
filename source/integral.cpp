@@ -17,7 +17,7 @@ double Simpson::value (double from, double to, const std::function<double(double
 {
 	if (from >= to) return 0;
 
-	double h = (to - from) / this->quadr_terms;
+	double h = std::abs(to - from) / this->quadr_terms;
 	double I = 0;
 
 	double a = from;
@@ -36,6 +36,89 @@ double Simpson::value (double from, double to, const std::function<double(double
 	}
 
 	return I * (to - from) / this->quadr_terms / 6;
+}
+
+// =========================================================================
+
+SimpsonRunge::SimpsonRunge (std::size_t min_node_number, double accurence, std::size_t max_node_number)
+: init_nodes(min_node_number), epsilon(accurence), max_nodes(max_node_number)
+{ 
+	if (min_node_number == 0) throw std::invalid_argument("Zero node number is not allowed.");
+	this->running_units = 1;
+}
+
+double SimpsonRunge::value (double from, double to, const std::function<double(double)> &func)
+{
+	if (from >= to) return 0;
+	if (std::isnan(from)) throw std::logic_error("FROM limit is nan.");
+	if (std::isnan(to))   throw std::logic_error("TO limit is nan.");
+
+	// First iteration with Simpson quadtature
+
+	double newI = 0;
+	std::pair<double,double> old_sum(0,0); // { f_a + f_b , f_ab }
+	std::pair<double,double> new_sum(0,0); // { f_a + f_b , f_ab }
+	double h = std::abs(to - from) / this->init_nodes;
+
+	double a = from;
+	double b = from + h;
+	double f_a = func(a);
+	double f_ab = func(a+h/2);
+	double f_b = func(b);
+
+	while (b <= to) {
+		old_sum.first += f_a + f_b;
+		old_sum.second += f_ab;
+		a = b;
+		b += h;
+		f_a = f_b;
+		f_ab = func(a+h/2);
+		f_b = func(b);
+	}
+
+	double oldI = (old_sum.first + 4 * old_sum.second) / this->init_nodes;
+
+	// Runge rule for Simpson quadtature for augumentation
+
+	for (std::size_t nodes = 2 * this->init_nodes; nodes <= this->max_nodes; nodes *= 2) {
+
+
+		this->running_units *= 2;
+
+		h /= 2;
+		a = from + h;
+		new_sum.first = 0;
+		new_sum.second = 0;
+
+		while (a < to) {
+			new_sum.first  += func(a) / 2; // TODO: why devided by 2 ???
+			new_sum.second += func(a-h/2);
+			a += h;
+		}
+
+		new_sum.first -= func(to);
+		new_sum.first += old_sum.first + old_sum.second;
+		newI = (new_sum.first + 4 * new_sum.second) / nodes; // TODO: (node + 1) ???
+
+		// refactor of exit criteria
+		if (std::abs(newI) < 1e-5 ) return 0;
+		double error = 100 * std::abs((oldI - newI) / newI);
+		if (error < this->epsilon)  {
+			newI = 32 * newI / 31 - oldI / 31; // Runge error linearization
+			return (to - from) / 6 * newI;
+		}
+
+		oldI = newI;
+		old_sum.first = new_sum.first;
+		old_sum.second = new_sum.second;
+	}
+
+	throw (to - from) / 6 * newI;
+}
+
+std::size_t SimpsonRunge::current_units () const
+{
+	return this->running_units;
 }
 
 // =========================================================================

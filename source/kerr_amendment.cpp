@@ -8,6 +8,8 @@
 
 #include "kerr_amendment.hpp"
 
+const std::string KerrAmendment::exeption_msg = "[WW] Integral by $VAR has not trustable at $TIME, $RHO, $PHI, $Z";
+
 /* Nonlinear medium */
 
 KerrMedium::KerrMedium (double realative_mu, double realative_eps, double kerr, double conduct) 
@@ -113,81 +115,162 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 {
 	double vt_z = vt - z;
 	if (z == 0) return 0;
-	if (vt_z < 1e-10) return 0;
+	if (vt_z < 1e-9) return 0;
 
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
 	double mu_r = this->nl_medium->relative_permeability(vt,z);
 	double em_relation = NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r;
-	double coeff = kerr * this->A0 * this->A0 * this->A0 * em_relation * em_relation / 128;
-	double R = this->R; 
+	double R = this->R, A0 = this->A0; 
+	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
 
-	auto mode_sum = [R, vt, rho, phi, z] (double rho_perp, double z_perp) {
-		
-		double max_vt = vt - z + z_perp; // grater then zero
+	double integral;
 
-		auto delta_sum = [R, vt, rho, phi, z, max_vt, rho_perp, z_perp] (double nu) {
-			double sum = 0;
-			sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, -1, nu, max_vt, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 1, nu, max_vt, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, -3, nu, max_vt, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 3, nu, max_vt, rho_perp, z_perp);
-			return sum;
-		};
+	try {
 
-		auto step_sum = [R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp, double nu) {
-			double delta_vt = vt - vt_perp;
-			double delta_z = z - z_perp;
-			if (delta_vt - delta_z <= 0) return 0.0;
-			double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z);
-			double bessel = jn(0,nu * casual) + jn(2,nu * casual); 
-			double sum = 0;
-			sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, -1, nu, vt_perp, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 1, nu, vt_perp, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, -3, nu, vt_perp, rho_perp, z_perp);
-			sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
-				   KerrAmendment::N_sum(R, 3, nu, vt_perp, rho_perp, z_perp);
-			return sum * nu * nu * delta_vt * bessel / 2;
-		};
+		integral = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
+			[R, vt, rho, phi, z] (double z_perp) {
 
-		double max_nu1 = 10 * std::abs(rho - rho_perp);
-		double step_pints_nu = 7 * (rho + rho_perp);
-		Simpson nu_int = Simpson(step_pints_nu * max_nu1);
+				try {
 
-		Simpson2D_line tau_nu_int = Simpson2D_line();
-		tau_nu_int.first_limit(0, 100, max_vt);
-		auto min_nu2 = [] (double vt_perp) { 
-			return 0; 
-		};
-		auto terms_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) {
-			double period_step = 7 * std::abs(rho + rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
-			double max_nu = 10 * std::abs(rho - rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
-			return (std::size_t) (period_step * max_nu);
-		};
-		auto max_nu2 = [rho, rho_perp, vt, z, z_perp] (double vt_perp) { 
-			return 10 * std::abs(rho - rho_perp + std::sqrt(vt - vt_perp - z + z_perp));
-		};
-		tau_nu_int.second_limit(min_nu2, terms_nu2, max_nu2);
-		
-		double first = nu_int.value(0, max_nu1, delta_sum);
-		if (std::isnan(first)) first = 0;
-		double second = tau_nu_int.value(step_sum);
-		if (std::isnan(second)) second = 0;
-		return first - second;
-	};
+					return SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
+						[R, vt, rho, phi, z, z_perp] (double rho_perp) {
 
-	std::vector< std::tuple<double,std::size_t,double> > limits;
-	limits.push_back(std::make_tuple(0, 100, 2*R));
-	limits.push_back(std::make_tuple(0, 100, 2*R));
-	Simpson2D multi = Simpson2D(limits);
-	return - coeff * multi.value(mode_sum);
+							double max_vt = vt - z + z_perp; // grater then zero
+							double max_nu = PERIODS_NU * std::abs(rho - rho_perp);
+							double period_nu =  NODES_NU * (rho + rho_perp);
+							std::size_t nodes_nu = max_nu * period_nu;
+							if (!nodes_nu) nodes_nu = 1;
+
+							double delta_sum;
+
+							try  {
+
+								delta_sum = SimpsonRunge(nodes_nu, MAX_ERROR).value(0, max_nu,
+									[R, vt, rho, phi, z, max_vt, rho_perp, z_perp] (double nu) {
+
+										double sum = 0;
+										sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
+											   KerrAmendment::N_sum(R, -1, nu, max_vt, rho_perp, z_perp);
+										sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
+											   KerrAmendment::N_sum(R, 1, nu, max_vt, rho_perp, z_perp);
+										sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
+											   KerrAmendment::N_sum(R, -3, nu, max_vt, rho_perp, z_perp);
+										sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
+											   KerrAmendment::N_sum(R, 3, nu, max_vt, rho_perp, z_perp);
+										return sum;
+								} );	// <--------------------------------------------------------------------------------------- d nu1
+
+							} catch (double not_trusted) {
+								std::string msg = KerrAmendment::exeption_msg;
+								msg = std::regex_replace(msg, std::regex("\\$VAR" ), "NU1");
+								msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
+								msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
+								msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
+								msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
+								msg += std::string(" Z'= ") + std::to_string(z_perp);
+								msg += std::string(" RHO'= ") + std::to_string(rho_perp);
+								std::cout << msg << std::endl;
+								delta_sum = not_trusted;
+							}
+							
+							if (std::isnan(delta_sum)) delta_sum = 0;
+
+							double step_sum = 0;
+							try {
+
+								step_sum = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, max_vt,
+									[R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp) {
+
+									double delta_vt = vt - vt_perp;
+									double delta_z = z - z_perp;
+									double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z);
+									if (std::isnan(casual)) return 0.0;
+									double period_nu = NODES_NU * std::abs(rho + rho_perp + casual);
+									double max_nu =  PERIODS_NU * std::abs(rho - rho_perp + casual);
+									std::size_t nodes_nu = max_nu * period_nu;
+									if (!nodes_nu) nodes_nu = 1;
+
+									double res;
+									try {
+
+										res = SimpsonRunge(nodes_nu, MAX_ERROR).value( 0, max_nu,
+											[R, vt, rho, phi, z, rho_perp, z_perp, vt_perp, casual, delta_vt] (double nu) {
+												double bessel = jn(0,nu * casual) + jn(2,nu * casual); 
+												double sum = 0;
+												sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
+													   KerrAmendment::N_sum(R, -1, nu, vt_perp, rho_perp, z_perp);
+												sum += KerrAmendment::x_trans( 1, nu, rho, phi) *
+													   KerrAmendment::N_sum(R, 1, nu, vt_perp, rho_perp, z_perp);
+												sum += KerrAmendment::x_trans( -3, nu, rho, phi) *
+													   KerrAmendment::N_sum(R, -3, nu, vt_perp, rho_perp, z_perp);
+												sum += KerrAmendment::x_trans( 3, nu, rho, phi) *
+													   KerrAmendment::N_sum(R, 3, nu, vt_perp, rho_perp, z_perp);
+												return sum * nu * nu * delta_vt * bessel / 2;
+
+										} );	// <-------------------------------------------------------------------------------- d nu2
+
+									} catch (double not_trusted) {
+										std::string msg = KerrAmendment::exeption_msg;
+										msg = std::regex_replace(msg, std::regex("\\$VAR" ), "NU2");
+										msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
+										msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
+										msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
+										msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
+										msg += std::string(" Z'= ") + std::to_string(z_perp);
+										msg += std::string(" RHO'= ") + std::to_string(rho_perp);
+										msg += std::string(" VT'= ") + std::to_string(vt_perp);
+										std::cout << msg << std::endl;
+										res = not_trusted;
+									}
+
+									if (std::isnan(res)) res = 0;
+									return res;
+
+								} );	// <---------------------------------------------------------------------------------------- d tau'
+
+							} catch (double not_trusted) {
+								std::string msg = KerrAmendment::exeption_msg;
+								msg = std::regex_replace(msg, std::regex("\\$VAR" ), "VT'");
+								msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
+								msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
+								msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
+								msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
+								msg += std::string(" Z'= ") + std::to_string(z_perp);
+								msg += std::string(" RHO'= ") + std::to_string(rho_perp);
+								std::cout << msg << std::endl;
+								step_sum = not_trusted;
+							}
+
+						return delta_sum - step_sum;
+
+					} ); //	<------------------------------------------------------------------------------------------------------- d rho'
+
+				} catch (double not_trusted) {
+					std::string msg = KerrAmendment::exeption_msg;
+					msg = std::regex_replace(msg, std::regex("\\$VAR" ), "RHO'");
+					msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
+					msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
+					msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
+					msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
+					msg += std::string(" Z'= ") + std::to_string(z_perp);
+					std::cout << msg << std::endl;
+					return not_trusted;
+				}
+		} );	// <---------------------------------------------------------------------------------------------------------------- d z'
+
+	} catch (double not_trusted) {
+		std::string msg = KerrAmendment::exeption_msg;
+		msg = std::regex_replace(msg, std::regex("\\$VAR" ), "Z'");
+		msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
+		msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
+		msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
+		msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
+		std::cout << msg << std::endl;
+		integral = not_trusted; 
+	}
+
+	return - coeff * integral;
 }
 
 double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const

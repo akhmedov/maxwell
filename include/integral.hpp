@@ -16,7 +16,9 @@
 #include <cmath>
 #include <random>
 #include <vector>
-#include <utility>			// std::pair std::tiple
+#include <regex> 		// std::replace()
+#include <numeric>		// std::accumulate
+#include <utility>		// std::pair std::tiple
 #include <valarray>
 #include <functional>
 #include <iostream>
@@ -31,6 +33,17 @@ struct Simpson : public Integral {
 	double value (double from, double to, const std::function<double(double)> &f) const;
 private:
 	const std::size_t quadr_terms;
+};
+
+struct SimpsonRunge : public Integral {
+	SimpsonRunge (std::size_t node_number, double precision /* % */, std::size_t max_nodes = 1e5);
+	double value (double from, double to, const std::function<double(double)> &f);
+	std::size_t current_units () const;
+private:
+	const std::size_t init_nodes;
+	const std::size_t max_nodes;
+	const double epsilon;
+	std::size_t running_units;
 };
 
 struct Simpson2D : public Integral {

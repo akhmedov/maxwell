@@ -339,7 +339,7 @@ bool UnitTest::simpson2d_line ()
 
 	Simpson2D_line integral = Simpson2D_line();
 	integral.first_limit(0, 400, a);
-	auto min_y  = [] (double x) { return 0;     };
+	auto min_y  = [] (double x) { UNUSED(x); return 0;     };
 	auto term_y = [] (double x) { return (std::size_t) 200*x; };
 	auto max_y  = [] (double x) { return x;     };
 	integral.second_limit(min_y, term_y, max_y);
@@ -360,9 +360,9 @@ bool UnitTest::simpson2d_line2 ()
 
 	Simpson2D_line integral = Simpson2D_line();
 	integral.first_limit(0, 300, radius);
-	auto min_y  = [] (double x) { return 0;      };
-	auto term_y = [] (double x) { return 300;    };
-	auto max_y  = [] (double x) { return M_PI_2; };
+	auto min_y  = [] (double x) { UNUSED(x); return 0;      };
+	auto term_y = [] (double x) { UNUSED(x); return 300;    };
+	auto max_y  = [] (double x) { UNUSED(x); return M_PI_2; };
 	integral.second_limit(min_y, term_y, max_y);
 
 	double res = 4 * integral.value(func);
@@ -473,6 +473,42 @@ bool UnitTest::I2_time_partder ()
 	return true;
 }
 
+bool UnitTest::simpson_runge ()
+{
+	double accuracy = 1; // %
+
+	double from = 0;
+	double to = M_PI_2;
+
+	auto f = [] (double x) {
+		return std::sin(x);
+	};
+
+	double I = SimpsonRunge(1, 1).value(from, to, f);
+	return 100*std::abs(I-1) < accuracy ? true : false;
+}
+
+bool UnitTest::simpson_runge_2d ()
+{
+	size_t init_units = 1;
+	double error = 2; /* % */
+
+	auto f = [] (double x, double y) {
+		return 4 * x * y;
+	};
+
+	SimpsonRunge integral = SimpsonRunge(init_units, error);
+
+	double I = integral.value(0, 1,
+		[f, &integral] (double x) {
+			return integral.value(0, 1, [f,x] (double y) {
+				return f(x,y); 
+			} );
+		} );
+
+	return 100 * abs(I - 1) < 2*error ? true : false;
+}
+
 int main()
 {
 	cout << boolalpha;
@@ -496,6 +532,14 @@ int main()
 	/* cout << "Math::UnitTest::invers_sqrt \t\t\t"; 
 	cout.flush();
 	cout << UnitTest::invers_sqrt() << endl; */
+
+	cout << "MissileField::UnitTest::simpson_runge \t\t"; 
+	cout.flush();
+	cout << UnitTest::simpson_runge() << endl;
+
+	cout << "MissileField::UnitTest::simpson_runge_2d \t"; 
+	cout.flush();
+	cout << UnitTest::simpson_runge_2d() << endl;
 
 	cout << "MissileField::UnitTest::simpson_I1 \t\t"; 
 	cout.flush();

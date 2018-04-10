@@ -13,10 +13,10 @@
 #ifndef kerr_amendment_hpp
 #define kerr_amendment_hpp
 
-#define NU_POINTS  2e3
-#define VT_POINTS  20
-#define PHO_POINTS 20
-#define Z_POINTS   20
+#define PERIODS_NU	3
+#define NODES_NU	7
+#define MIN_NODES	5
+#define MAX_ERROR	10 // %
 
 #include "integral.hpp"
 #include "phys_math.hpp"
@@ -25,6 +25,8 @@
 #include "nonlinear_field.hpp"
 #include "uniform_disk_current.hpp"
 
+#include <regex>
+#include <string>
 #include <complex>
 
 using namespace std::complex_literals;
@@ -79,7 +81,8 @@ protected:
 	static double int_bessel_001_perp (double vt, double z, double rho, double R);
 
 protected:
-	
+
+	static const std::string exeption_msg;
 	MissileField* linear_field;
 	double A0;
 	double R;
