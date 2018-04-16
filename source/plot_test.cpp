@@ -64,9 +64,17 @@ int main()
 
 	/* NONLINEAR ELECTRIC CURRENT DISTRIBUTION J' */
 
-	std::cout << std::endl << "PlotTest::";
+	/* std::cout << std::endl << "PlotTest::";
 	std::cout << "nonlinear_current(phi=0,z=0) " << std::endl;
-	PlotTest::nonlinear_current(3.14159,0.5);
+	PlotTest::nonlinear_current(3.14159,0.5); */
+
+	/* KERR TE WAVE UNDERINTEGRAL EXPRESION FROM NU */
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "kerr_under_integral_from_nu(r,r',R=1) " << std::endl;
+	std::vector<double> r = {2.2, 0, 0, 2};
+	std::vector<double> r_perp = {2.1, 0, 0, 1.9};
+	PlotTest::kerr_under_integral_from_nu(r, r_perp);
 }
 
 void PlotTest::set_options ()
@@ -74,6 +82,63 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+
+void PlotTest::kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R)
+{
+	double vt = r[0];
+	double vt_perp = r_perp[0];
+	double rho = r[1];
+	double rho_perp = r_perp[1];
+	double phi = r[2];
+	double phi_perp = r_perp[2];  UNUSED(phi_perp);
+	double z = r[3];
+	double z_perp = r_perp[3];
+
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+
+	double max_vt = vt - z + z_perp; // grater then zero
+	double delta_vt = vt - vt_perp;
+	double delta_z = z - z_perp;
+	double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z);
+	if (std::isnan(casual)) throw std::invalid_argument("Casuality princip is not supported at r and r'");
+	double max_nu =  PERIODS_NU * std::abs(rho - rho_perp + casual);
+
+	for (double nu = 0; nu < 3 * max_nu; max_nu += 0.001) {
+
+		double term1 = 0;
+		for (std::size_t m = -3; m <= 3; m += 2) {
+			term1 += KerrAmendment::x_trans( m, nu, rho, phi) *
+				     KerrAmendment::N_sum(R, m, nu, max_vt, rho_perp, z_perp);
+		}
+
+		double bessel = jn(0,nu * casual) + jn(2,nu * casual);
+		double term2 = 0;
+		for (std::size_t m = -3; m <= 3; m += 2) {
+			term2 += KerrAmendment::x_trans( m, nu, rho, phi) *
+				     KerrAmendment::N_sum(R, m, nu, vt_perp, rho_perp, z_perp);
+		}
+		term2 *= nu * nu * delta_vt * bessel / 2;
+
+		line = {nu, term1, term2, term1 + term2};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	// plot->set_colormap(Colormap::parula);
+	plot->set_ox_label("nu");
+	plot->set_oy_label("");
+	plot->grid_on();
+	plot->cage_on();
+	std::vector<std::string> title = {"delta term",
+									  "step term",
+									  "sum"};
+	plot->plot_multi(plot_data, title);
+	plot->call_gnuplot();
 }
 
 void PlotTest::nonlinear_current (double phi, double z)
