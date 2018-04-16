@@ -16,6 +16,7 @@ const std::string MySQL::UPDATE_LINEAR     = "UPDATE maxwell.maxwell_data SET li
 const std::string MySQL::UPDATE_SQUARE     = "UPDATE maxwell.maxwell_data SET square  = $VALUE WHERE id = $POINT;";
 const std::string MySQL::UPDATE_KERR       = "UPDATE maxwell.maxwell_data SET kerr    = $VALUE WHERE id = $POINT;";
 const std::string MySQL::USE_MAXWELL       = "USE maxwell;";
+const std::string MySQL::SET_WAIT_TIMEOUT  = "SET wait_timeout=9999999;";
 
 MySQL::MySQL(Config* gl_config)
 {
@@ -31,7 +32,10 @@ MySQL::MySQL(Config* gl_config)
 
 	if (!connected) throw std::logic_error("Connection failed! MySQL is not connected.");
 
-	int error_code = mysql_query(this->connection, MySQL::USE_MAXWELL.c_str());
+	int error_code = mysql_query(this->connection, MySQL::SET_WAIT_TIMEOUT.c_str());
+	MySQL::throw_error_code(error_code);
+
+	error_code = mysql_query(this->connection, MySQL::USE_MAXWELL.c_str());
 	MySQL::throw_error_code(error_code);
 
 	std::string problem_id = MySQL::SELECT_PROBLEM_ID;

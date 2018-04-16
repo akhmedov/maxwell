@@ -74,6 +74,7 @@ private:
 	static const std::string UPDATE_SQUARE;
 	static const std::string UPDATE_KERR;
 	static const std::string RESET_NOISE;
+	static const std::string SET_WAIT_TIMEOUT;
 };
 
 #endif /* mysql_connect_hpp */
