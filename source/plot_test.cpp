@@ -72,8 +72,7 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "kerr_under_integral_from_nu(r,r',R=1) " << std::endl;
-	std::vector<double> r = {2.2, 0, 0, 2};
-	std::vector<double> r_perp = {2.1, 0, 0, 1.9};
+	std::vector<double> r = {1.2, 0, 0, 1}, r_perp = {1.1, 0.1, 0, 1};
 	PlotTest::kerr_under_integral_from_nu(r, r_perp);
 }
 
@@ -106,25 +105,25 @@ void PlotTest::kerr_under_integral_from_nu (const std::vector<double> &r, const 
 	if (std::isnan(casual)) throw std::invalid_argument("Casuality princip is not supported at r and r'");
 	double max_nu =  PERIODS_NU * std::abs(rho - rho_perp + casual);
 
-	for (double nu = 0; nu < 3 * max_nu; max_nu += 0.001) {
+	for (double nu = 0; nu < 3 * max_nu; nu += 0.001) {
 
 		double term1 = 0;
-		for (std::size_t m = -3; m <= 3; m += 2) {
+		for (int m = -3; m <= 3; m += 2)
 			term1 += KerrAmendment::x_trans( m, nu, rho, phi) *
 				     KerrAmendment::N_sum(R, m, nu, max_vt, rho_perp, z_perp);
-		}
 
 		double bessel = jn(0,nu * casual) + jn(2,nu * casual);
 		double term2 = 0;
-		for (std::size_t m = -3; m <= 3; m += 2) {
+		for (int m = -3; m <= 3; m += 2)
 			term2 += KerrAmendment::x_trans( m, nu, rho, phi) *
 				     KerrAmendment::N_sum(R, m, nu, vt_perp, rho_perp, z_perp);
-		}
 		term2 *= nu * nu * delta_vt * bessel / 2;
 
 		line = {nu, term1, term2, term1 + term2};
 		plot_data.push_back(line);
 		line.clear();
+
+		std::cout << nu << ' ' << term1 << ' ' << term2 << std::endl;
 	}
 
 	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );

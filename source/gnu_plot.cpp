@@ -83,6 +83,7 @@ void GnuPlot::cage_on ( bool status)
 
 void GnuPlot::plot2d (const std::vector<std::vector<double>> &array) 
 {
+	if (array.empty()) throw std::invalid_argument("Empty plot dataset.");
 	this->is_3d_plot = false;
 	this->is_multi_plot = false;
 	
@@ -104,6 +105,8 @@ void GnuPlot::plot2d (const std::vector<std::vector<double>> &array)
 
 void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &title) 
 {
+	if (arrays.empty()) throw std::invalid_argument("Empty plot dataset.");
+	if (arrays[0].size()-1 != title.size()) throw std::invalid_argument("Size of input arrays does not match.");
 	this->is_3d_plot = false;
 	this->is_multi_plot = true;
 	
@@ -126,6 +129,7 @@ void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const 
 
 void GnuPlot::plot3d (const std::vector<std::vector<double>> &matrix)
 {
+	if (matrix.empty()) throw std::invalid_argument("Empty plot dataset.");
 	this->is_3d_plot = true;
 	this->is_multi_plot = false;
 
