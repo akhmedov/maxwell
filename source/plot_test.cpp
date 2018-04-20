@@ -72,7 +72,8 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "kerr_under_integral_from_nu(r,r',R=1) " << std::endl;
-	std::vector<double> r = {1.2, 0, 0, 1}, r_perp = {1.1, 0.1, 0, 1};
+	std::vector<double> r = {3, 0, 0, std::sqrt(2)};
+	std::vector<double> r_perp = {std::sqrt(3), 0.5, 0, std::sqrt(1.5)};
 	PlotTest::kerr_under_integral_from_nu(r, r_perp);
 }
 
@@ -104,6 +105,7 @@ void PlotTest::kerr_under_integral_from_nu (const std::vector<double> &r, const 
 	double casual = std::sqrt(delta_vt*delta_vt - delta_z*delta_z);
 	if (std::isnan(casual)) throw std::invalid_argument("Casuality princip is not supported at r and r'");
 	double max_nu =  PERIODS_NU * std::abs(rho - rho_perp + casual);
+	if (max_nu <= 1e-5) throw std::invalid_argument("max_nu is zero value for current r and r'");
 
 	for (double nu = 0; nu < 3 * max_nu; nu += 0.001) {
 

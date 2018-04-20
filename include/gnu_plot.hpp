@@ -53,7 +53,7 @@ struct GnuPlot {
 	void set_logscale_oy (bool status = true);
 
 	void grid_on (bool status = true);
-	void cage_on ( bool status = true );
+	void cage_on (bool status = true);
 
 	void plot2d (const std::vector<std::vector<double>> &array);
 	void plot_multi (const std::vector<std::vector<double>> &array, const std::vector<std::string> &title);
