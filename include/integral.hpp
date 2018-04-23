@@ -36,7 +36,7 @@ private:
 };
 
 struct SimpsonRunge : public Integral {
-	SimpsonRunge (std::size_t node_number, double precision /* % */, std::size_t max_nodes = 1e5);
+	SimpsonRunge (std::size_t node_number, double precision /* % */, std::size_t max_nodes = 1e4);
 	double value (double from, double to, const std::function<double(double)> &f);
 	std::size_t current_units () const;
 private:

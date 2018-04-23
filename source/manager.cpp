@@ -8,14 +8,15 @@
 
 #include "manager.hpp"
 
-Manager::Manager ()
-: Manager(std::thread::hardware_concurrency() - 1) 
+Manager::Manager (Logger* logger_ptr)
+: Manager(std::thread::hardware_concurrency() - 1, logger_ptr) 
 { }
 
 //=============================================================================
 
-Manager::Manager (std::size_t threads)
+Manager::Manager (std::size_t threads, Logger* logger_ptr)
 {
+	this->global_logger = logger_ptr;
 	this->data_left = 0;
 	this->total_data = 0;
 	this->thread_number = threads;
@@ -50,6 +51,8 @@ std::vector<std::vector<double>> Manager::get_value ()
 	auto tmp = this->result;
 	std::vector<std::vector<double>> res(tmp.size());
 	std::copy(tmp.begin(), tmp.end(), res.begin());
+
+	if (this->global_logger) this->global_logger->write_all();
 	
 	this->reset();
 	return res;
@@ -303,11 +306,11 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 //== SafeManger ===============================================================
 //=============================================================================
 
-/* SafeManager::SafeManager (Config* gl_config) 
+/* SafeManager::SafeManager (Config* gl_config, Logger* logger_ptr) 
 : Manager(), client(gl_config) { } */
 
-SafeManager::SafeManager (std::size_t threads, Config* gl_config) 
-: Manager(threads), client()
+SafeManager::SafeManager (std::size_t threads, Config* gl_config, Logger* logger_ptr) 
+: Manager(threads,logger_ptr), client()
 {
 	for (std::size_t c = 0; c < this->thread_number; c++) {
 		MySQL* thread_client = new MySQL(gl_config);

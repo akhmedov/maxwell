@@ -45,17 +45,21 @@ void PlotModel::__Ex_from_ct ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
+	Logger* logger = NULL;
+	if (global_conf->logger_status()) 
+		logger = new Logger(global_conf->maxwell_log_path());
+
 	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
 	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 
 	NoiseField* noise = new NoiseField(0,noise_level);
 	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
+	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source, logger);
 	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
 	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
+	if (!this->global_conf->safe_mode()) thead_core = new Manager(thread_num, logger);
 	else thead_core = new SafeManager( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 

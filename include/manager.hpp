@@ -9,6 +9,7 @@
 #ifndef manager_hpp
 #define manager_hpp
 
+#include "logger.hpp"
 #include "mysql_connect.hpp"
 #include "abstract_field.hpp"
 #include "uniform_disk_current.hpp"
@@ -36,8 +37,8 @@ struct TimeSort {
 
 struct Manager {
 	
-	Manager ();
-	Manager (std::size_t threads);
+	Manager (Logger* global_logger = NULL);
+	Manager (std::size_t threads, Logger* global_logger = NULL);
 	void progress_bar (bool status = true);
 	void add_argument (std::vector<double> argument);
 	virtual std::vector<std::vector<double>> get_value ();
@@ -60,17 +61,21 @@ protected:
 	std::size_t data_left;
 	std::size_t total_data;
 	bool print_progtess = false;
+
+private:
+	Logger* global_logger;
 };
 
 struct SafeManager : public Manager {
 
-	// SafeManger (Config* global);
-	SafeManager (std::size_t threads, Config* global);
+	// SafeManger (Config* global, Logger* global_logger = NULL);
+	SafeManager (std::size_t threads, Config* global, Logger* global_logger = NULL);
 	std::vector<std::vector<double>> get_value ();
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
 	~SafeManager ();
 
 private:
+
 
 	std::vector<MySQL*> client;
 };

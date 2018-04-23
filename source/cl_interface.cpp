@@ -51,9 +51,10 @@ CLI::CLI (Config* conf)
 	this->binar_cmd.insert(binar_var_cmd.begin(),binar_var_cmd.end());
 
 	this->unar_cmd = {
+		{"--log"},
+		{"--safe"},
 		{"--help"},
-		{"--version"},
-		{"--safe"}
+		{"--version"}
 	};
 }
 
@@ -222,6 +223,9 @@ void CLI::update_config (const std::string& param) const
 
 	if (!param.compare("--safe"))
 		this->global_conf->safe_mode(true);
+
+	if (!param.compare("--log"))
+		this->global_conf->logger_status(true);
 }
 
 bool CLI::is_float ( const std::string& literal )
@@ -362,7 +366,7 @@ void CLI::print_help () const
 {
 	// [--renoise] 
 
-	std::cout << "usage: maxwell [--version] [--help] [--safe] [--conf <posix_path>]" << std::endl;
+	std::cout << "usage: maxwell [--version] [--help] [--safe] [--log] [--conf <posix_path>]" << std::endl;
 	std::cout << "               [--shape <type>] [--duration <float>] [<MODEL> <model_num>]" << std::endl;
 	std::cout << "               [--magnitude <float>] [--radius <float>] [--kerr <float>]" << std::endl;
 	std::cout << "               [--mur <float>] [--epsr <float>] [--noise <percent,percent>]" << std::endl;
@@ -456,6 +460,22 @@ void CLI::print_arguments () const
 		std::cout << "No data base conection." << std::endl;
 		std::cout << "Use --safe flag to store progress on hard drive." << std::endl;
 	}
+
+	if (this->global_conf->logger_status()) {
+		std::cout << "Model debug informaition will be loged at " << this->global_conf->maxwell_log_path() << std::endl;
+	} else {
+		std::cout << "Use --log flag to enable log." << std::endl;
+	}
+
+	std::string conf_path = this->global_conf->maxwell_config_path();
+	std::ifstream conf_file(conf_path);
+	if (conf_file.bad()) {
+		std::cout << "Configuration file is not found. Use --conf [PATH] option to spesifiy it." << std::endl;
+	} else {
+		std::cout << "Path to configuration file: " << conf_path << std::endl;
+	}
+	conf_file.close();
+
 	std::cout << "..." << std::endl;
 }
 
@@ -551,6 +571,11 @@ void CLI::read_config_file () const
 				else if (option.find("SCRIPT_NAME") != std::string::npos) {
 					// std::experimental::filesystem::exists(arg);
 					this->global_conf->gnp_script_path(arg);
+				}
+
+				else if (option.find("LOGGER_NAME") != std::string::npos) {
+					// std::experimental::filesystem::exists(arg);
+					this->global_conf->maxwell_log_path(arg);
 				}
 
 				else if (option.find("MAGNETIC_TERM_NUM") != std::string::npos) {

@@ -8,7 +8,7 @@
 
 #include "kerr_amendment.hpp"
 
-const std::string KerrAmendment::exeption_msg = "[WW] Integral by $VAR has not trustable at $TIME, $RHO, $PHI, $Z";
+const std::string KerrAmendment::exeption_msg = "Integral by $VAR has not trustable at $TIME, $RHO, $PHI, $Z";
 
 /* Nonlinear medium */
 
@@ -103,9 +103,10 @@ double KerrAmendment::current_phi (double vt, double rho, double phi, double z) 
 	return - coeff * (cos0sin3 + cos2sin1);
 }
 
-KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source)
+KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source, Logger* logger_ptr)
 : NonlinearField(field, medium) 
-{ 
+{
+	this->global_logger = logger_ptr;
 	this->linear_field = field;
 	this->A0 = source->get_magnitude();
 	this->R = source->get_disk_radius();
@@ -116,6 +117,8 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 	double vt_z = vt - z;
 	if (z == 0) return 0;
 	if (vt_z < 1e-9) return 0;
+
+	Logger* log_ptr = this->global_logger;
 
 	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
 	double eps_r = this->nl_medium->relative_permittivity(vt,z);
@@ -129,12 +132,12 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 	try {
 
 		integral = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
-			[R, vt, rho, phi, z] (double z_perp) {
+			[log_ptr, R, vt, rho, phi, z] (double z_perp) {
 
 				try {
 
 					return SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
-						[R, vt, rho, phi, z, z_perp] (double rho_perp) {
+						[log_ptr, R, vt, rho, phi, z, z_perp] (double rho_perp) {
 
 							double max_vt = vt - z + z_perp; // grater then zero
 							double max_nu = PERIODS_NU * std::abs(rho - rho_perp);
@@ -147,7 +150,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 							try  {
 
 								delta_sum = SimpsonRunge(nodes_nu, MAX_ERROR).value(0, max_nu,
-									[R, vt, rho, phi, z, max_vt, rho_perp, z_perp] (double nu) {
+									[R, rho, phi, max_vt, rho_perp, z_perp] (double nu) {
 
 										double sum = 0;
 										sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
@@ -162,15 +165,20 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 								} );	// <--------------------------------------------------------------------------------------- d nu1
 
 							} catch (double not_trusted) {
-								std::string msg = KerrAmendment::exeption_msg;
-								msg = std::regex_replace(msg, std::regex("\\$VAR" ), "NU1");
-								msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
-								msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
-								msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
-								msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
-								msg += std::string(" Z'= ") + std::to_string(z_perp);
-								msg += std::string(" RHO'= ") + std::to_string(rho_perp);
-								std::cout << msg << std::endl;
+
+								if (log_ptr) {
+									std::string mesg = KerrAmendment::exeption_msg;
+									mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
+									mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
+									mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+									mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+									mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+									mesg += std::string(" (Z'= ") + std::to_string(z_perp);
+									mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
+									mesg += std::string(")");
+									log_ptr->warning(mesg);
+								}
+
 								delta_sum = not_trusted;
 							}
 							
@@ -180,7 +188,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 							try {
 
 								step_sum = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, max_vt,
-									[R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp) {
+									[log_ptr, R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp) {
 
 									double delta_vt = vt - vt_perp;
 									double delta_z = z - z_perp;
@@ -195,7 +203,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 									try {
 
 										res = SimpsonRunge(nodes_nu, MAX_ERROR).value( 0, max_nu,
-											[R, vt, rho, phi, z, rho_perp, z_perp, vt_perp, casual, delta_vt] (double nu) {
+											[R, rho, phi, rho_perp, z_perp, vt_perp, casual, delta_vt] (double nu) {
 												double bessel = jn(0,nu * casual) + jn(2,nu * casual); 
 												double sum = 0;
 												sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
@@ -211,16 +219,21 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 										} );	// <-------------------------------------------------------------------------------- d nu2
 
 									} catch (double not_trusted) {
-										std::string msg = KerrAmendment::exeption_msg;
-										msg = std::regex_replace(msg, std::regex("\\$VAR" ), "NU2");
-										msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
-										msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
-										msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
-										msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
-										msg += std::string(" Z'= ") + std::to_string(z_perp);
-										msg += std::string(" RHO'= ") + std::to_string(rho_perp);
-										msg += std::string(" VT'= ") + std::to_string(vt_perp);
-										std::cout << msg << std::endl;
+
+										if (log_ptr) {
+											std::string mesg = KerrAmendment::exeption_msg;
+											mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
+											mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
+											mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+											mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+											mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+											mesg += std::string(" (Z'= ") + std::to_string(z_perp);
+											mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
+											mesg += std::string(", VT'= ") + std::to_string(vt_perp);
+											mesg += std::string(")");
+											log_ptr->warning(mesg);
+										}
+
 										res = not_trusted;
 									}
 
@@ -230,15 +243,20 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 								} );	// <---------------------------------------------------------------------------------------- d tau'
 
 							} catch (double not_trusted) {
-								std::string msg = KerrAmendment::exeption_msg;
-								msg = std::regex_replace(msg, std::regex("\\$VAR" ), "VT'");
-								msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
-								msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
-								msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
-								msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
-								msg += std::string(" Z'= ") + std::to_string(z_perp);
-								msg += std::string(" RHO'= ") + std::to_string(rho_perp);
-								std::cout << msg << std::endl;
+
+								if (log_ptr) {
+									std::string mesg = KerrAmendment::exeption_msg;
+									mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
+									mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
+									mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+									mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+									mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+									mesg += std::string(" (Z'= ") + std::to_string(z_perp);
+									mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
+									mesg += std::string(")");
+									log_ptr->warning(mesg);
+								}
+
 								step_sum = not_trusted;
 							}
 
@@ -247,27 +265,39 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 					} ); //	<------------------------------------------------------------------------------------------------------- d rho'
 
 				} catch (double not_trusted) {
-					std::string msg = KerrAmendment::exeption_msg;
-					msg = std::regex_replace(msg, std::regex("\\$VAR" ), "RHO'");
-					msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
-					msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
-					msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
-					msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
-					msg += std::string(" Z'= ") + std::to_string(z_perp);
-					std::cout << msg << std::endl;
+
+					if (log_ptr) {
+						std::string mesg = KerrAmendment::exeption_msg;
+						mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
+						mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
+						mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+						mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+						mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+						mesg += std::string(" (Z'= ") + std::to_string(z_perp);
+						mesg += std::string(")");
+						log_ptr->warning(mesg);
+					}
+
 					return not_trusted;
 				}
 		} );	// <---------------------------------------------------------------------------------------------------------------- d z'
 
 	} catch (double not_trusted) {
-		std::string msg = KerrAmendment::exeption_msg;
-		msg = std::regex_replace(msg, std::regex("\\$VAR" ), "Z'");
-		msg = std::regex_replace(msg, std::regex("\\$TIME"), std::to_string(vt));
-		msg = std::regex_replace(msg, std::regex("\\$RHO" ), std::to_string(rho));
-		msg = std::regex_replace(msg, std::regex("\\$PHI" ), std::to_string(phi));
-		msg = std::regex_replace(msg, std::regex("\\$Z"   ), std::to_string(z));
-		std::cout << msg << std::endl;
-		integral = not_trusted; 
+
+		if (log_ptr) {
+			std::string mesg = KerrAmendment::exeption_msg;
+			mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
+			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
+			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+			log_ptr->warning(mesg);
+		}
+
+		integral = not_trusted;
+
+		std::cout << "Ex (" << vt << ',' << rho << ',' << phi << ',' << z << ") => ";
+		std::cout << - coeff * integral << std::endl;
 	}
 
 	return - coeff * integral;

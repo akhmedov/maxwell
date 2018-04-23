@@ -5,10 +5,13 @@
 # Default outputfile
 /maxwell.gnp
 
-# Project build birictorice with contents
+# Project build dirictorice with contents
 /gnump/
 /gnuplot/
-/build/
+/build/*.o
+/build/maxwell
+/build/plot_test
+/build/unit_test
 
 # All log files
 /**/*.log

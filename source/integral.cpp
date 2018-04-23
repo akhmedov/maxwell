@@ -41,7 +41,7 @@ double Simpson::value (double from, double to, const std::function<double(double
 // =========================================================================
 
 SimpsonRunge::SimpsonRunge (std::size_t min_node_number, double accurence, std::size_t max_node_number)
-: init_nodes(min_node_number), epsilon(accurence), max_nodes(max_node_number)
+: init_nodes(min_node_number), max_nodes(max_node_number), epsilon(accurence)
 { 
 	if (min_node_number == 0) throw std::invalid_argument("Zero node number is not allowed.");
 	this->running_units = 1;

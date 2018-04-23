@@ -47,6 +47,7 @@ struct Config {
 	void display_params (bool);
 	void reset_noise (bool);
 	void safe_mode (bool);
+	void logger_status (bool);
 
 	void plot_color_map (Colormap);
 	void plot_device (PlotDev);
@@ -54,6 +55,7 @@ struct Config {
 	void path_gnuplot_binary (std::string);
 	void gnp_script_path (std::string);
 	void maxwell_config_path (std::string);
+	void maxwell_log_path (std::string);
 
 	void magnetic_term_num (std::size_t);
 	void float_bitrate (std::size_t);
@@ -94,6 +96,7 @@ struct Config {
 	bool display_params () const;
 	bool reset_noise () const;
 	bool safe_mode () const;
+	bool logger_status () const;
 
 	Colormap plot_color_map () const;
 	PlotDev plot_device () const;
@@ -101,6 +104,7 @@ struct Config {
 	std::string path_gnuplot_binary () const;
 	std::string gnp_script_path () const;
 	std::string maxwell_config_path () const;
+	std::string maxwell_log_path () const;
 
 	std::size_t magnetic_term_num () const;
 	std::size_t float_bitrate () const;
@@ -142,6 +146,7 @@ private:
 	bool call_gnuplot_value;
 	bool display_params_value;
 	bool is_safe_mode;
+	bool is_logger_mode;
 
 	Colormap plot_cmap_value;
 	PlotDev device_value;
@@ -149,6 +154,7 @@ private:
 	std::string ppath_gnuplot_value;
 	std::string ppath_gnp_value;
 	std::string ppath_maxwell_config;
+	std::string ppath_maxwell_log;
 
 	std::size_t h_terms_value;
 	std::size_t fbitrate_value;

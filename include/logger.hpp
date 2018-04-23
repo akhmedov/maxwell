@@ -9,14 +9,16 @@
 #ifndef logger_hpp
 #define logger_hpp
 
-#define QSIZE_LIMIT 5e3
+#define QSIZE_LIMIT 1
 
 #ifndef UNUSED
 #define UNUSED(expr) do { (void)(expr); } while (0)
 #endif
 
-#include <string>
+#include <mutex>
+#include <ctime>
 #include <queue>
+#include <string>
 #include <utility>
 #include <fstream>
 
@@ -27,7 +29,14 @@ struct Logger {
 	void error (const std::string &text);
 	void write_next ();
 	void write_all ();
+	~Logger ();
+
+protected:
+	static std::string sys_time ();
+	static std::string name_upgrade (const std::string &old_name);
+
 private:
+	std::mutex mesg_add;
 	const std::string file_name;
 	enum MesgType {II, WW, EE};
 	std::ofstream text_file;

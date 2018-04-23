@@ -15,6 +15,7 @@
 #include "manager.hpp"
 #include "integral.hpp"
 #include "config.hpp"
+#include "logger.hpp"
 #include "noise.hpp"
 
 #include <algorithm>

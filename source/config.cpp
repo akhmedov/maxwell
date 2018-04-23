@@ -21,6 +21,7 @@ Config::Config ()
 	this->plot_bcage_value = true;
 	this->display_params_value = true;
 	this->is_safe_mode = false;
+	this->is_logger_mode = false;
 
 	this->plot_cmap_value = Colormap::gray;
 	this->device_value = PlotDev::x11;
@@ -28,6 +29,7 @@ Config::Config ()
 	this->ppath_gnuplot_value = "gnuplot";
 	this->ppath_gnp_value = "maxwell.gnp";
 	this->ppath_maxwell_config = "maxwell.conf";
+	this->ppath_maxwell_log = "maxwell.log";
 
 	this->h_terms_value = 100;
 	this->fbitrate_value = 256;
@@ -47,7 +49,7 @@ Config::Config ()
 	// working_component must not be default!!!
 	// this->working_component = FieldComponnt::Ex;
 
-	this->mysql_addr  = "localhoast";
+	this->mysql_addr  = "localhost";
 	this->mysql_user  = "maxwell";
 	this->mysql_pass  = "maxwell";
 	this->mysql_dbase = "maxwell";
@@ -151,6 +153,11 @@ void Config::safe_mode (bool option)
 	this->is_safe_mode = option;
 }
 
+void Config::logger_status (bool option)
+{
+	this->is_logger_mode = option;
+}
+
 void Config::plot_color_map (Colormap plot_color)
 {
 	this->plot_cmap_value = plot_color;
@@ -174,6 +181,11 @@ void Config::gnp_script_path (std::string posix_path)
 void Config::maxwell_config_path (std::string posix_path)
 {
 	this->ppath_maxwell_config = posix_path;
+}
+
+void Config::maxwell_log_path (std::string posix_path)
+{
+	this->ppath_maxwell_log = posix_path;
 }
 
 void Config::magnetic_term_num (std::size_t terms)
@@ -353,6 +365,11 @@ bool Config::safe_mode () const
 	return this->is_safe_mode;
 }
 
+bool Config::logger_status () const
+{
+	return this->is_logger_mode;
+}
+
 Colormap Config::plot_color_map () const
 {
 	return this->plot_cmap_value;
@@ -378,6 +395,10 @@ std::string Config::maxwell_config_path () const
 	return this->ppath_maxwell_config;
 }
 
+std::string Config::maxwell_log_path () const
+{
+	return this->ppath_maxwell_log;
+}
 
 std::size_t Config::magnetic_term_num () const
 {

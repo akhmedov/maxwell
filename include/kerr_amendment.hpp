@@ -18,6 +18,7 @@
 #define MIN_NODES	5
 #define MAX_ERROR	10 // %
 
+#include "logger.hpp"
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "linear_source.hpp"
@@ -52,7 +53,7 @@ private:
 
 struct KerrAmendment : public NonlinearField {
 
-	KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source);
+	KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source, Logger* global_logger = NULL);
 	double electric_x (double ct, double rho, double phi, double z) const;
 
 	double electric_rho (double ct, double rho, double phi, double z) const;
@@ -86,6 +87,10 @@ protected:
 	MissileField* linear_field;
 	double A0;
 	double R;
+
+private:
+
+	Logger* global_logger;
 };
 
 #endif /* kerr_amendment_hpp */
