@@ -509,6 +509,17 @@ bool UnitTest::simpson_runge_2d ()
 	return 100 * abs(I - 1) < 2*error ? true : false;
 }
 
+bool UnitTest::simpson_runge_jump ()
+{
+	double a = 1;
+
+	auto f = [a] (double x) {
+		return 1/(x-a);
+	};
+
+	return false;
+}
+
 int main()
 {
 	cout << boolalpha;
@@ -580,6 +591,10 @@ int main()
 	cout << "KerrAmendment::UnitTest::I2_time_partder \t"; 
 	cout.flush();
 	cout << UnitTest::I2_time_partder() << endl;
+
+	cout << "KerrAmendment::UnitTest::simpson_runge_jump \t"; 
+	cout.flush();
+	cout << UnitTest::simpson_runge_jump() << endl;
 
 	/* cout << "Math::UnitTest::monte_carlo_integral \t";
 	cout.flush();

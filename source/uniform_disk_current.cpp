@@ -78,6 +78,8 @@ double UniformPlainDisk::get_disk_radius() const
 
 // Electric field
 
+std::size_t MissileField::STATIC_TERMS_NUMBER = 100;
+
 MissileField::MissileField (UniformPlainDisk* source, Homogeneous* medium)
 : LinearField(source,medium)
 {
@@ -85,21 +87,14 @@ MissileField::MissileField (UniformPlainDisk* source, Homogeneous* medium)
 	this->R = source->get_disk_radius();
 }
 
-/* MissileField::MissileField (UniformPlainDisk* source, KerrMedium* medium)
-: LinearField(source,medium)
-{
-	this->A0 = source->get_magnitude();
-	this->R = source->get_disk_radius();
-} */
-
 void MissileField::set_yterms_num (std::size_t number)
 {
-	this->STATIC_TERMS_NUMBER = number;
+	MissileField::STATIC_TERMS_NUMBER = number;
 }
 
-std::size_t MissileField::get_yterms_num () const
+std::size_t MissileField::get_yterms_num ()
 {
-	return this->STATIC_TERMS_NUMBER;
+	return MissileField::STATIC_TERMS_NUMBER;
 }
 
 double MissileField::electric_rho (double ct, double rho, double phi, double z) const
@@ -117,10 +112,10 @@ double MissileField::electric_rho (double ct, double rho, double phi, double z) 
 		std::size_t bais = 1e5;
 		Simpson I = Simpson(10*bais);
 		
-		auto ui_011 = [sqrt_vt_z, rho, r] (double nu) {
-			if (rho == 0) return r * j0(nu*sqrt_vt_z) * j1(nu*r) / 2;
+		auto ui_011 = [sqrt_vt_z, rho, R] (double nu) {
 			if (nu == 0) return 0.0;
-			return r * j0(nu*sqrt_vt_z) * j1(nu*rho) * j1(nu*r) / rho / nu;
+			if (rho == 0) return R * j0(nu*sqrt_vt_z) * j1(nu*R) / 2;
+			return R * j0(nu*sqrt_vt_z) * j1(nu*rho) * j1(nu*R) / rho / nu;
 		};
 
 		value *= I.value(0, bais, ui_011) * std::cos(phi);
@@ -133,7 +128,6 @@ double MissileField::electric_rho (double ct, double rho, double phi, double z) 
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
-
 }
 
 double MissileField::electric_phi (double ct, double rho, double phi, double z) const
@@ -156,8 +150,8 @@ double MissileField::electric_phi (double ct, double rho, double phi, double z) 
 		};
 		
 		auto ui_011 = [sqrt_vt_z, rho, R] (double nu) {
-			if (rho == 0) return R * j0(nu*sqrt_vt_z) * j1(nu*R) / 2;
 			if (nu == 0) return 0.0;
+			if (rho == 0) return R * j0(nu*sqrt_vt_z) * j1(nu*R) / 2;
 			return R * j0(nu*sqrt_vt_z) * j1(nu*rho) * j1(nu*R) / rho / nu;
 		};
 
@@ -166,8 +160,8 @@ double MissileField::electric_phi (double ct, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		double i1 = this->int_bessel_011(sqrt_vt_z, rho, R);
-		double i2 = this->int_bessel_001(sqrt_vt_z, rho, R);
+		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+		double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
 		value *= - (i2 - i1) * std::sin(phi);
 		return value;
 
@@ -182,38 +176,34 @@ double MissileField::electric_z (double ct, double rho, double phi, double z) co
 
 // Magnetic field
 
-double MissileField::magnetic_rho (double ct, double rho, double phi, double z) const
+double MissileField::magnetic_rho (double vt, double rho, double phi, double z) const
 {
-	double eps_r = medium->relative_permittivity(ct,z);
-	double mu_r = medium->relative_permeability(ct,z);
 	double value = this->A0 / 2;
-	mpf_class ct_z = mpf_class(ct * ct);
-	mpf_div(ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
-	mpf_add( ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (ct_z.get_d() <= 0) return 0;
+	double R = this->R;
+	mpf_class vt_z = mpf_class(vt * vt);
+	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
+	if (vt_z.get_d() <= 0) return 0;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
 		throw std::logic_error("MissileField::magnetic_rho is not implemented for -DNUMERIC_PDISK_LINEAR_INT");
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
-
 		
-		value *= (this->int_lommel_001(ct, rho, z) - this->int_lommel_011(ct, rho, z)) * std::sin(phi);
-		return value;
+		value *= MissileField::int_lommel_001(vt, rho, z, R) - 
+				 MissileField::int_lommel_011(vt, rho, z, R);
+		return value * std::sin(phi);
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::magnetic_phi (double ct, double rho, double phi, double z) const
+double MissileField::magnetic_phi (double vt, double rho, double phi, double z) const
 {
-	double eps_r = medium->relative_permittivity(ct,z);
-	double mu_r = medium->relative_permeability(ct,z);
 	double value = this->A0 / 2;
-	mpf_class ct_z = mpf_class(ct * ct);
-	mpf_div(ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
-	mpf_add( ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (ct_z.get_d() <= 0) return 0;
+	double R = this->R;
+	mpf_class vt_z = mpf_class(vt * vt);
+	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
+	if (vt_z.get_d() <= 0) return 0;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -221,21 +211,19 @@ double MissileField::magnetic_phi (double ct, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		value *= this->int_lommel_011(ct, rho, z) * std::cos(phi);
+		value *= MissileField::int_lommel_011(vt, rho, z, R) * std::cos(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::magnetic_z (double ct, double rho, double phi, double z) const
+double MissileField::magnetic_z (double vt, double rho, double phi, double z) const
 {
-	double eps_r = medium->relative_permittivity(ct,z);
-	double mu_r = medium->relative_permeability(ct,z);
 	double value = this->A0;
-	mpf_class ct_z = mpf_class(ct * ct);
-	mpf_div(ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
-	mpf_add( ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (ct_z.get_d() <= 0) return 0;
+	double R = this->R;
+	mpf_class vt_z = mpf_class(vt * vt);
+	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
+	if (vt_z.get_d() <= 0) return 0;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -243,7 +231,7 @@ double MissileField::magnetic_z (double ct, double rho, double phi, double z) co
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		value *= this->int_lommel_111(ct, rho, z) * std::sin(phi);
+		value *= MissileField::int_lommel_111(vt, rho, z, R) * std::sin(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
@@ -326,25 +314,18 @@ double MissileField::int_bessel_011 (double sqrt_vt_z, double rho, double R)
 	return res / (4 * M_PI * rho2);
 }
 
-double MissileField::int_lommel_001 (double ct, double rho, double z) const
+double MissileField::int_lommel_001 (double vt, double rho, double z, double R)
 {
-	double eps_r = medium->relative_permittivity(ct,z);
-	double mu_r = medium->relative_permeability(ct,z);
-	double R2 = this->R * this->R;
-
 	mp_bitcnt_t bitrate = mp_bitcnt_t(256);
 	mpf_set_default_prec(bitrate);
 
-	mpf_class ctpz, ctmz, ctz;
-	mpf_div(ctpz.get_mpf_t(), mpf_class(ct).get_mpf_t(), mpf_class(std::sqrt(eps_r * mu_r)).get_mpf_t());
+	mpf_class ctpz(vt), ctmz(vt), ctz;
 	mpf_add(ctpz.get_mpf_t(), ctpz.get_mpf_t(), mpf_class(z).get_mpf_t());
-	mpf_div(ctmz.get_mpf_t(), mpf_class(ct).get_mpf_t(), mpf_class(std::sqrt(eps_r * mu_r)).get_mpf_t());
 	mpf_add(ctmz.get_mpf_t(), ctmz.get_mpf_t(), mpf_class(-z).get_mpf_t());
 	mpf_div(ctz.get_mpf_t(), ctmz.get_mpf_t(), ctpz.get_mpf_t());
 	mpf_class ctz_in_pow(ctz);
 
-	mpf_class ct_z = mpf_class(ct * ct);
-	mpf_div(ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(eps_r * mu_r).get_mpf_t());
+	mpf_class ct_z = mpf_class(vt * vt);
 	mpf_add( ct_z.get_mpf_t(), ct_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
 	
 	mpf_class yacob_arg, yacob;
@@ -352,13 +333,13 @@ double MissileField::int_lommel_001 (double ct, double rho, double z) const
 	if (rho == 0) {
 		if (R < std::sqrt(ct_z.get_d())) {
 			mpf_class sum = mpf_class(0);
-			for (std::size_t m = 0; m <= this->STATIC_TERMS_NUMBER; m++) {
-				yacob = Math::yacobi_polinom(m, 1 - 2 * R2 / ct_z);
+			for (std::size_t m = 0; m <= MissileField::STATIC_TERMS_NUMBER; m++) {
+				yacob = Math::yacobi_polinom(m, 1 - 2 * R * R / ct_z);
 				mpf_mul(yacob.get_mpf_t(), yacob.get_mpf_t(), ctz_in_pow.get_mpf_t());
 				mpf_add(sum.get_mpf_t(), sum.get_mpf_t(), yacob.get_mpf_t());
 				mpf_mul(ctz_in_pow.get_mpf_t(), ctz_in_pow.get_mpf_t(), ctz.get_mpf_t());
 			}
-			mpf_class res = mpf_class(2 * R2);
+			mpf_class res = mpf_class(2 * R * R);
 			mpf_mul(res.get_mpf_t(), res.get_mpf_t(), sum.get_mpf_t());
 			mpf_div(res.get_mpf_t(), res.get_mpf_t(), ct_z.get_mpf_t());
 			return res.get_d();
@@ -369,13 +350,13 @@ double MissileField::int_lommel_001 (double ct, double rho, double z) const
 	throw std::logic_error("MissileField::int_lommel_001 is not implemented for non zero rho!");
 }
 
-double MissileField::int_lommel_011 (double ct, double rho, double z) const
+double MissileField::int_lommel_011 (double vt, double rho, double z, double R)
 {
-	return this->int_lommel_001(ct, rho, z) / 2;
+	return MissileField::int_lommel_001(vt, rho, z, R) / 2;
 }
 
-double MissileField::int_lommel_111 (double ct, double rho, double z) const
+double MissileField::int_lommel_111 (double vt, double rho, double z, double R)
 {
-	UNUSED(ct); UNUSED(rho); UNUSED(z);
+	UNUSED(vt); UNUSED(rho); UNUSED(z); UNUSED(R);
 	throw std::logic_error("MissileField::int_lommel_111 is not implemented");
 }

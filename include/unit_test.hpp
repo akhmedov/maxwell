@@ -46,6 +46,7 @@ struct UnitTest : private Math, private Integral, private KerrAmendment {
 	static bool monte_carlo_integral ();
 	static bool monte_carlo_improper ();
 	static bool imptoper_int_bessel ();
+	static bool simpson_runge_jump ();
 	static bool yacobi_pol_compare ();
 	static bool simpson_runge_2d ();
 	static bool I1_time_partder ();

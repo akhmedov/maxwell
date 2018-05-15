@@ -22,9 +22,9 @@
 #include "config.hpp"
 #include "integral.hpp"
 #include "phys_math.hpp"
+#include "linear_field.hpp"
 #include "linear_medium.hpp"
 #include "linear_source.hpp"
-#include "linear_field.hpp"
 
 struct Homogeneous : public LinearMedium {
 
@@ -59,8 +59,8 @@ struct MissileField : public LinearField {
 
 	MissileField (UniformPlainDisk* source, Homogeneous* medium);
 
-	void set_yterms_num (std::size_t);
-	std::size_t get_yterms_num () const;
+	static void set_yterms_num (std::size_t);
+	static std::size_t get_yterms_num ();
 
 	double static_magnitude (double z) const;
 	double static_magnitude (double rho, double phi, double z, double eps = 10e-10) const;
@@ -75,17 +75,16 @@ struct MissileField : public LinearField {
 
 	static double int_bessel_001 (double vt_z, double rho, double R); // I2 in thesis.pdf
 	static double int_bessel_011 (double vt_z, double rho, double R); // I1 in thesis.pdf
-	
-	// TODO: refactor for integrtion test compatability
-	double int_lommel_001 (double ct, double rho, double z) const; // I4 in thesis.pdf
-	double int_lommel_011 (double ct, double rho, double z) const; // I3 in thesis.pdf
-	double int_lommel_111 (double ct, double rho, double z) const; // I5 in thesis.pdf
+
+	static double int_lommel_001 (double ct, double rho, double z, double R); // I4 in thesis.pdf
+	static double int_lommel_011 (double ct, double rho, double z, double R); // I3 in thesis.pdf
+	static double int_lommel_111 (double ct, double rho, double z, double R); // I5 in thesis.pdf
 	
 protected:
 
 	double A0;
 	double R;
-	std::size_t STATIC_TERMS_NUMBER = 100;
+	static std::size_t STATIC_TERMS_NUMBER;
 };
 
 #endif /* uniform_disk_current_hpp */
