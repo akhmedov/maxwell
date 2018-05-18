@@ -21,23 +21,19 @@ PlotModel::PlotModel (Config* conf)
 	};
 }
 
-void PlotModel::call (const PlotModel::Name& model_name)
+void PlotModel::set_logger (Logger* log)
 {
-	this->model_pointer[model_name - 1](*this);
+	this->global_log = log;
 }
 
-void PlotModel::__Ex_from_ct ()
+void PlotModel::call (const PlotModel::Name& model_name, const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
-	double R = this->global_conf->plane_disk_radius();
-	double A0 = this->global_conf->plane_disk_magnitude();
-	double eps_r = this->global_conf->plane_disk_epsr();
-	double mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
+	this->model_pointer[model_name - 1](*this, to_compute);
+}
 
-	double noise_level = this->global_conf->noise_level();
+void PlotModel::__Ex_from_ct (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
+{
 	std::size_t thread_num = this->global_conf->thread_number();
-
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
 	double ct_to = this->global_conf->receiver_vt()[2];
@@ -45,31 +41,14 @@ void PlotModel::__Ex_from_ct ()
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
-	Logger* logger = NULL;
-	if (global_conf->logger_status()) 
-		logger = new Logger(global_conf->maxwell_log_path());
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source, logger);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
 	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager(thread_num, logger);
-	else thead_core = new SafeManager( thread_num, this->global_conf );
+	if (!this->global_conf->safe_mode()) thead_core = new Manager(thread_num, this->global_log);
+	else thead_core = new SafeManager( thread_num, this->global_conf, this->global_log);
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -98,7 +77,7 @@ void PlotModel::__Ex_from_ct ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct ()
+void PlotModel::__Hy_from_ct (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	double R = this->global_conf->plane_disk_radius();
 	double A0 = this->global_conf->plane_disk_magnitude();
@@ -134,10 +113,6 @@ void PlotModel::__Hy_from_ct ()
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 		thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -167,7 +142,7 @@ void PlotModel::__Hy_from_ct ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Ex_from_ct_rho ()
+void PlotModel::__Ex_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	float R = this->global_conf->plane_disk_radius();
 	float A0 = this->global_conf->plane_disk_magnitude();
@@ -206,10 +181,6 @@ void PlotModel::__Ex_from_ct_rho ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -239,7 +210,7 @@ void PlotModel::__Ex_from_ct_rho ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct_rho ()
+void PlotModel::__Hy_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	float R = this->global_conf->plane_disk_radius();
 	float A0 = this->global_conf->plane_disk_magnitude();
@@ -278,10 +249,6 @@ void PlotModel::__Hy_from_ct_rho ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -311,7 +278,7 @@ void PlotModel::__Hy_from_ct_rho ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Ex_from_ct_z ()
+void PlotModel::__Ex_from_ct_z (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	float R = this->global_conf->plane_disk_radius();
 	float A0 = this->global_conf->plane_disk_magnitude();
@@ -350,10 +317,6 @@ void PlotModel::__Ex_from_ct_z ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::electric_x, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::electric_x, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::electric_x, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
@@ -383,7 +346,7 @@ void PlotModel::__Ex_from_ct_z ()
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct_z ()
+void PlotModel::__Hy_from_ct_z (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	float R = this->global_conf->plane_disk_radius();
 	float A0 = this->global_conf->plane_disk_magnitude();
@@ -422,10 +385,6 @@ void PlotModel::__Hy_from_ct_z ()
 		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
 			thead_core->add_argument( {ct,rho,phi,z} );
 
-	std::vector<std::pair<Component,AbstractField*>> to_compute;
-	// to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, noise));
-	to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, linear));
-	if (this->global_conf->kerr_medium()) to_compute.push_back(std::make_pair(&AbstractField::magnetic_y, non_linear));
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 

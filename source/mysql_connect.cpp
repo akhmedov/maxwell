@@ -8,8 +8,8 @@
 
 #include "mysql_connect.hpp"
 
-const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_header WHERE radiator = '$RADIATOR_TYPE' AND component = '$FIELD_COMP' AND radius = $RADIUS_VAL AND magnitude = $MAGNITUDE_VAL AND mu_r = $MUR_VAL AND eps_r = $EPSR_VAL AND kerr_r = $KERR_VAL AND duration = 0 AND signal_type = 'rect';";
-const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = 0, signal_type = 'rect';";
+const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_header WHERE radiator = '$RADIATOR_TYPE' AND component = '$FIELD_COMP' AND radius = $RADIUS_VAL AND magnitude = $MAGNITUDE_VAL AND mu_r = $MUR_VAL AND eps_r = $EPSR_VAL AND kerr_r = $KERR_VAL AND duration = $TAU_VAL AND signal_type = $SIGNAL;";
+const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = $TAU_VAL, signal_type = $SIGNAL;";
 const std::string MySQL::SELECT_POINT      = "SELECT id,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
 const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
 const std::string MySQL::UPDATE_LINEAR     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
@@ -45,7 +45,9 @@ MySQL::MySQL(Config* gl_config)
 	problem_id = std::regex_replace(problem_id, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_config->plane_disk_magnitude()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));	
+	problem_id = std::regex_replace(problem_id, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$SIGNAL"), std::to_string(this->global_config->impulse_shape()));
 
 	error_code = mysql_query(this->connection, problem_id.c_str());
 	MySQL::throw_error_code(error_code);
@@ -67,6 +69,8 @@ MySQL::MySQL(Config* gl_config)
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$SIGNAL"), std::to_string(this->global_config->impulse_shape()));
 
 		error_code = mysql_query(this->connection, insert_problem.c_str());
 		MySQL::throw_error_code(error_code);

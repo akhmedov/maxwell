@@ -94,20 +94,21 @@ libmysqlclient-dev - mysql client connector
 
 ### BUG LIST ###
 
+- save mode does not work from plot_model update
 + phi select query in data base
-- mysql connection on Linux; bad_typeid(), race_condition, database NULL fill 
-- config object is not updated if called from main(). Investigate?
++ mysql connection on Linux; bad_typeid(), race_condition, database NULL fill 
++ config object is not updated if called from main(). Investigate?
 - fix noise type configuration by precompiler define-vars
-- computation manager main thread sleep mode (efficiency?)
++ computation manager main thread sleep mode (efficiency?)
 - numerical linear vs analitical linear
 - refactor GnuPlot::write_commants_to_script()
 + refactor of --arg parther in main.cpp
 + refactor and restructur of main.cpp; code is not clean
 + refactor of ready_model.cpp; code copy-paste
 + refactor of manager.cpp; code copy-paste
-- refactor of manager.cpp: online sotring and wait function in get_value()
++ refactor of manager.cpp: online sotring and wait function in get_value()
 - extract all cout, cerr and exaptions handling to a separate CLI class
-- catch illegal answers in model
++ catch illegal answers in model
 + Config conflict: Conflict::TEMS_NUM == MissileField::STATIC_TERMS_NUMBER 
 
 - warnings on GNU GCC 5.4.0 20160607
@@ -124,12 +125,12 @@ libmysqlclient-dev - mysql client connector
 
 ### TODO LIST ###
 
-- secure culculation flag
-- numerics implementaion if Hy(ct,r) in linear medium
++ secure culculation flag
++ numerics implementaion if Hy(ct,r) in linear medium
 - smart pointers all over the code
 + numerical and analitic implementation of E(ct) by CLI option
 + Implement calculation DB
-- Implement logger class
++ Implement logger class
 - LIST ALL tested methods next to respount include
 + implement make help option in Makefile
 + gnuplot font size
@@ -143,7 +144,7 @@ libmysqlclient-dev - mysql client connector
 + add function GnuPlot::multi_plot2d()
 - add function GnuPlot::animation_plot2d()
 - add function GnuPlot::animation_plot3d()
-- noise field  AbstuctField::WightAdditiveGaussNoise() 
++ noise field  AbstuctField::WightAdditiveGaussNoise() 
 
 - call gnuplot from enter point without system() call (version 1.0)
 - client server calculation ability through web soket (version 1.0)

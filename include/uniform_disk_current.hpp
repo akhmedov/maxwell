@@ -43,9 +43,10 @@ protected:
 struct UniformPlainDisk : public LinearCurrent {
 
 	UniformPlainDisk (double disk_radius, double magnitude);
-	double rho (double ct, double rho, double phi, double z) const;
-	double phi (double ct, double rho, double phi, double z) const;
-	double z (double ct, double rho, double phi, double z) const;
+	double time_shape (double vt) const;
+	double rho (double rho, double phi, double z) const;
+	double phi (double rho, double phi, double z) const;
+	double z (double rho, double phi, double z) const;
 
 	double get_magnitude () const;
 	double get_disk_radius () const;

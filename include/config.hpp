@@ -14,7 +14,7 @@
 
 enum Superposition {additive, multipl};
 enum ModelType {plot, dataset, info};
-enum ImpulseShape {rect, gauss, triangl};
+enum ImpulseShape {on, meandr, duhamel};
 enum Colormap {gray, parula};
 enum PlotDev {x11, term};
 enum FieldComponent {Ex, Ey, Ez, Ephi, Erho, Hx, Hy, Hz, Hphi, Hrho};
@@ -71,6 +71,7 @@ struct Config {
 	void noise_level (double);
 	void medium_superposition (Superposition);
 	void field_component (std::size_t model_num);
+	void duration (double);
 
 	void mysql_hostname (std::string);
 	void mysql_username (std::string);
@@ -120,6 +121,7 @@ struct Config {
 	double noise_level () const;
 	Superposition medium_superposition () const;
 	FieldComponent field_component () const;
+	double duration () const;
 
 	std::string mysql_hostname () const;
 	std::string mysql_username () const;
@@ -170,6 +172,7 @@ private:
 	double noise_percent;
 	Superposition superposition;
 	FieldComponent working_component;
+	double signal_duration;
 
 	std::string mysql_addr;
 	std::string mysql_user;

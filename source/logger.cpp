@@ -99,5 +99,7 @@ std::string Logger::name_upgrade (const std::string &basic)
 
 Logger::~Logger ()
 {
+	this->info("Logger destructor is called");
+	this->write_all();
 	text_file.close();
 }

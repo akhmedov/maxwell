@@ -3,7 +3,7 @@
 --  Maxwell
 --
 --  Created by Rolan Akhmedov on 19.01.18.
---  Copyright © 2017 Rolan Akhmedov. All rights reserved.
+--  Copyright © 2018 Rolan Akhmedov. All rights reserved.
 --
 
 -- user and database init
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS maxwell_header (
 	eps_r		DOUBLE(20,7) NOT NULL,
 	kerr_r		DOUBLE(20,7) NOT NULL,
 	duration	DOUBLE(20,7) NOT NULL,
-	signal_type	ENUM('turn_on','turn_off','rect','gauss','triangle') NOT NULL,
+	signal_type	ENUM('on','meandr','duhamel') NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT UC_maxwell_header UNIQUE (radiator, component, radius, 
 		magnitude, mu_r, eps_r, kerr_r, duration, signal_type)

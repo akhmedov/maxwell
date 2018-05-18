@@ -9,7 +9,7 @@
 #ifndef logger_hpp
 #define logger_hpp
 
-#define QSIZE_LIMIT 1
+#define QSIZE_LIMIT 10
 
 #ifndef UNUSED
 #define UNUSED(expr) do { (void)(expr); } while (0)

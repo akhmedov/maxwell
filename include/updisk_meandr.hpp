@@ -1,9 +1,9 @@
 //
 //  updisk_meandr.hpp
-//  Evolution
+//  Maxwell
 //
 //  Created by Rolan Akhmedov on 13.06.18.
-//  Copyright © 2017 Rolan Akhmedov. All rights reserved.
+//  Copyright © 2018 Rolan Akhmedov. All rights reserved.
 //
 
 #ifndef UNUSED
@@ -45,7 +45,7 @@ protected:
 	double tau;
 };
 
-struct SquaredPulse : protected MissileField {
+struct SquaredPulse : public MissileField {
 
 	SquaredPulse (MeandrPeriod* source, Homogeneous* medium);
 
@@ -57,8 +57,8 @@ struct SquaredPulse : protected MissileField {
 	double magnetic_phi (double ct, double rho, double phi, double z) const;
 	double magnetic_z (double ct, double rho, double phi, double z) const;
 
-	static double int_bessel_001 (double ct, double rho, double z, double R, double tau); // I2 in thesis.pdf
-	static double int_bessel_011 (double ct, double rho, double z, double R, double tau); // I1 in thesis.pdf
+	static double int_bessel_001 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R); // I2 in thesis.pdf
+	static double int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R); // I1 in thesis.pdf
 	
 protected:
 

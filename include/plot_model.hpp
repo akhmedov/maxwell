@@ -9,14 +9,12 @@
 #ifndef plot_model_hpp
 #define plot_model_hpp
 
-#include "kerr_amendment.hpp"
-#include "uniform_disk_current.hpp"
 #include "gnu_plot.hpp"
 #include "manager.hpp"
 #include "integral.hpp"
 #include "config.hpp"
 #include "logger.hpp"
-#include "noise.hpp"
+
 
 #include <algorithm>
 #include <vector>
@@ -26,17 +24,19 @@
 
 struct PlotModel {
 	PlotModel (Config* global_conf);
+	void set_logger (Logger* global_log);
 	enum Name { Ex_from_ct = 1, Hy_from_ct, Ex_from_ct_rho };
-	void call (const Name& model_name);
+	void call (const Name& model_name, const std::vector<std::pair<Component,AbstractField*>>&);
 private:
+	Logger* global_log;
 	Config* global_conf;
-	std::vector<std::function<void(PlotModel&)>> model_pointer;
-	void __Ex_from_ct ();
-	void __Hy_from_ct ();
-	void __Ex_from_ct_rho ();
-	void __Hy_from_ct_rho ();
-	void __Ex_from_ct_z ();
-	void __Hy_from_ct_z ();
+	std::vector<std::function<void(PlotModel&, const std::vector<std::pair<Component,AbstractField*>>&)>> model_pointer;
+	void __Ex_from_ct     (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __Hy_from_ct     (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __Ex_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __Hy_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __Ex_from_ct_z   (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __Hy_from_ct_z   (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
 };
 
 #endif /* plot_model_hpp */

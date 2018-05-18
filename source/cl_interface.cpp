@@ -10,6 +10,7 @@
 
 CLI::CLI (Config* conf)
 {
+	this->global_log = NULL;
 	this->global_conf = conf;
 
 	/* TODO: set short_binar_cmd */
@@ -24,9 +25,9 @@ CLI::CLI (Config* conf)
 
 	this->binar_def_cmd = {
 		/* impulse shape */
-		{"--shape",		"rect"},
-		{"--shape",		"gauss"},
-		{"--shape",		"triangle"}
+		{"--shape",		"on"},
+		{"--shape",		"meandr"},
+		{"--shape",		"duhamel"}
 	};
 
 	this->binar_var_cmd = {
@@ -58,7 +59,7 @@ CLI::CLI (Config* conf)
 	};
 }
 
-void CLI::call_handler (const std::vector<std::string>& argv) const
+void CLI::call_handler (const std::vector<std::string>& argv)
 {
 	// Configuration conf = Configuration::Configuration();
 
@@ -117,10 +118,16 @@ void CLI::call_handler (const std::vector<std::string>& argv) const
 	this->run_list();
 }
 
-void CLI::run_list () const
+void CLI::run_list ()
 {
 	/* read config file */
 	this->read_config_file();
+	std::string logger_path = this->global_conf->maxwell_log_path();
+	if (this->global_conf->logger_status()) {
+		std::cout << "QWERTY" << std::endl;
+		this->global_log = new Logger(logger_path);
+		this->plot_model->set_logger(this->global_log);
+	}
 
 	if (this->global_conf->version_opt()) CLI::print_version();
 	else if (this->global_conf->help_opt()) CLI::print_help(); 
@@ -130,17 +137,23 @@ void CLI::run_list () const
 		data_model->call(global_conf->dataset_model()); */
 	} else if (this->global_conf->plot_model()) {
 		CLI::print_arguments();
-		std::size_t model_name = this->global_conf->plot_model();
-		plot_model->call( (PlotModel::Name) model_name);
+		std::size_t model_num = this->global_conf->plot_model();
+		ImpulseShape shape = this->global_conf->impulse_shape();
+		auto field_comp = CLI::func_ptr_of(this->global_conf->field_component());
+		auto to_compute = CLI::em_problem(shape, field_comp);
+		plot_model->call( (PlotModel::Name) model_num, to_compute);
 	}
 }
 
 void CLI::update_config (const std::string& param, const std::string& arg) const
 {
 	if (!param.compare("--shape")) {
-		if (!arg.compare("rect")) {
-			this->global_conf->impulse_shape(ImpulseShape::rect);
-		} else throw std::logic_error("Only rect shape is implemented!");
+		if (!arg.compare("on"))
+			this->global_conf->impulse_shape(ImpulseShape::on);
+		else if (!arg.compare("meandr"))
+			this->global_conf->impulse_shape(ImpulseShape::meandr);
+		else if (!arg.compare("duhamel"))
+			this->global_conf->impulse_shape(ImpulseShape::duhamel);
 	}
 
 	if (!param.compare("--plot")) {
@@ -156,7 +169,7 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 		this->global_conf->maxwell_config_path(arg);
 
 	if (!param.compare("--duration"))
-		throw std::logic_error("Duration option is not implemented!");
+		this->global_conf->duration(std::stod(arg));
 
 	if (!param.compare("--magnitude"))
 		this->global_conf->plane_disk_magnitude(std::stod(arg));
@@ -280,7 +293,6 @@ bool CLI::is_range_value (const std::string& literal)
 	if (ranged.size() != 3) return false;
 
 	bool is_float = CLI::is_float(ranged[0]) && CLI::is_float(ranged[1]) && CLI::is_float(ranged[2]);
-	
 	if (is_float) return std::stod(ranged[0]) < std::stod(ranged[2]);
 	else return false;
 }
@@ -392,9 +404,9 @@ void CLI::print_help () const
 	std::cout << std::endl;
 	std::cout << "  --shape         DEFAULT_DURATION     OTHER_PARAMITERS                 " << std::endl;
 	std::cout << "------------------------------------------------------------------------" << std::endl;
-	std::cout << "      rect                infinity                                      " << std::endl;
-	std::cout << "     gauss                       1              sigma=1                 " << std::endl;
-	std::cout << "  triangle                       1                                      " << std::endl;
+	std::cout << "        on         [not available]                                      " << std::endl;
+	std::cout << "    meandr                       1                                      " << std::endl;
+	std::cout << "   duhamel                       1              sigma=1                 " << std::endl;
 
 	std::cout << std::endl;
 	std::cout << "  PARAMITER         DEFAULT_VALUE      OTHER_OPTIONS                    " << std::endl;
@@ -403,7 +415,7 @@ void CLI::print_help () const
 	std::cout << "  --radius                      1      any positive float               " << std::endl;
 	std::cout << "  --mur                         1      any positive float               " << std::endl;
 	std::cout << "  --epsr                        1      any positive float               " << std::endl;
-	std::cout << "  --shape                    rect      gauss,triangle                   " << std::endl;
+	std::cout << "  --shape                      on      meandr,duhamel                   " << std::endl;
 	std::cout << "  --noise                       0      any positive float (%)           " << std::endl;
 	std::cout << "  --kerr                        0      any positive float               " << std::endl;
 
@@ -636,4 +648,119 @@ void CLI::read_config_file () const
 		} 
 	}
 	file.close();
+}
+
+Component CLI::func_ptr_of (const FieldComponent& comp)
+{
+	switch (comp) {
+		case FieldComponent::Erho: return &AbstractField::electric_rho;
+		case FieldComponent::Ephi: return &AbstractField::electric_phi;
+		case FieldComponent::Ex:   return &AbstractField::electric_x;
+		case FieldComponent::Ey:   return &AbstractField::electric_y;
+		case FieldComponent::Ez:   return &AbstractField::electric_z;
+		case FieldComponent::Hrho: return &AbstractField::magnetic_rho;
+		case FieldComponent::Hphi: return &AbstractField::magnetic_phi;
+		case FieldComponent::Hx:   return &AbstractField::magnetic_x;
+		case FieldComponent::Hy:   return &AbstractField::magnetic_y;
+		case FieldComponent::Hz:   return &AbstractField::magnetic_z;
+		default: std::logic_error ("Unknown FieldComponent:: in CLI::func_ptr_of!");
+	}
+}
+
+std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseShape& problem_name, const Component& comp) const
+{
+	std::vector<std::pair<Component,AbstractField*>> res;
+
+	// double noise_level = this->global_conf->noise_level();
+	// NoiseField* noise = new NoiseField(0,noise_level);
+	// res.push_back(std::make_pair(comp, noise));
+
+	switch (problem_name) {
+		case ImpulseShape::on: {
+
+			double R = this->global_conf->plane_disk_radius();
+			double A0 = this->global_conf->plane_disk_magnitude();
+			double eps_r = this->global_conf->plane_disk_epsr();
+			double mu_r = this->global_conf->plane_disk_mur();
+			double xi3 = this->global_conf->kerr_value();
+			double sigma = 0;
+
+			Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+			KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, linear_medium);
+			linear->set_yterms_num( this->global_conf->magnetic_term_num() );
+			res.push_back(std::make_pair(comp, linear));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source, this->global_log);
+				res.push_back(std::make_pair(comp, non_linear));
+			}
+
+			break;
+
+		} case ImpulseShape::meandr: {
+
+			double R = this->global_conf->plane_disk_radius();
+			double A0 = this->global_conf->plane_disk_magnitude();
+			double eps_r = this->global_conf->plane_disk_epsr();
+			double mu_r = this->global_conf->plane_disk_mur();
+			double xi3 = this->global_conf->kerr_value();
+			double tau = this->global_conf->duration();
+			double sigma = 0;
+
+			Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+			KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+			MeandrPeriod* source = new MeandrPeriod(R, A0, tau);
+			SquaredPulse* linear = new SquaredPulse(source, linear_medium);
+			res.push_back(std::make_pair(comp, linear));
+
+			if (this->global_conf->kerr_medium())
+				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+
+			break;
+
+		} case ImpulseShape::duhamel: {
+
+			double R = this->global_conf->plane_disk_radius();
+			double A0 = this->global_conf->plane_disk_magnitude();
+			double eps_r = this->global_conf->plane_disk_epsr();
+			double mu_r = this->global_conf->plane_disk_mur();
+			double xi3 = this->global_conf->kerr_value();
+			double tau = this->global_conf->duration();
+			double sigma = 0;
+
+			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, medium);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			// auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? 1.0 : 0.0; };
+			auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? std::sin(M_PI * vt / tau) : 0.0; };
+			free_shape->set_time_depth(f);
+			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			res.push_back(std::make_pair(comp, duhamel));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+			}
+
+			break;
+
+		} default:
+
+			throw std::logic_error ("Unknown ImpulseShape:: in CLI::em_problem!");
+	}
+		
+
+	return res;
+}
+
+CLI::~CLI ()
+{
+	if (this->global_log != NULL) {
+		std::cout << "QWERTY!!!" << std::endl;
+		this->global_log->info("Command line interface is closed");
+		delete this->global_log;
+	}
 }

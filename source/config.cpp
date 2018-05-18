@@ -35,7 +35,7 @@ Config::Config ()
 	this->fbitrate_value = 256;
 	this->thread_number_value = 4;
 
-	this->impulse_shape_value = ImpulseShape::rect;
+	this->impulse_shape_value = ImpulseShape::on;
 
 	this->plane_disk_radius_value = 1;
 	this->plane_disk_magnitude_value = 1;
@@ -45,6 +45,7 @@ Config::Config ()
 	this->is_medium_kerr = false;
 	this->noise_percent = 0;
 	this->superposition = Superposition::additive;
+	this->signal_duration = 1;
 	
 	// working_component must not be default!!!
 	// this->working_component = FieldComponnt::Ex;
@@ -259,8 +260,12 @@ void Config::field_component (std::size_t model_num)
 		case 6: this->working_component = FieldComponent::Hy; break;
 		case 7: this->working_component = FieldComponent::Hy; break;
 		default: throw std::logic_error("This model number is not implemnted in Config::field_component()");
-
 	};
+}
+
+void Config::duration (double val)
+{
+	this->signal_duration = val;
 }
 
 void Config::mysql_hostname (std::string text)
@@ -456,6 +461,12 @@ FieldComponent Config::field_component () const
 {
 	return this->working_component;
 }
+
+double Config::duration () const
+{
+	return this->signal_duration;
+}
+
 
 std::string Config::mysql_hostname () const
 {

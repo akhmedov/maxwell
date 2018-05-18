@@ -38,7 +38,7 @@ double Homogeneous::relative_permeability (double ct, double z) const
 // Linear umiform electric current
 
 UniformPlainDisk::UniformPlainDisk(double disk_radius, double magnitude)
-{
+: LinearCurrent() {
 	if (disk_radius > 0) this->R = disk_radius;
 	else std::invalid_argument("Relative permittivity must be positive.");
 	
@@ -46,23 +46,28 @@ UniformPlainDisk::UniformPlainDisk(double disk_radius, double magnitude)
 	else std::invalid_argument("Electic current magnitude must be positive.");
 }
 
-double UniformPlainDisk::rho (double ct, double rho, double phi, double z) const
+double UniformPlainDisk::time_shape (double vt) const
 {
-	double coeffisient = Math::kronecker_delta(z,0) * Math::heaviside_sfunc(ct,0);
+	return Math::heaviside_sfunc(vt,0);
+}
+
+double UniformPlainDisk::rho (double rho, double phi, double z) const
+{
+	double coeffisient = Math::kronecker_delta(z,0);
 	coeffisient *= Math::heaviside_sfunc(rho,0) - Math::heaviside_sfunc(rho,R);
 	return coeffisient * std::cos(phi);
 }
 
-double UniformPlainDisk::phi (double ct, double rho, double phi, double z) const
+double UniformPlainDisk::phi (double rho, double phi, double z) const
 {
-	double coeffisient = Math::kronecker_delta(z,0) * Math::heaviside_sfunc(ct,0);
+	double coeffisient = Math::kronecker_delta(z,0);
 	coeffisient *= Math::heaviside_sfunc(rho,0) - Math::heaviside_sfunc(rho,R);
 	return - coeffisient * std::sin(phi);
 }
 
-double UniformPlainDisk::z (double ct, double rho, double phi, double z) const
+double UniformPlainDisk::z (double rho, double phi, double z) const
 {
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
+	UNUSED(phi); UNUSED(rho); UNUSED(z);
 	return 0;
 }
 

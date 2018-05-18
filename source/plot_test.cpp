@@ -70,11 +70,62 @@ int main()
 
 	/* KERR TE WAVE UNDERINTEGRAL EXPRESION FROM NU */
 
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "kerr_under_integral_from_nu(r,r',R=1) " << std::endl;
+	// std::vector<double> r = {3, 0, 0, std::sqrt(2)};
+	// std::vector<double> r_perp = {std::sqrt(3), 0.5, 0, std::sqrt(1.5)};
+	// PlotTest::kerr_under_integral_from_nu(r, r_perp);
+
+	/* DUHAMEL LINEAR FIELD */
+
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "plot_source(tau = 1) " << std::endl;
+	// PlotTest::plot_source(0.1);
+
 	std::cout << std::endl << "PlotTest::";
-	std::cout << "kerr_under_integral_from_nu(r,r',R=1) " << std::endl;
-	std::vector<double> r = {3, 0, 0, std::sqrt(2)};
-	std::vector<double> r_perp = {std::sqrt(3), 0.5, 0, std::sqrt(1.5)};
-	PlotTest::kerr_under_integral_from_nu(r, r_perp);
+	std::cout << "Ex_derivative() " << std::endl;
+	PlotTest::Ex_derivative(0.1);
+}
+
+void PlotTest::Ex_derivative (double tau)
+{
+	double R = 1;
+	double eps_r = 1;
+	double mu_r = 1;
+	double xi3 = 0;
+	double A0 = 1;
+
+	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, linear_medium);
+
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+
+	auto f = [linear, tau] (double vt) {
+		return linear->electric_x(vt - tau, 1, 0, 2);
+	};
+
+	for (double vt = 1.7; vt < 3; vt += 0.01) {
+		double anal = 0;
+		double numerics = Math::derivat3(f, vt);
+
+		line = {vt, anal, numerics};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::parula);
+	plot->set_ox_label("vt, m");
+	plot->set_oy_label("");
+	plot->grid_on();
+	plot->cage_on();
+	std::vector<std::string> title = {"analitics",
+									  "numerical"};
+	plot->plot_multi(plot_data, title);
+	plot->call_gnuplot();
 }
 
 void PlotTest::set_options ()
@@ -82,6 +133,29 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+void PlotTest::plot_source (double tau)
+{
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+	auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? std::sin(M_PI * vt / tau) : 0.0; };
+
+	for (double vt = 0; vt < 1.5; vt += 0.01) {
+		double source = f(vt);
+		line = {vt, source};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot2d(plot_data);
+	plot->call_gnuplot();
 }
 
 
