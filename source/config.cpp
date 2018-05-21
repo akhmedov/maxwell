@@ -35,7 +35,7 @@ Config::Config ()
 	this->fbitrate_value = 256;
 	this->thread_number_value = 4;
 
-	this->impulse_shape_value = ImpulseShape::on;
+	this->impulse_shape_value = ImpulseShape::meandr;
 
 	this->plane_disk_radius_value = 1;
 	this->plane_disk_magnitude_value = 1;

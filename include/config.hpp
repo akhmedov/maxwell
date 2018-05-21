@@ -14,7 +14,7 @@
 
 enum Superposition {additive, multipl};
 enum ModelType {plot, dataset, info};
-enum ImpulseShape {on, meandr, duhamel};
+enum ImpulseShape {on, meandr, sin_cycle, sinc, gauss, sigmoid, duhamel};
 enum Colormap {gray, parula};
 enum PlotDev {x11, term};
 enum FieldComponent {Ex, Ey, Ez, Ephi, Erho, Hx, Hy, Hz, Hphi, Hrho};

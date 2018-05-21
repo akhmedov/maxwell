@@ -10,6 +10,7 @@
 #define cl_interface_hpp
 
 #include "noise.hpp"
+#include "function.hpp"
 #include "updisk_meandr.hpp"
 #include "kerr_amendment.hpp"
 #include "linear_duhamel.hpp"

@@ -14,7 +14,7 @@
 #define linear_duhamel_hpp
 
 #define INIT_NODES 1e5
-#define MAX_NODES  1e7
+#define MAX_NODES  1e8
 
 #include "logger.hpp"
 #include "config.hpp"
@@ -23,6 +23,9 @@
 #include "linear_field.hpp"
 #include "linear_medium.hpp"
 #include "linear_source.hpp"
+
+#include <regex>
+#include <string>
 
 struct FreeTimeCurrent : public LinearCurrent {
 	FreeTimeCurrent (LinearCurrent* on_source, double duration);
@@ -47,6 +50,7 @@ struct LinearDuramel : public LinearField {
 	double magnetic_phi (double vt, double rho, double phi, double z) const;
 	double magnetic_z   (double vt, double rho, double phi, double z) const;
 private:
+	static const std::string WARNING_MSG;
 	Logger* global_log;
 	LinearField* on_field;
 	double accuracy = 1;

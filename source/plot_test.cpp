@@ -78,13 +78,13 @@ int main()
 
 	/* DUHAMEL LINEAR FIELD */
 
-	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "plot_source(tau = 1) " << std::endl;
-	// PlotTest::plot_source(0.1);
-
 	std::cout << std::endl << "PlotTest::";
-	std::cout << "Ex_derivative() " << std::endl;
-	PlotTest::Ex_derivative(0.1);
+	std::cout << "plot_source() " << std::endl;
+	PlotTest::plot_source();
+
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "Ex_derivative() " << std::endl;
+	// PlotTest::Ex_derivative(0.1);
 }
 
 void PlotTest::Ex_derivative (double tau)
@@ -135,13 +135,19 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
 }
 
-void PlotTest::plot_source (double tau)
+void PlotTest::plot_source ()
 {
 	std::vector<std::vector<double>> plot_data;
 	std::vector<double> line;
-	auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? std::sin(M_PI * vt / tau) : 0.0; };
 
-	for (double vt = 0; vt < 1.5; vt += 0.01) {
+	// auto f = [] (double x) { return Function::rect(x, 1); };
+	// auto f = [] (double x) { return Function::sin(x, 1); };
+	// auto f = [] (double x) { return Function::sinc(x, 1); };
+	// auto f = [] (double x) { return Function::gauss(x, 1); };
+	auto f = [] (double x) { return Function::sigmoid(x, 1); };
+	// auto f = [] (double x) { return Function::gauss(x, 2) * Function::sinc(x, 2, 10); };
+
+	for (double vt = -1; vt < 3; vt += 0.01) {
 		double source = f(vt);
 		line = {vt, source};
 		plot_data.push_back(line);

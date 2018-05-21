@@ -27,6 +27,10 @@ CLI::CLI (Config* conf)
 		/* impulse shape */
 		{"--shape",		"on"},
 		{"--shape",		"meandr"},
+		{"--shape",		"sigmoid"},
+		{"--shape",		"gauss"},
+		{"--shape",		"sin"},
+		{"--shape",		"sinc"},
 		{"--shape",		"duhamel"}
 	};
 
@@ -124,7 +128,6 @@ void CLI::run_list ()
 	this->read_config_file();
 	std::string logger_path = this->global_conf->maxwell_log_path();
 	if (this->global_conf->logger_status()) {
-		std::cout << "QWERTY" << std::endl;
 		this->global_log = new Logger(logger_path);
 		this->plot_model->set_logger(this->global_log);
 	}
@@ -152,8 +155,17 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 			this->global_conf->impulse_shape(ImpulseShape::on);
 		else if (!arg.compare("meandr"))
 			this->global_conf->impulse_shape(ImpulseShape::meandr);
+		else if (!arg.compare("sigmoid"))
+			this->global_conf->impulse_shape(ImpulseShape::sigmoid);
+		else if (!arg.compare("sin"))
+			this->global_conf->impulse_shape(ImpulseShape::sin_cycle);
+		else if (!arg.compare("sinc"))
+			this->global_conf->impulse_shape(ImpulseShape::sinc);
+		else if (!arg.compare("gauss"))
+			this->global_conf->impulse_shape(ImpulseShape::gauss);
 		else if (!arg.compare("duhamel"))
 			this->global_conf->impulse_shape(ImpulseShape::duhamel);
+
 	}
 
 	if (!param.compare("--plot")) {
@@ -404,20 +416,24 @@ void CLI::print_help () const
 	std::cout << std::endl;
 	std::cout << "  --shape         DEFAULT_DURATION     OTHER_PARAMITERS                 " << std::endl;
 	std::cout << "------------------------------------------------------------------------" << std::endl;
-	std::cout << "        on         [not available]                                      " << std::endl;
+	std::cout << "        on            [not in use]                                      " << std::endl;
 	std::cout << "    meandr                       1                                      " << std::endl;
-	std::cout << "   duhamel                       1              sigma=1                 " << std::endl;
+	std::cout << "   sigmoid                       1                                      " << std::endl;
+	std::cout << "       sin                       1                                      " << std::endl;
+	std::cout << "      sinc                       1            cycles=10                 " << std::endl;
+	std::cout << "     gauss                       1                                      " << std::endl;
+	std::cout << "   duhamel                       1                                      " << std::endl;
 
 	std::cout << std::endl;
 	std::cout << "  PARAMITER         DEFAULT_VALUE      OTHER_OPTIONS                    " << std::endl;
 	std::cout << "------------------------------------------------------------------------" << std::endl;	
-	std::cout << "  --magnitude                   1      any positive float               " << std::endl;
-	std::cout << "  --radius                      1      any positive float               " << std::endl;
-	std::cout << "  --mur                         1      any positive float               " << std::endl;
-	std::cout << "  --epsr                        1      any positive float               " << std::endl;
-	std::cout << "  --shape                      on      meandr,duhamel                   " << std::endl;
-	std::cout << "  --noise                       0      any positive float (%)           " << std::endl;
-	std::cout << "  --kerr                        0      any positive float               " << std::endl;
+	std::cout << "  --magnitude                  1       any positive float               " << std::endl;
+	std::cout << "  --radius                     1       any positive float               " << std::endl;
+	std::cout << "  --mur                        1       any positive float               " << std::endl;
+	std::cout << "  --epsr                       1       any positive float               " << std::endl;
+	std::cout << "  --shape                      meandr  on,sigmoid,sin(c),gauss,duhamel  " << std::endl;
+	std::cout << "  --noise                      0       any positive float (%)           " << std::endl;
+	std::cout << "  --kerr                       0       any positive float               " << std::endl;
 
 
 	std::cout << std::endl;
@@ -669,6 +685,14 @@ Component CLI::func_ptr_of (const FieldComponent& comp)
 
 std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseShape& problem_name, const Component& comp) const
 {
+	double R = this->global_conf->plane_disk_radius();
+	double A0 = this->global_conf->plane_disk_magnitude();
+	double eps_r = this->global_conf->plane_disk_epsr();
+	double mu_r = this->global_conf->plane_disk_mur();
+	double xi3 = this->global_conf->kerr_value();
+	double tau = this->global_conf->duration();
+	double sigma = 0;
+
 	std::vector<std::pair<Component,AbstractField*>> res;
 
 	// double noise_level = this->global_conf->noise_level();
@@ -676,14 +700,8 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 	// res.push_back(std::make_pair(comp, noise));
 
 	switch (problem_name) {
-		case ImpulseShape::on: {
 
-			double R = this->global_conf->plane_disk_radius();
-			double A0 = this->global_conf->plane_disk_magnitude();
-			double eps_r = this->global_conf->plane_disk_epsr();
-			double mu_r = this->global_conf->plane_disk_mur();
-			double xi3 = this->global_conf->kerr_value();
-			double sigma = 0;
+		case ImpulseShape::on: {
 
 			Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
 			KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
@@ -701,14 +719,6 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 
 		} case ImpulseShape::meandr: {
 
-			double R = this->global_conf->plane_disk_radius();
-			double A0 = this->global_conf->plane_disk_magnitude();
-			double eps_r = this->global_conf->plane_disk_epsr();
-			double mu_r = this->global_conf->plane_disk_mur();
-			double xi3 = this->global_conf->kerr_value();
-			double tau = this->global_conf->duration();
-			double sigma = 0;
-
 			Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
 			KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 			MeandrPeriod* source = new MeandrPeriod(R, A0, tau);
@@ -720,23 +730,13 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 
 			break;
 
-		} case ImpulseShape::duhamel: {
-
-			double R = this->global_conf->plane_disk_radius();
-			double A0 = this->global_conf->plane_disk_magnitude();
-			double eps_r = this->global_conf->plane_disk_epsr();
-			double mu_r = this->global_conf->plane_disk_mur();
-			double xi3 = this->global_conf->kerr_value();
-			double tau = this->global_conf->duration();
-			double sigma = 0;
+		} case ImpulseShape::sin_cycle: {
 
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
 			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
-			// auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? 1.0 : 0.0; };
-			auto f = [tau] (double vt) { return (vt >= 0 && vt <= tau) ? std::sin(M_PI * vt / tau) : 0.0; };
-			free_shape->set_time_depth(f);
+			free_shape->set_time_depth([tau] (double vt) {return Function::sin(vt,tau);});
 			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
 
@@ -745,6 +745,62 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
 			}
 
+			break;
+
+		} case ImpulseShape::sinc: {
+
+			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, medium);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
+			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			res.push_back(std::make_pair(comp, duhamel));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+			}
+
+			break;
+
+		} case ImpulseShape::gauss: {
+
+			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, medium);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
+			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			res.push_back(std::make_pair(comp, duhamel));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+			}
+
+			break;
+
+		} case ImpulseShape::sigmoid: {
+
+			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, medium);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			free_shape->set_time_depth([tau] (double vt) {return Function::sigmoid(vt,tau);});
+			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			res.push_back(std::make_pair(comp, duhamel));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+			}
+
+			break;
+
+		} case ImpulseShape::duhamel: {
+
+			throw std::logic_error ("Arbitrary impulse shape field is not implemented!");
 			break;
 
 		} default:
@@ -759,7 +815,6 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 CLI::~CLI ()
 {
 	if (this->global_log != NULL) {
-		std::cout << "QWERTY!!!" << std::endl;
 		this->global_log->info("Command line interface is closed");
 		delete this->global_log;
 	}

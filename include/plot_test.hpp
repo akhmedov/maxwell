@@ -13,18 +13,20 @@
 #define UNUSED(expr) do { (void)(expr); } while (0)
 #endif
 
+
 #include "config.hpp"
+#include "function.hpp"
 #include "gnu_plot.hpp"
-#include "phys_math.hpp"
 #include "integral.hpp"
 #include "gnu_plot.hpp"
-#include "uniform_disk_current.hpp"
+#include "phys_math.hpp"
 #include "kerr_amendment.hpp"
+#include "uniform_disk_current.hpp"
 
 struct PlotTest : private Math, private Integral, private KerrAmendment {
 
 	static void Ex_derivative (double tau);
-	static void plot_source (double tau);
+	static void plot_source ();
 	static void kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R = 1);
 	static void nonlinear_current (double phi = 0, double z = 0);
 	static void I1_numeric_integral (std::size_t points = 1e4, double limits = 1e5);

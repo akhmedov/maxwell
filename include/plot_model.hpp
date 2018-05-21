@@ -10,8 +10,8 @@
 #define plot_model_hpp
 
 #include "gnu_plot.hpp"
-#include "manager.hpp"
 #include "integral.hpp"
+#include "manager.hpp"
 #include "config.hpp"
 #include "logger.hpp"
 
