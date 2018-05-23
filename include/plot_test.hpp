@@ -21,10 +21,14 @@
 #include "gnu_plot.hpp"
 #include "phys_math.hpp"
 #include "kerr_amendment.hpp"
+#include "linear_duhamel.hpp"
+#include "electrodynamics.hpp"
 #include "uniform_disk_current.hpp"
 
 struct PlotTest : private Math, private Integral, private KerrAmendment {
 
+	static void signal_spectr ();
+	static void plot_energy ();
 	static void Ex_derivative (double tau);
 	static void plot_source ();
 	static void kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R = 1);

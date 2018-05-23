@@ -78,13 +78,76 @@ int main()
 
 	/* DUHAMEL LINEAR FIELD */
 
-	std::cout << std::endl << "PlotTest::";
-	std::cout << "plot_source() " << std::endl;
-	PlotTest::plot_source();
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "plot_source() " << std::endl;
+	// PlotTest::plot_source();
 
 	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "Ex_derivative() " << std::endl;
 	// PlotTest::Ex_derivative(0.1);
+
+	/* ENERGY PLOT */
+
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "signal_spectr() " << std::endl;
+	// PlotTest::signal_spectr();
+
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "plot_energy() " << std::endl;
+	PlotTest::plot_energy();
+
+}
+
+void PlotTest::signal_spectr ()
+{
+	double tau = 0.5;
+	auto f = [tau] (double vt) { return Function::gauss(vt,tau); };
+
+
+
+	for (double w0 = 1e5; w0 < 1e7; w0 += 1) {
+		auto re = [f,w0] (double w) { return f(w) * cos(w0 * w); };
+		auto im = [f,w0] (double w) { return f(w) * sin(w0 * w); };
+		double spec = 0;
+		double norm = Math::inv_sqrt(2*M_PI);
+		spec += SimpsonRunge(1e2,1,1e4).value(0,1e3,re);
+		spec -= SimpsonRunge(1e2,1,1e4).value(0,1e3,im);
+		if (spec) std::cout << w0 << " -> " << spec/norm << std::endl;
+	}
+}
+
+void PlotTest::plot_energy ()
+{
+	double R = 1, A0 = 1, tau = 0.5;
+	double eps_r = 1, mu_r = 1;
+	double rho = 1, z = 20;
+
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, medium);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
+	LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear);
+
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+	for (double phi = 0.0; phi <= M_PI/2; phi += 0.1) {
+		double val = ((Electrodynamics*) duhamel)->energy_e(rho,phi,z);
+		std::cout << "Energy: " << 180*phi/M_PI << " -> " << val << std::endl;
+		line = {180*phi/M_PI, val};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot(PlotTest::global_conf->gnp_script_path());
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	// plot->set_colormap(Colormap::parula);
+	plot->set_ox_label("phi, m");
+	plot->set_oy_label("D");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot2d(plot_data);
+	plot->call_gnuplot();
 }
 
 void PlotTest::Ex_derivative (double tau)

@@ -13,8 +13,8 @@
 #ifndef linear_duhamel_hpp
 #define linear_duhamel_hpp
 
-#define INIT_NODES 1e5
-#define MAX_NODES  1e8
+#define INIT_NODES 1e3
+#define MAX_NODES  1e6
 
 #include "logger.hpp"
 #include "config.hpp"
