@@ -10,6 +10,7 @@
 
 PlotModel::PlotModel (Config* conf)
 {
+	this->global_log = NULL;
 	this->global_conf = conf;
 	this->model_pointer = {
 		&PlotModel::__Ex_from_ct,
