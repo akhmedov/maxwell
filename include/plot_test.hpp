@@ -28,7 +28,7 @@
 struct PlotTest : private Math, private Integral, private KerrAmendment {
 
 	static void signal_spectr ();
-	static void plot_energy ();
+	static void plot_energy (double z);
 	static void Ex_derivative (double tau);
 	static void plot_source ();
 	static void kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R = 1);
@@ -40,7 +40,6 @@ struct PlotTest : private Math, private Integral, private KerrAmendment {
 	static void I2_time_partder (double rho, double z, double R = 1);
 	static void kerr_ammend_undeintegral (double ct_perp, double phi_perp, double rho_perp, double z_perp, double R = 1);
 	static void set_options ();
-
 private:
 	static Config* global_conf;
 };

@@ -29,7 +29,8 @@
 #include "uniform_disk_current.hpp"
 #include "kerr_amendment.hpp"
 
-struct UnitTest : private Math, private Integral, private KerrAmendment {
+struct UnitTest : private GnuPlot, private Math, private Integral, private KerrAmendment {
+	
 	static bool next_prime ();
 	static bool binom_prod ();
 	static bool bessel_perp ();
@@ -48,6 +49,7 @@ struct UnitTest : private Math, private Integral, private KerrAmendment {
 	static bool imptoper_int_bessel ();
 	static bool simpson_runge_jump ();
 	static bool yacobi_pol_compare ();
+	static bool vector_to_matrix ();
 	static bool simpson_runge_2d ();
 	static bool I1_time_partder ();
 	static bool I2_time_partder ();

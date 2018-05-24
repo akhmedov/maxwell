@@ -1,4 +1,46 @@
-#include "gnu_plot.hpp" 
+#include "gnu_plot.hpp"
+
+/* const std::string GnuPlot::GRAY_PLANE_TMP = 
+"set term x11 font '$FONT'" 
+"set xlabel '$XLABEL'"
+"set ylabel '$YLABEL'"
+"set zlabel 'oZ' rotate center"
+"set grid layerdefault"
+"$grid << EOD"
+"$DATA"
+"EOD"
+"plot '$grid' using 1:2 with lines linecolor rgb 'black' notitle" 
+"pause -1 'Hit return to continue'"
+;
+
+const std::string GnuPlot::GRAY_SURFASE_TMP =
+"TODO"
+;
+
+const std::string GnuPlot::GRAY_PLANE_TMP =
+"TODO"
+;
+
+const std::string GnuPlot::PALURA_PLANE_TMP =
+"TODO"
+; */
+
+const std::string GnuPlot::GRAY_CMAP_TMP =
+"set term x11 font '$FONT'\n"
+"set border linewidth 0\n"
+"set palette grey\n"
+"$grid << EOD\n"
+"$DATA\n"
+"EOD\n"
+"unset tics\n"
+"unset colorbox\n"
+"set size square\n"
+"set palette defined (0 'white', 1 'black')\n"
+"set pm3d map\n"
+"set pm3d interpolate 10,10\n"
+"splot '$grid' matrix\n"
+"pause -1 'Hit return to continue'\n"
+;
 
 GnuPlot::GnuPlot (std::string filename)
 {
@@ -21,6 +63,7 @@ GnuPlot::GnuPlot (std::string filename)
 	this->is_grid_on = false;
 	this->is_plot_in_cage = false;
 	this->is_3d_plot = false;
+	this->is_colormap_plot = false;
 
 	this->color_schem = Colormap::gray;
 	this->gnuplot_path = "gnuplot";
@@ -101,6 +144,83 @@ void GnuPlot::plot2d (const std::vector<std::vector<double>> &array)
 	this->write_commants_to_script(plot_data);
 	std::cout << "Done." << std::endl;
 	std::cout.flush();
+}
+
+std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<std::vector<double>> cart)
+{
+	std::vector<std::vector<std::vector<double>>> matrix_ext;
+	
+	while (!cart.empty()) {
+		
+		std::vector<std::vector<double>> samey;
+		std::vector<std::size_t> samey_idx;
+		
+		// select points with same y
+		for (std::size_t i = 0; i < cart.size(); i++) {
+			if (cart[i][1] == cart[0][1]) {
+				samey.push_back(cart[i]);
+				samey_idx.push_back(i);
+			}
+		}
+		// erase the points from cart
+		std::sort(samey_idx.rbegin(), samey_idx.rend());
+		for (auto i : samey_idx) {
+			cart.erase(cart.begin() + i);
+		}
+		// sort selection by x
+		std::sort(samey.begin(), samey.end(), 
+			[] (const std::vector<double>& a, const std::vector<double>& b) 
+			{ return a[1] < b[1]; }
+		);
+		// insert selection to matrix_ext
+		matrix_ext.push_back(samey);
+	}
+
+	// sort matrix_ext by y
+	std::sort(matrix_ext.begin(), matrix_ext.end(), 
+			[] (const std::vector<std::vector<double>>& a, const std::vector<std::vector<double>>& b) 
+			{ return a[0][1] < b[0][1]; }
+	);
+
+	return matrix_ext;
+}
+
+std::vector<std::vector<double>> GnuPlot::grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix_ext)
+{
+	auto y_size = matrix_ext.size();
+	auto x_size = matrix_ext[0].size();
+
+	std::vector<std::vector<double>> matrix(
+		y_size, std::vector<double>(x_size, 0.0)
+	);
+
+	for (std::size_t y = 0; y < matrix_ext.size(); y++)
+		for (std::size_t x = 0; x < matrix_ext[0].size(); x++)
+			matrix[y][x] = matrix_ext[y][x][2];
+
+	return matrix;
+}
+
+void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array)
+{
+	auto matrix_ext = GnuPlot::matrix_from(array);
+	auto matrix = GnuPlot::grep_magnitude(matrix_ext);
+
+	std::string data;
+	for (auto&& line : matrix) {
+		for (auto&& val : line)
+			data += std::to_string(val) + " ";
+		data += "\n";
+	}
+
+	std::string text = GnuPlot::GRAY_CMAP_TMP;
+	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
+	text = std::regex_replace(text, std::regex("\\$DATA"), data);
+
+	std::ofstream script;
+	script.open( this->script_name );
+	script << text;
+	script.close();
 }
 
 void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &title) 

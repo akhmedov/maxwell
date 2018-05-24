@@ -9,6 +9,8 @@
 #ifndef gnu_plot_hpp
 #define gnu_plot_hpp
 
+#include <cmath>
+#include <regex>
 #include <algorithm>
 #include <iostream>
 #include <tuple>
@@ -55,6 +57,7 @@ struct GnuPlot {
 	void grid_on (bool status = true);
 	void cage_on (bool status = true);
 
+	void plot_colormap (const std::vector<std::vector<double>> &array);
 	void plot2d (const std::vector<std::vector<double>> &array);
 	void plot_multi (const std::vector<std::vector<double>> &array, const std::vector<std::string> &title);
 	void plot3d (const std::vector<std::vector<double>> &matrix);
@@ -62,9 +65,24 @@ struct GnuPlot {
 
 	void set_colormap (const Colormap &schem);
 
+protected:
+	static std::vector<std::vector<std::vector<double>>> matrix_from (std::vector<std::vector<double>> array);
+	static std::vector<std::vector<double>> grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix);
+
 private:
 	void direct_gnuplot_call (const Text &plot_data) const;
 	void write_commants_to_script (const Text &plot_data, const std::vector<std::string> &title = {}) const;
+
+	// templates
+
+	const static std::string GRAY_SURFASE_TMP;
+	const static std::string PARULA_SURFASE_TMP;
+	const static std::string GRAY_PLANE_TMP;
+	const static std::string PARULA_PLANE_TMP;
+	const static std::string GRAY_CMAP_TMP;
+	const static std::string PARULA_CMAP_TMP;
+
+	// variables 
 
 	std::string gnuplot_path;
 	std::string script_name;
@@ -83,6 +101,7 @@ private:
 	bool is_grid_on;
 	bool is_plot_in_cage;
 	bool is_3d_plot;
+	bool is_colormap_plot;
 };
 
 #endif /* gnu_plot_hpp */

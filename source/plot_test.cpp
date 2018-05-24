@@ -93,17 +93,16 @@ int main()
 	// PlotTest::signal_spectr();
 
 	std::cout << std::endl << "PlotTest::";
-	std::cout << "plot_energy() " << std::endl;
-	PlotTest::plot_energy();
-
+	std::cout << "plot_energy(z=5,10,20) " << std::endl;
+	PlotTest::plot_energy(5);
+	PlotTest::plot_energy(10);
+	PlotTest::plot_energy(20);
 }
 
 void PlotTest::signal_spectr ()
 {
 	double tau = 0.5;
 	auto f = [tau] (double vt) { return Function::gauss(vt,tau); };
-
-
 
 	for (double w0 = 1e5; w0 < 1e7; w0 += 1) {
 		auto re = [f,w0] (double w) { return f(w) * cos(w0 * w); };
@@ -116,11 +115,10 @@ void PlotTest::signal_spectr ()
 	}
 }
 
-void PlotTest::plot_energy ()
+void PlotTest::plot_energy (double z)
 {
 	double R = 1, A0 = 1, tau = 0.5;
 	double eps_r = 1, mu_r = 1;
-	double rho = 1, z = 20;
 
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
@@ -131,23 +129,30 @@ void PlotTest::plot_energy ()
 
 	std::vector<std::vector<double>> plot_data;
 	std::vector<double> line;
-	for (double phi = 0.0; phi <= M_PI/2; phi += 0.1) {
-		double val = ((Electrodynamics*) duhamel)->energy_e(rho,phi,z);
-		std::cout << "Energy: " << 180*phi/M_PI << " -> " << val << std::endl;
-		line = {180*phi/M_PI, val};
-		plot_data.push_back(line);
-		line.clear();
+
+	double max  = ((Electrodynamics*) duhamel)->energy_e(0.0,0.0,z);
+	std::cout << std::endl;
+	std::cout << "E(0,z=" << z << "): " << max << std::endl;
+
+	for (double x = -3; x <= 3;  x += 0.1) {
+		for (double y = -3; y <= 3;  y += 0.1) {
+			double rho = std::sqrt(x*x + y*y);
+			double phi = std::atan2(y, x);
+			double val = ((Electrodynamics*) duhamel)->energy_e(rho,phi,z) / max;
+			std::cout << x << ' ' << y << " -> " << val << std::endl;
+			line = {x, y, val};
+			plot_data.push_back(line);
+			line.clear();
+		}
 	}
 
-	GnuPlot* plot = new GnuPlot(PlotTest::global_conf->gnp_script_path());
+	GnuPlot* plot = new GnuPlot( std::to_string((int)z) + ".gnp" );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
-	// plot->set_colormap(Colormap::parula);
-	plot->set_ox_label("phi, m");
-	plot->set_oy_label("D");
+	plot->set_ox_label("x, m");
+	plot->set_oy_label("y, m");
 	plot->grid_on();
 	plot->cage_on();
-	plot->plot2d(plot_data);
-	plot->call_gnuplot();
+	plot->plot_colormap(plot_data);
 }
 
 void PlotTest::Ex_derivative (double tau)
@@ -178,17 +183,7 @@ void PlotTest::Ex_derivative (double tau)
 		line.clear();
 	}
 
-	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
-	plot->set_colormap(Colormap::parula);
-	plot->set_ox_label("vt, m");
-	plot->set_oy_label("");
-	plot->grid_on();
-	plot->cage_on();
-	std::vector<std::string> title = {"analitics",
-									  "numerical"};
-	plot->plot_multi(plot_data, title);
-	plot->call_gnuplot();
+
 }
 
 void PlotTest::set_options ()
@@ -220,7 +215,7 @@ void PlotTest::plot_source ()
 	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("");
+	plot->set_oy_label("f(t)");
 	plot->grid_on();
 	plot->cage_on();
 	plot->plot2d(plot_data);
