@@ -12,6 +12,7 @@
 #include "logger.hpp"
 #include "mysql_connect.hpp"
 #include "abstract_field.hpp"
+#include "electrodynamics.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <typeinfo>
@@ -26,6 +27,7 @@
 #include <iostream>
 
 typedef std::function<double(AbstractField*,double,double,double,double)> Component;
+typedef std::function<double(Electrodynamics*,double,double,double)> Energy;
 
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
@@ -46,13 +48,16 @@ struct Manager {
 	void call ( std::function<double(double)> );
 	void call ( std::vector<std::function<double(double)>> funcs);
 	void call ( std::function<double(double,double,double,double)> );
-	void call ( std::function<double(AbstractField*,double,double,double,double)>, AbstractField*);
+	void call ( Component, AbstractField*);
 	virtual void call ( std::vector<std::pair<Component,AbstractField*>>);
+	virtual void call ( std::vector<std::pair<Energy,Electrodynamics*>>);
 
 protected:
 	void reset ();
 	bool is_ready ();
 
+	std::mutex active_thread;
+	std::vector<bool> is_active;
 	std::vector< std::thread > thread_list;
 	std::vector< std::stack< std::vector<double> > > argument;
 	std::multiset< std::vector<double>, TimeSort > result;

@@ -20,8 +20,10 @@ Manager::Manager (std::size_t threads, Logger* logger_ptr)
 	this->data_left = 0;
 	this->total_data = 0;
 	this->thread_number = threads;
-	for (std::size_t iter = 0; iter < this->thread_number; iter++)
+	for (std::size_t iter = 0; iter < this->thread_number; iter++) {
 		this->argument.push_back( std::stack<std::vector<double>>() );
+		this->is_active.push_back(false);
+	}
 }
 
 //=============================================================================
@@ -68,6 +70,8 @@ bool Manager::is_ready ()
 		if (!i.empty()) ready = false;
 	for (auto&& i : this->thread_list) 
 		if (i.joinable()) ready = false;
+	for (auto&& i : this->is_active)
+		if (i) ready = false;
 
 	return ready;
 }
@@ -89,6 +93,9 @@ void Manager::call ( std::function<double(double)> func)
 {
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 			double res = func(arg[0]);
@@ -97,6 +104,9 @@ void Manager::call ( std::function<double(double)> func)
 			this->data_left--;
 			this->result.insert( arg );
 			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 
@@ -130,7 +140,9 @@ void Manager::call ( std::function<double(double,double,double,double)> func)
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
-
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			this->argument[i].pop();
 
@@ -141,6 +153,9 @@ void Manager::call ( std::function<double(double,double,double,double)> func)
 			this->data_left--;
 			this->result.insert( arg );
 			this->result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 
@@ -174,6 +189,9 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 
@@ -186,6 +204,9 @@ void Manager::call ( std::vector<std::function<double(double)>> funcs)
 			this->data_left--;
 			this->result.insert( arg );
 			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 
@@ -219,6 +240,9 @@ void Manager::call ( std::function<double(AbstractField*,double,double,double,do
 {
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 			double res = component(field, arg[0], arg[1], arg[2], arg[3]);
@@ -228,6 +252,9 @@ void Manager::call ( std::function<double(AbstractField*,double,double,double,do
 			this->data_left--;
 			this->result.insert( arg );
 			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 
@@ -263,6 +290,9 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 
@@ -276,6 +306,62 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 			this->data_left--;
 			this->result.insert( arg );
 			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
+		}
+	};
+
+	this->thread_list = std::vector<std::thread>(this->thread_number);
+
+	std::size_t num = 0;
+	for (auto& i : this->thread_list) {
+		i = std::thread(call_thread, num++);
+		i.detach();
+	}
+
+	std::size_t last_printed = 101;
+	while (!this->is_ready()) {
+		if (this->print_progtess) {
+			double progress = (double) this->data_left / (double) this->total_data;
+			progress *= 100;
+			if ((std::size_t)progress != last_printed) {
+				last_printed = (std::size_t) progress;
+				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
+				std::cout.flush();
+			}
+		}
+	}
+	std::cout << std::endl;
+}
+
+//=============================================================================
+
+void Manager::call ( std::vector<std::pair<Energy,Electrodynamics*>> field )
+{
+	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
+
+	auto call_thread = [&] (std::size_t i) {
+		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
+			std::vector<double> arg = this->argument[i].top();
+			argument[i].pop();
+
+			for (auto f : field) {
+				double res = f.first(f.second, arg[0], arg[1], arg[2]);
+				if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+				arg.push_back(res);
+			}
+
+			this->result_write.lock();
+			this->data_left--;
+			this->result.insert( arg );
+			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 
@@ -324,6 +410,9 @@ void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)
 
 	auto call_thread = [&] (std::size_t i) {
 		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
 			std::vector<double> arg = this->argument[i].top();
 			argument[i].pop();
 			
@@ -350,6 +439,9 @@ void SafeManager::call (std::vector<std::pair<Component,AbstractField*>> field)
 			this->data_left--;
 			this->result.insert( arg );
 			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
 		}
 	};
 

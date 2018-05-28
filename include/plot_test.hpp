@@ -13,8 +13,8 @@
 #define UNUSED(expr) do { (void)(expr); } while (0)
 #endif
 
-
 #include "config.hpp"
+#include "manager.hpp"
 #include "function.hpp"
 #include "gnu_plot.hpp"
 #include "integral.hpp"

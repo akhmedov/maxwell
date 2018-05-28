@@ -36,9 +36,10 @@ const std::string GnuPlot::GRAY_CMAP_TMP =
 "unset colorbox\n"
 "set size square\n"
 "set palette defined (0 'white', 1 'black')\n"
-"set pm3d map\n"
-"set pm3d interpolate 10,10\n"
-"splot '$grid' matrix\n"
+"# set pm3d map\n"
+"# set pm3d interpolate 10,10\n"
+"# splot '$grid' matrix\n"
+"plot '$grid' matrix with image\n"
 "pause -1 'Hit return to continue'\n"
 ;
 
@@ -148,6 +149,7 @@ void GnuPlot::plot2d (const std::vector<std::vector<double>> &array)
 
 std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<std::vector<double>> cart)
 {
+	const double eps = 1e-8;
 	std::vector<std::vector<std::vector<double>>> matrix_ext;
 	
 	while (!cart.empty()) {
@@ -157,7 +159,9 @@ std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<
 		
 		// select points with same y
 		for (std::size_t i = 0; i < cart.size(); i++) {
-			if (cart[i][1] == cart[0][1]) {
+			if (cart[i].size() != 3)
+				throw std::invalid_argument("Illegal format point (size)");
+			if (std::abs(cart[i][1] - cart[0][1]) <= eps) {
 				samey.push_back(cart[i]);
 				samey_idx.push_back(i);
 			}
@@ -170,7 +174,7 @@ std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<
 		// sort selection by x
 		std::sort(samey.begin(), samey.end(), 
 			[] (const std::vector<double>& a, const std::vector<double>& b) 
-			{ return a[1] < b[1]; }
+			{ return a[0] < b[0]; }
 		);
 		// insert selection to matrix_ext
 		matrix_ext.push_back(samey);
