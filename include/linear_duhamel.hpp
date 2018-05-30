@@ -15,6 +15,7 @@
 
 #define INIT_NODES 1e3
 #define MAX_NODES  1e6
+#define STEP 	   1e-4
 
 #include "logger.hpp"
 #include "config.hpp"
@@ -41,6 +42,7 @@ private:
 };
 
 struct LinearDuramel : public LinearField {
+
 	LinearDuramel (LinearCurrent* source, LinearMedium* medium, LinearField* on, Logger* global_log = NULL);
 	void   set_accuracy (double persent);
 	double electric_rho (double vt, double rho, double phi, double z) const;
@@ -49,6 +51,7 @@ struct LinearDuramel : public LinearField {
 	double magnetic_rho (double vt, double rho, double phi, double z) const;
 	double magnetic_phi (double vt, double rho, double phi, double z) const;
 	double magnetic_z   (double vt, double rho, double phi, double z) const;
+
 private:
 	static const std::string WARNING_MSG;
 	Logger* global_log;

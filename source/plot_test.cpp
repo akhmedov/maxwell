@@ -94,12 +94,13 @@ int main()
 
 	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "plot_energy(z=5,10,20) " << std::endl;
-	PlotTest::plot_energy(5);
-	PlotTest::plot_energy(10);
-	PlotTest::plot_energy(15);
-	PlotTest::plot_energy(20);
-	PlotTest::plot_energy(25);
-	PlotTest::plot_energy(30);
+	PlotTest::plot_energy(0.50);
+	PlotTest::plot_energy(1.00);
+	PlotTest::plot_energy(2.50);
+	PlotTest::plot_energy(5.00);
+	PlotTest::plot_energy(10.0);
+	PlotTest::plot_energy(15.0);
+	PlotTest::plot_energy(20.0);
 }
 
 void PlotTest::signal_spectr ()
@@ -120,54 +121,58 @@ void PlotTest::signal_spectr ()
 
 void PlotTest::plot_energy (double z)
 {
-	std::string str_z = std::to_string((int)z);
+	std::string str_z = std::to_string(z);
+	str_z = str_z.substr(0,3);
 	double R = 1, A0 = 1, tau = 0.5;
 	double eps_r = 1, mu_r = 1;
+	double range = z + R;
 
+	Logger* log = new Logger(str_z + ".log");
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 	MissileField* linear = new MissileField(source, medium);
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-	LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear);
+	LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, log);
 
-	double max  = ((Electrodynamics*) duhamel)->energy_cart(0,0,z);
-	std::cout << "Wmax (z=" << str_z << "): " << max << std::endl;
+	double max0 = duhamel->energy_cart(0,0,0.5);
+	double max = duhamel->energy_cart(0,0,z);
+	std::cout << "Wmax (z=" << str_z << ") = " << max << std::endl;
 
 	Manager* thead_core = new Manager(4, NULL);
 	thead_core->progress_bar(true);
 
-	for (double x = 0; x <= 3;  x += 0.1)
-		for (double y = 0; y <= 3;  y += 0.1)
+	for (double x = -range; x <= range; x += 0.05)
+		for (double y = -range; y <= range; y += 0.05)
 			thead_core->add_argument( {x,y,z} );
 
-	Electrodynamics* field = (Electrodynamics*) duhamel;
-	auto property = &Electrodynamics::energy_cart;
-	auto function = std::make_pair(property, field);
+	auto property = &AbstractField::energy_cart;
+	auto function = std::make_pair(property, duhamel);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
 	for (auto&& i : data) {
-		i[3] /= max; // norm W
+		i[3] *= z*z / max0; // norm W
 		i.erase(i.begin() + 2); // erase z
 	}
 
-	std::vector<std::vector<double>> agumentat;
+	/* std::vector<std::vector<double>> agumentat;
 	for (auto&& i : data) {
 		double x = i[0], y = i[1], W = i[2];
 		if (x > 1e-8) agumentat.push_back( {-x,y,W} );
 		if (y > 1e-8) agumentat.push_back( {x,-y,W} );
 		if (x > 1e-8 && y > 1e-8) agumentat.push_back( {-x,-y,W} );
 	}
-	data.insert(std::end(data), std::begin(agumentat), std::end(agumentat));
+	data.insert(std::end(data), std::begin(agumentat), std::end(agumentat)); */
 
-	GnuPlot* plot = new GnuPlot( str_z + "-new.gnp" );
+	GnuPlot* plot = new GnuPlot( str_z + ".gnp" );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
 	plot->set_ox_label("x, m");
 	plot->set_oy_label("y, m");
 	plot->grid_on();
 	plot->cage_on();
 	plot->plot_colormap(data);
+	delete log;
 }
 
 void PlotTest::Ex_derivative (double tau)

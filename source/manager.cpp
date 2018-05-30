@@ -337,7 +337,7 @@ void Manager::call ( std::vector<std::pair<Component,AbstractField*>> field )
 
 //=============================================================================
 
-void Manager::call ( std::vector<std::pair<Energy,Electrodynamics*>> field )
+void Manager::call ( std::vector<std::pair<Energy,AbstractField*>> field )
 {
 	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
 

@@ -8,6 +8,11 @@
 
 #include "abstract_field.hpp"
 
+const std::string AbstractField::int_exept_mgs = "Energy integral is not trusted at $RHO, $PHI, $Z";
+
+AbstractField::AbstractField (Logger* log, double acc)
+: accuracy(acc), global_log(log) { }
+
 double AbstractField::electric_x (double ct, double rho, double phi, double z) const
 {
 	const double electric_rho = this->electric_rho(ct,rho,phi,z);
@@ -74,4 +79,58 @@ std::vector<double> AbstractField::magnetic_cartesian (double ct, double rho, do
 	array.push_back(this->magnetic_y(ct, rho, phi, z));
 	array.push_back(this->magnetic_z(ct, rho, phi, z));
 	return array;
+}
+
+double AbstractField::energy (double rho, double phi, double z) const
+{
+	double min_vt = 0;
+	double tau1 = std::sqrt((rho-1)*(rho-1) + z*z);
+	double tau2 = tau1 + 0.5;
+
+	auto f = [this, rho, phi, z] (double vt) {
+		double Erho = this->electric_rho(vt,rho,phi,z);
+		double Ephi = this->electric_phi(vt,rho,phi,z);
+		double Ez = this->electric_z(vt,rho,phi,z);
+		return Erho*Erho + Ephi*Ephi + Ez*Ez;
+	};
+
+	try { 
+		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
+	} catch (double not_trusted) {
+		std::string mesg = AbstractField::int_exept_mgs;
+		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
+		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+		global_log->warning(mesg);
+		return not_trusted; 
+	}
+}
+
+double AbstractField::energy_cart (double x, double y, double z) const
+{
+	double R = 1;
+	double tau = 0.5;
+
+	double rho = std::sqrt(x*x + y*y);
+	double phi = std::atan2(y, x);
+	double tau1 = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+	double tau2 = tau1 + 2*tau;
+
+	auto f = [this, rho, phi, z] (double vt) {
+		double Erho = this->electric_rho(vt,rho,phi,z);
+		double Ephi = this->electric_phi(vt,rho,phi,z);
+		double Ez = this->electric_z(vt,rho,phi,z);
+		return Erho*Erho + Ephi*Ephi + Ez*Ez;
+	};
+
+	try { 
+		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
+	} catch (double not_trusted) {
+		std::string mesg = AbstractField::int_exept_mgs;
+		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
+		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+		global_log->warning(mesg);
+		return not_trusted; 
+	}
 }

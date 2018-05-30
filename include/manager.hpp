@@ -12,7 +12,6 @@
 #include "logger.hpp"
 #include "mysql_connect.hpp"
 #include "abstract_field.hpp"
-#include "electrodynamics.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <typeinfo>
@@ -27,7 +26,7 @@
 #include <iostream>
 
 typedef std::function<double(AbstractField*,double,double,double,double)> Component;
-typedef std::function<double(Electrodynamics*,double,double,double)> Energy;
+typedef std::function<double(AbstractField*,double,double,double)> Energy;
 
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
@@ -50,7 +49,7 @@ struct Manager {
 	void call ( std::function<double(double,double,double,double)> );
 	void call ( Component, AbstractField*);
 	virtual void call ( std::vector<std::pair<Component,AbstractField*>>);
-	virtual void call ( std::vector<std::pair<Energy,Electrodynamics*>>);
+	virtual void call ( std::vector<std::pair<Energy,AbstractField*>>);
 
 protected:
 	void reset ();

@@ -75,11 +75,11 @@ double LinearDuramel::electric_rho (double vt, double rho, double phi, double z)
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Erho");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->electric_rho (vt-STEP, rho, phi, z);
 	}
 }
 
@@ -105,11 +105,11 @@ double LinearDuramel::electric_phi (double vt, double rho, double phi, double z)
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Ephi");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->electric_phi(vt-STEP, rho, phi, z);
 	}
 }
 
@@ -135,11 +135,11 @@ double LinearDuramel::electric_z (double vt, double rho, double phi, double z) c
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Ez");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->electric_z(vt-STEP, rho, phi, z);
 	}
 }
 
@@ -165,11 +165,11 @@ double LinearDuramel::magnetic_rho (double vt, double rho, double phi, double z)
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hrho");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->magnetic_rho (vt-STEP, rho, phi, z);
 	}
 }
 
@@ -195,11 +195,11 @@ double LinearDuramel::magnetic_phi (double vt, double rho, double phi, double z)
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hphi");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->magnetic_phi (vt-STEP, rho, phi, z);
 	}
 }
 
@@ -225,10 +225,10 @@ double LinearDuramel::magnetic_z (double vt, double rho, double phi, double z) c
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hz");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
 			this->global_log->warning(mesg);
 		}
-		return not_trusted;
+		return this->magnetic_z (vt-STEP, rho, phi, z);
 	}
 }

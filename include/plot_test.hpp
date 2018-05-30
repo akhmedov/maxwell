@@ -22,7 +22,6 @@
 #include "phys_math.hpp"
 #include "kerr_amendment.hpp"
 #include "linear_duhamel.hpp"
-#include "electrodynamics.hpp"
 #include "uniform_disk_current.hpp"
 
 struct PlotTest : private Math, private Integral, private KerrAmendment {
@@ -40,6 +39,7 @@ struct PlotTest : private Math, private Integral, private KerrAmendment {
 	static void I2_time_partder (double rho, double z, double R = 1);
 	static void kerr_ammend_undeintegral (double ct_perp, double phi_perp, double rho_perp, double z_perp, double R = 1);
 	static void set_options ();
+
 private:
 	static Config* global_conf;
 };
