@@ -17,7 +17,7 @@ enum ModelType {plot, dataset, info};
 enum ImpulseShape {on, meandr, sin_cycle, sinc, gauss, sigmoid, duhamel};
 enum Colormap {gray, parula};
 enum PlotDev {x11, term};
-enum FieldComponent {Ex, Ey, Ez, Ephi, Erho, Hx, Hy, Hz, Hphi, Hrho};
+enum FieldComponent {Ex, Ey, Erho, Ephi, Hx, Hy, Hrho, Hphi, Ez,  Hz,  W};
 
 struct Config {
 
@@ -70,7 +70,7 @@ struct Config {
 	void kerr_medium (bool);
 	void noise_level (double);
 	void medium_superposition (Superposition);
-	void field_component (std::size_t model_num);
+	void field_component (FieldComponent);
 	void duration (double);
 
 	void mysql_hostname (std::string);

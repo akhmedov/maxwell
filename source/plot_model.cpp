@@ -13,12 +13,10 @@ PlotModel::PlotModel (Config* conf)
 	this->global_log = NULL;
 	this->global_conf = conf;
 	this->model_pointer = {
-		&PlotModel::__Ex_from_ct,
-		&PlotModel::__Hy_from_ct,
-		&PlotModel::__Ex_from_ct_rho,
-		&PlotModel::__Hy_from_ct_rho,
-		&PlotModel::__Ex_from_ct_z,
-		&PlotModel::__Hy_from_ct_z
+		&PlotModel::__from_ct,
+		&PlotModel::__from_ct_rho,
+		&PlotModel::__from_ct_z,
+		&PlotModel::__from_x_y
 	};
 }
 
@@ -32,7 +30,7 @@ void PlotModel::call (const PlotModel::Name& model_name, const std::vector<std::
 	this->model_pointer[model_name - 1](*this, to_compute);
 }
 
-void PlotModel::__Ex_from_ct (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
+void PlotModel::__from_ct (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
 	std::size_t thread_num = this->global_conf->thread_number();
 	double ct_from = this->global_conf->receiver_vt()[0];
@@ -53,17 +51,12 @@ void PlotModel::__Ex_from_ct (const std::vector<std::pair<Component,AbstractFiel
 	thead_core->call(to_compute);
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	Superposition medium_type = this->global_conf->medium_superposition();
+	// Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
 	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
+		double magnitude = 0;
+		for (std::size_t j = 4; j < i.size(); j++)
+			magnitude += i[j];
 		plot_data.push_back({i[0], magnitude});
 	}
 
@@ -78,83 +71,9 @@ void PlotModel::__Ex_from_ct (const std::vector<std::pair<Component,AbstractFiel
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
+void PlotModel::__from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
-	double R = this->global_conf->plane_disk_radius();
-	double A0 = this->global_conf->plane_disk_magnitude();
-	double eps_r = this->global_conf->plane_disk_epsr();
-	double mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
-
-	double noise_level = this->global_conf->noise_level();
 	std::size_t thread_num = this->global_conf->thread_number();
-
-	double ct_from = this->global_conf->receiver_vt()[0];
-	double ct_step = this->global_conf->receiver_vt()[1];
-	double ct_to = this->global_conf->receiver_vt()[2];
-	double rho = this->global_conf->receiver_rho()[0];
-	double phi = this->global_conf->receiver_phi()[0];
-	double z = this->global_conf->receiver_z()[0];
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
-	else thead_core = new SafeManager( thread_num, this->global_conf );
-	thead_core->progress_bar( this->global_conf->print_progress() );
-
-	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
-		thead_core->add_argument( {ct,rho,phi,z} );
-
-	thead_core->call(to_compute);
-	std::vector<std::vector<double>> data = thead_core->get_value();
-
-	Superposition medium_type = this->global_conf->medium_superposition();
-	std::vector<std::vector<double>> plot_data;
-	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
-		plot_data.push_back({i[0], magnitude});
-	}
-
-	GnuPlot* plot = new GnuPlot(this->global_conf->gnp_script_path());
-	plot->set_gnuplot_bin(this->global_conf->path_gnuplot_binary());
-	plot->set_colormap(this->global_conf->plot_color_map());
-	plot->set_ox_label("ct, m");
-	plot->set_oy_label("Hy, A/m");
-	plot->grid_on();
-	plot->cage_on();
-	// plot->set_logscale_ox(true);
-	plot->plot2d(plot_data);
-	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
-}
-
-void PlotModel::__Ex_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
-{
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
-
-	double noise_level = this->global_conf->noise_level();
-	std::size_t thread_num = this->global_conf->thread_number();
-
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
 	double ct_to = this->global_conf->receiver_vt()[2];
@@ -163,15 +82,6 @@ void PlotModel::__Ex_from_ct_rho (const std::vector<std::pair<Component,Abstract
 	double rho_to = this->global_conf->receiver_rho()[2];
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
 	Manager* thead_core;
 	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
@@ -188,14 +98,9 @@ void PlotModel::__Ex_from_ct_rho (const std::vector<std::pair<Component,Abstract
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
 	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
+		double magnitude = 0;
+		for (std::size_t j = 4; j < i.size(); j++)
+			magnitude += i[j];
 		plot_data.push_back({magnitude,i[0],i[1]});
 	}
 
@@ -211,86 +116,9 @@ void PlotModel::__Ex_from_ct_rho (const std::vector<std::pair<Component,Abstract
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
+void PlotModel::__from_ct_z (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
-	
-	double noise_level = this->global_conf->noise_level();
 	std::size_t thread_num = this->global_conf->thread_number();
-
-	double ct_from = this->global_conf->receiver_vt()[0];
-	double ct_step = this->global_conf->receiver_vt()[1];
-	double ct_to = this->global_conf->receiver_vt()[2];
-	double rho_from = this->global_conf->receiver_rho()[0];
-	double rho_step = this->global_conf->receiver_rho()[1];
-	double rho_to = this->global_conf->receiver_rho()[2];
-	double phi = this->global_conf->receiver_phi()[0];
-	double z = this->global_conf->receiver_z()[0];
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
-	else thead_core = new SafeManager( thread_num, this->global_conf );
-	thead_core->progress_bar( this->global_conf->print_progress() );
-
-	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
-		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
-			thead_core->add_argument( {ct,rho,phi,z} );
-
-	thead_core->call(to_compute);
-	std::vector<std::vector<double>> data = thead_core->get_value();
-
-	Superposition medium_type = this->global_conf->medium_superposition();
-	std::vector<std::vector<double>> plot_data;
-	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
-		plot_data.push_back({magnitude,i[0],i[1]});
-	}
-
-	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
-	plot->set_colormap(this->global_conf->plot_color_map());
-	plot->set_ox_label("ct, m");
-	plot->set_oy_label("rho, m");
-	plot->set_oz_label("Hy, A/m");
-	plot->grid_on();
-	plot->cage_on();
-	plot->plot3d(plot_data);
-	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
-}
-
-void PlotModel::__Ex_from_ct_z (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
-{
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
-	
-	double noise_level = this->global_conf->noise_level();
-	std::size_t thread_num = this->global_conf->thread_number();
-
 	double ct_from = this->global_conf->receiver_vt()[0];
 	double ct_step = this->global_conf->receiver_vt()[1];
 	double ct_to = this->global_conf->receiver_vt()[2];
@@ -299,15 +127,6 @@ void PlotModel::__Ex_from_ct_z (const std::vector<std::pair<Component,AbstractFi
 	double z_from = this->global_conf->receiver_z()[0];
 	double z_step = this->global_conf->receiver_z()[1];
 	double z_to = this->global_conf->receiver_z()[2];
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 
 	Manager* thead_core;
 	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
@@ -324,14 +143,9 @@ void PlotModel::__Ex_from_ct_z (const std::vector<std::pair<Component,AbstractFi
 	Superposition medium_type = this->global_conf->medium_superposition();
 	std::vector<std::vector<double>> plot_data;
 	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
+		double magnitude = 0;
+		for (std::size_t j = 4; j < i.size(); j++)
+			magnitude += i[j];
 		plot_data.push_back({magnitude,i[0],i[3]});
 	}
 
@@ -347,75 +161,12 @@ void PlotModel::__Ex_from_ct_z (const std::vector<std::pair<Component,AbstractFi
 	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
 }
 
-void PlotModel::__Hy_from_ct_z (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
+void PlotModel::__from_x_y (const std::vector<std::pair<Component,AbstractField*>>& to_compute)
 {
-	float R = this->global_conf->plane_disk_radius();
-	float A0 = this->global_conf->plane_disk_magnitude();
-	float eps_r = this->global_conf->plane_disk_epsr();
-	float mu_r = this->global_conf->plane_disk_mur();
-	double xi3 = this->global_conf->kerr_value();
-	double sigma = 0;
-	
-	double noise_level = this->global_conf->noise_level();
-	std::size_t thread_num = this->global_conf->thread_number();
-
-	double ct_from = this->global_conf->receiver_vt()[0];
-	double ct_step = this->global_conf->receiver_vt()[1];
-	double ct_to = this->global_conf->receiver_vt()[2];
-	double rho = this->global_conf->receiver_rho()[0];
-	double phi = this->global_conf->receiver_phi()[0];
-	double z_from = this->global_conf->receiver_z()[0];
-	double z_step = this->global_conf->receiver_z()[1];
-	double z_to = this->global_conf->receiver_z()[2];
-
-	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
-	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-
-	NoiseField* noise = new NoiseField(0,noise_level);
-	MissileField* linear = new MissileField(source, linear_medium);
-	KerrAmendment* non_linear = new KerrAmendment(linear, kerr_medium, source);
-	linear->set_yterms_num( this->global_conf->magnetic_term_num() );
-
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
-	else thead_core = new SafeManager( thread_num, this->global_conf );
-	thead_core->progress_bar( this->global_conf->print_progress() );
-
-	for (double z = z_from; z <= z_to; z += z_step)
-		for (double ct = ct_from; ct <= ct_to; ct += ct_step)
-			thead_core->add_argument( {ct,rho,phi,z} );
-
-	thead_core->call(to_compute);
-	std::vector<std::vector<double>> data = thead_core->get_value();
-
-	Superposition medium_type = this->global_conf->medium_superposition();
-	std::vector<std::vector<double>> plot_data;
-	for (auto i : data) {
-		double magnitude;
-		switch (medium_type) {
-			case Superposition::additive:
-				magnitude = i[4]+i[5]; break;
-			case Superposition::multipl:
-				magnitude = i[4]*i[5]; break;
-			default: throw std::invalid_argument("This statment must not be reached!");
-		}
-		plot_data.push_back({magnitude,i[0],i[3]});
-	}
-
-	GnuPlot* plot = new GnuPlot( this->global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( this->global_conf->path_gnuplot_binary() );
-	plot->set_colormap(this->global_conf->plot_color_map());
-	plot->set_ox_label("ct, m");
-	plot->set_oy_label("z, m");
-	plot->set_oz_label("Hy, A/m");
-	plot->grid_on();
-	plot->cage_on();
-	plot->plot3d(plot_data);
-	if ( this->global_conf->call_gnuplot() ) plot->call_gnuplot();
+	throw std::logic_error("Not implemented!");
 }
 
-/* void ReadyModel::linear_Ex_from_rho_phi (double ct, double z)
+/* void ReadyModel::__from_rho_phi (double ct, double z)
 {
 	// not tested and not used
 	float R = Config::plane_disk_radius();
@@ -597,144 +348,6 @@ void PlotModel::__Hy_from_ct_z (const std::vector<std::pair<Component,AbstractFi
 									   "N = 40", 
 									   "N = 100"
 	};
-	plot->plot_multi(plot_data, title);
-	if ( Config::call_gnuplot() ) plot->call_gnuplot();
-} */
-
-/* void ReadyModel::inegration_compare_i1 ()
-{
-	Manager* thead_core = new Manager(4);
-	thead_core->progress_bar( Config::print_progress() );	
-
-	// double a = 1.7, b = 0.7;
-	// double a = 1, b = 1;
-	// double a = 1, b = 0.05;
-	double a = 1, b = 0.5;
-	// double a = 0.1, b = 0.6;
-	for (double c = 0.01; c < 5; c += 0.01)
-		thead_core->add_argument( {c} );
-
-	auto int_anal = [a, b] (double c) {
-		if (a < std::abs(b-c)) return 0.0;
-		if (a > b+c) return 0.5;
-		double res = 0, a2 = a*a, b2 = b*b, c2 = c*c;
-		double frac1 = (a-b) * (a-b) / (a+b) / (a+b);
-		double frac2 = ( (a+b)*(a+b) - c2 ) / ( c2 - (b-a)*(b-a) );
-		res += (a2 + b2) * acos((c2 - a2 - b2)/(2 * a * b));
-		res -= sqrt( (4 * a2 * b2) - (a2+b2-c2)*(a2+b2-c2) );
-		res -= 2 * std::abs(a2 - b2) * atan(sqrt( frac1 * frac2 ));
-		return  res / (4 * M_PI * b2);
-	};
-
-	auto int_simpson = [a, b] (double c) {
-		size_t bais = 10e5;
-		Simpson I = Simpson(10*bais);
-		auto f = [a, b, c] (double x) { 
-			if (b == 0) return a * 0.5 * j1(a*x) * j0(c*x);
-			if (x == 0) return 0.0;
-			return a * j1(a*x) * j1(b*x) * j0(c*x) / (x * b);
-		};
-		return I.value(0, bais, f);
-	};
-
-	auto int_gl = [a, b] (double c) {
-		GaussLaguerre I = GaussLaguerre(); 
-		auto f = [a, b, c] (double x) {
-			if (b == 0) return a * 0.5 * j1(a*x) * j0(c*x);
-			if (x == 0) return 0.0;
-			return a * j1(a*x) * j1(b*x) * j0(c*x) / (x * b);
-		};
-		return I.value(f);
-	};
-
-	thead_core->call( {int_anal, int_simpson, int_gl} );
-	std::stack<std::vector<double>> res = thead_core->get_value();
-
-	std::vector<std::vector<double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		plot_data.push_back(tmp);
-	}
-
-	typedef std::vector<double> vector;
-	std::sort(plot_data.begin(), plot_data.end(),
-	[] (const vector &a, const vector &b) -> bool
-	{ 
-		return a.front() < b.front();
-	});
-
-	GnuPlot* plot = new GnuPlot( Config::gnp_script_path() );
-	plot->set_gnuplot_bin( Config::path_gnuplot_binary() );
-	std::string xlable = "c ( a = ARG_A, b = ARG_B )";
-	xlable.replace(xlable.find("ARG_A"), std::string("ARG_A").length(), std::to_string(a));
-	xlable.replace(xlable.find("ARG_B"), std::string("ARG_B").length(), std::to_string(b));
-	plot->set_ox_label(xlable);
-	plot->set_oy_label("f(x) = j1(ax) j1(bx) j0(cx) / x");
-	plot->grid_on();
-	plot->cage_on();
-	std::vector<std::string> title = {"analitic", "simpson", "laguerre"};
-	plot->plot_multi(plot_data, title);
-	if ( Config::call_gnuplot() ) plot->call_gnuplot();
-
-} */
-
-/* void ReadyModel::inegration_compare_i2 ()
-{
-	Manager* thead_core = new Manager(4);
-	thead_core->progress_bar( Config::print_progress() );	
-
-	double a = 1.7, b = 0.7;
-	for (double c = 0.01; c < 5; c += 0.05)
-		thead_core->add_argument( {c} );
-
-	auto int_anal = [a, b] (double c) {
-		if (c < std::abs(a-b)) return 0.0;
-		if (c > a+b) return 1/c;
-		double numer = a*a + b*b - c*c;
-		double denumer = 2 * a * b;
-		return acos(numer/denumer) / (M_PI * c);
-	};
-
-	auto int_simpson = [a, b] (double c) {
-		size_t bais = 10e5;
-		Simpson I = Simpson(10*bais);
-		auto f = [a, b, c] (double x) { 
-			return j0(a*x) * j0(b*x) * j1(c*x); 
-		};
-		return I.value(0, bais, f);
-	};
-
-	auto int_gl = [a, b] (double c) {
-		GaussLaguerre I = GaussLaguerre(); 
-		auto f = [a, b, c] (double x) {
-			return j0(a*x) * j0(b*x) * j1(c*x);
-		};
-		return I.value(f);
-	};
-
-	thead_core->call( {int_anal, int_simpson, int_gl} );
-	std::stack<std::vector<double>> res = thead_core->get_value();
-
-	std::vector<std::vector<double>> plot_data;
-	while (!res.empty()) {
-		std::vector<double> tmp = res.top(); res.pop();
-		plot_data.push_back(tmp);
-	}
-
-	typedef std::vector<double> vector;
-	std::sort(plot_data.begin(), plot_data.end(),
-	[] (const vector &a, const vector &b) -> bool
-	{ 
-		return a.front() < b.front();
-	});
-
-	GnuPlot* plot = new GnuPlot( Config::gnp_script_path() );
-	plot->set_gnuplot_bin( Config::path_gnuplot_binary() );
-	plot->set_ox_label("c");
-	plot->set_oy_label("f(x) = j0(ax) j0(bx) j1(cx)");
-	plot->grid_on();
-	plot->cage_on();
-	std::vector<std::string> title = {"analitic", "simpson", "laguerre"};
 	plot->plot_multi(plot_data, title);
 	if ( Config::call_gnuplot() ) plot->call_gnuplot();
 } */

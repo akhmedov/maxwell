@@ -127,19 +127,23 @@ void PlotTest::plot_energy (double z)
 	double eps_r = 1, mu_r = 1;
 	double range = z + R;
 
+	PlotTest::global_conf->field_component(FieldComponent::W);
+	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
+	PlotTest::global_conf->duration(tau);
+
 	Logger* log = new Logger(str_z + ".log");
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 	MissileField* linear = new MissileField(source, medium);
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-	LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, log);
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, log);
 
 	double max0 = duhamel->energy_cart(0,0,0.5);
 	double max = duhamel->energy_cart(0,0,z);
 	std::cout << "Wmax (z=" << str_z << ") = " << max << std::endl;
 
-	Manager* thead_core = new Manager(4, NULL);
+	SafeManager* thead_core = new SafeManager(4, PlotTest::global_conf, NULL);
 	thead_core->progress_bar(true);
 
 	for (double x = -range; x <= range; x += 0.05)

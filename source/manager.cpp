@@ -486,6 +486,76 @@ std::vector<std::vector<double>> SafeManager::get_value ()
 	return res;
 }
 
+void SafeManager::call ( std::vector<std::pair<Energy,AbstractField*>> field )
+{
+	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
+
+	auto call_thread = [&] (std::size_t i) {
+		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
+			std::vector<double> arg = this->argument[i].top();
+			argument[i].pop();
+
+			/* for (auto f : field) {
+				double res = f.first(f.second, arg[0], arg[1], arg[2]);
+				if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+				arg.push_back(res);
+			} */
+
+			this->client[i]->select_point(0, arg[0], arg[1], arg[2]);
+
+			for (auto f : field) {
+
+				const std::type_info& type = typeid(*f.second);
+				double db_res = this->client[i]->get_value(type);
+				double res;
+
+				if ( std::isnan(db_res) ) {
+					res = f.first(f.second, arg[0], arg[1], arg[2]);
+					if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+					this->client[i]->set_value(type,res);
+				} else {
+					res = db_res;
+				}
+
+				arg.push_back(res);
+			}
+
+			this->result_write.lock();
+			this->data_left--;
+			this->result.insert( arg );
+			result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
+		}
+	};
+
+	this->thread_list = std::vector<std::thread>(this->thread_number);
+
+	std::size_t num = 0;
+	for (auto& i : this->thread_list) {
+		i = std::thread(call_thread, num++);
+		i.detach();
+	}
+
+	std::size_t last_printed = 101;
+	while (!this->is_ready()) {
+		if (this->print_progtess) {
+			double progress = (double) this->data_left / (double) this->total_data;
+			progress *= 100;
+			if ((std::size_t)progress != last_printed) {
+				last_printed = (std::size_t) progress;
+				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
+				std::cout.flush();
+			}
+		}
+	}
+	std::cout << std::endl;
+}
+
 SafeManager::~SafeManager ()
 {
 	for (auto i : this->client) delete i;

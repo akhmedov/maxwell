@@ -41,9 +41,9 @@ private:
 	std::function<double(double)> time_fnc;
 };
 
-struct LinearDuramel : public LinearField {
+struct LinearDuhamel : public LinearField {
 
-	LinearDuramel (LinearCurrent* source, LinearMedium* medium, LinearField* on, Logger* global_log = NULL);
+	LinearDuhamel (LinearCurrent* source, LinearMedium* medium, LinearField* on, Logger* global_log = NULL);
 	void   set_accuracy (double persent);
 	double electric_rho (double vt, double rho, double phi, double z) const;
 	double electric_phi (double vt, double rho, double phi, double z) const;

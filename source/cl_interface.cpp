@@ -679,6 +679,7 @@ Component CLI::func_ptr_of (const FieldComponent& comp)
 		case FieldComponent::Hx:   return &AbstractField::magnetic_x;
 		case FieldComponent::Hy:   return &AbstractField::magnetic_y;
 		case FieldComponent::Hz:   return &AbstractField::magnetic_z;
+		// case FieldComponent::W:    return &AbstractField::energy_cart;
 		default: std::logic_error ("Unknown FieldComponent:: in CLI::func_ptr_of!");
 	}
 }
@@ -737,7 +738,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			MissileField* linear = new MissileField(source, medium);
 			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sin(vt,tau);});
-			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
 
 			if (this->global_conf->kerr_medium()) {
@@ -754,7 +755,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			MissileField* linear = new MissileField(source, medium);
 			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
-			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
 
 			if (this->global_conf->kerr_medium()) {
@@ -771,7 +772,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			MissileField* linear = new MissileField(source, medium);
 			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 			free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
 
 			if (this->global_conf->kerr_medium()) {
@@ -788,7 +789,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			MissileField* linear = new MissileField(source, medium);
 			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sigmoid(vt,tau);});
-			LinearDuramel* duhamel = new LinearDuramel(free_shape, medium, linear, this->global_log);
+			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
 
 			if (this->global_conf->kerr_medium()) {

@@ -8,7 +8,7 @@
 
 #include "linear_duhamel.hpp"
 
-const std::string LinearDuramel::WARNING_MSG = "$COMP is not trusted at $TIME, $RHO, $PHI, $Z.";
+const std::string LinearDuhamel::WARNING_MSG = "$COMP is not trusted at $TIME, $RHO, $PHI, $Z.";
 
 FreeTimeCurrent::FreeTimeCurrent(LinearCurrent* on_source, double tau)
 : LinearCurrent(tau), base(on_source) { }
@@ -41,19 +41,19 @@ double FreeTimeCurrent::z (double rho, double phi, double z) const
 
 // Linear Field by Duramel integral
 
-LinearDuramel::LinearDuramel (LinearCurrent* source, LinearMedium* medium, LinearField* on, Logger* log)
+LinearDuhamel::LinearDuhamel (LinearCurrent* source, LinearMedium* medium, LinearField* on, Logger* log)
 : LinearField(source,medium) 
 {
 	this->on_field = on;
 	this->global_log = log;
 }
 
-void LinearDuramel::set_accuracy (double persent)
+void LinearDuhamel::set_accuracy (double persent)
 {
 	this->accuracy = persent;
 }
 
-double LinearDuramel::electric_rho (double vt, double rho, double phi, double z) const
+double LinearDuhamel::electric_rho (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -71,7 +71,7 @@ double LinearDuramel::electric_rho (double vt, double rho, double phi, double z)
 		return integral.value(0, vt, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Erho");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
@@ -83,7 +83,7 @@ double LinearDuramel::electric_rho (double vt, double rho, double phi, double z)
 	}
 }
 
-double LinearDuramel::electric_phi (double vt, double rho, double phi, double z) const
+double LinearDuhamel::electric_phi (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -101,7 +101,7 @@ double LinearDuramel::electric_phi (double vt, double rho, double phi, double z)
 		return integral.value(0, vt, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Ephi");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
@@ -113,7 +113,7 @@ double LinearDuramel::electric_phi (double vt, double rho, double phi, double z)
 	}
 }
 
-double LinearDuramel::electric_z (double vt, double rho, double phi, double z) const
+double LinearDuhamel::electric_z (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -131,7 +131,7 @@ double LinearDuramel::electric_z (double vt, double rho, double phi, double z) c
 		return integral.value(0, tau0, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Ez");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
@@ -143,7 +143,7 @@ double LinearDuramel::electric_z (double vt, double rho, double phi, double z) c
 	}
 }
 
-double LinearDuramel::magnetic_rho (double vt, double rho, double phi, double z) const
+double LinearDuhamel::magnetic_rho (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -161,7 +161,7 @@ double LinearDuramel::magnetic_rho (double vt, double rho, double phi, double z)
 		return integral.value(0, tau0, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hrho");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
@@ -173,7 +173,7 @@ double LinearDuramel::magnetic_rho (double vt, double rho, double phi, double z)
 	}
 }
 
-double LinearDuramel::magnetic_phi (double vt, double rho, double phi, double z) const
+double LinearDuhamel::magnetic_phi (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -191,7 +191,7 @@ double LinearDuramel::magnetic_phi (double vt, double rho, double phi, double z)
 		return integral.value(0, tau0, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hphi");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
@@ -203,7 +203,7 @@ double LinearDuramel::magnetic_phi (double vt, double rho, double phi, double z)
 	}
 }
 
-double LinearDuramel::magnetic_z (double vt, double rho, double phi, double z) const
+double LinearDuhamel::magnetic_z (double vt, double rho, double phi, double z) const
 {
 	SimpsonRunge integral = SimpsonRunge(INIT_NODES, this->accuracy, MAX_NODES);
 	double tau0 = this->source->get_duration();
@@ -221,7 +221,7 @@ double LinearDuramel::magnetic_z (double vt, double rho, double phi, double z) c
 		return integral.value(0, tau0, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
-			std::string mesg = LinearDuramel::WARNING_MSG;
+			std::string mesg = LinearDuhamel::WARNING_MSG;
 			mesg = std::regex_replace(mesg, std::regex("\\$COMP"), "Hz");
 			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
 			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));

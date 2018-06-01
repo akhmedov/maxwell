@@ -31,12 +31,10 @@ private:
 	Logger* global_log;
 	Config* global_conf;
 	std::vector<std::function<void(PlotModel&, const std::vector<std::pair<Component,AbstractField*>>&)>> model_pointer;
-	void __Ex_from_ct     (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
-	void __Hy_from_ct     (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
-	void __Ex_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
-	void __Hy_from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
-	void __Ex_from_ct_z   (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
-	void __Hy_from_ct_z   (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __from_ct     (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __from_ct_rho (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __from_ct_z   (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
+	void __from_x_y    (const std::vector<std::pair<Component,AbstractField*>>& to_compute);
 };
 
 #endif /* plot_model_hpp */

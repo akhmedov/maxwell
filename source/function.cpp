@@ -33,9 +33,8 @@ double Function::sinc (double x, double duration, std::size_t cycles)
 
 double Function::gauss (double x, double duration)
 {
-	duration = std::abs(duration);
-	double mu = duration / 2;
-	double sigma = 2 * std::pow(duration/7,2);;
+	double mu = std::abs(duration) / 2;
+	double sigma = 2 * std::pow(std::abs(duration)/7,2);;
 	double pow = std::pow(x-mu,2) / sigma;
 	return std::exp(-pow); // / std::sqrt(M_PI * sigma);
 }

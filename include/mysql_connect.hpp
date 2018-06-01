@@ -11,6 +11,8 @@
 
 #include "config.hpp"
 #include "noise.hpp"
+#include "updisk_meandr.hpp"
+#include "linear_duhamel.hpp"
 #include "uniform_disk_current.hpp"
 #include "kerr_amendment.hpp"
 
@@ -49,6 +51,7 @@ struct MySQL {
 protected:
 
 	static void throw_error_code (int code);
+	static std::string to_string(const ImpulseShape& type);
 	static std::string to_string(const FieldComponent& type);
 	void reconnect () const;
 

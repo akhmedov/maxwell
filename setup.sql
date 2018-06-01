@@ -17,15 +17,15 @@ USE maxwell;
 
 CREATE TABLE IF NOT EXISTS maxwell_header (
 	id			BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
-	radiator	ENUM('uni_disk', 'grad_disk', 'radial_disk') NOT NULL,
-	component	ENUM('Ex', 'Ey', 'Ez', 'Ephi', 'Erho', 'Hx', 'Hy', 'Hz', 'Hphi', 'Hrho') NOT NULL,
+	radiator	ENUM('uni_disk', 'grad_disk', 'radial_disk','uni_coax') NOT NULL,
+	component	ENUM('Ex', 'Ey', 'Erho', 'Ephi', 'Ez', 'Hx', 'Hy', 'Hrho', 'Hphi', 'Hz', 'W') NOT NULL,
 	radius		DOUBLE(20,7) NOT NULL,
 	magnitude	DOUBLE(20,7) NOT NULL,
 	mu_r		DOUBLE(20,7) NOT NULL,
 	eps_r		DOUBLE(20,7) NOT NULL,
 	kerr_r		DOUBLE(20,7) NOT NULL,
 	duration	DOUBLE(20,7) NOT NULL,
-	signal_type	ENUM('on','meandr','duhamel') NOT NULL,
+	signal_type	ENUM('on','meandr','sin','sinc','gauss','sigmoid','duhamel') NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT UC_maxwell_header UNIQUE (radiator, component, radius, 
 		magnitude, mu_r, eps_r, kerr_r, duration, signal_type)

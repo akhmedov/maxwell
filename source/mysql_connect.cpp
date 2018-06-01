@@ -8,8 +8,8 @@
 
 #include "mysql_connect.hpp"
 
-const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_header WHERE radiator = '$RADIATOR_TYPE' AND component = '$FIELD_COMP' AND radius = $RADIUS_VAL AND magnitude = $MAGNITUDE_VAL AND mu_r = $MUR_VAL AND eps_r = $EPSR_VAL AND kerr_r = $KERR_VAL AND duration = $TAU_VAL AND signal_type = $SIGNAL;";
-const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = $TAU_VAL, signal_type = $SIGNAL;";
+const std::string MySQL::SELECT_PROBLEM_ID = "SELECT id FROM maxwell.maxwell_header WHERE radiator = '$RADIATOR_TYPE' AND component = '$FIELD_COMP' AND radius = $RADIUS_VAL AND magnitude = $MAGNITUDE_VAL AND mu_r = $MUR_VAL AND eps_r = $EPSR_VAL AND kerr_r = $KERR_VAL AND duration = $TAU_VAL AND signal_type = '$SIGNAL';";
+const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET radiator = '$RADIATOR_TYPE', component = '$FIELD_COMP', radius = $RADIUS_VAL, magnitude = $MAGNITUDE_VAL, mu_r = $MUR_VAL, eps_r = $EPSR_VAL, kerr_r = $KERR_VAL, duration  = $TAU_VAL, signal_type = '$SIGNAL';";
 const std::string MySQL::SELECT_POINT      = "SELECT id,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
 const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
 const std::string MySQL::UPDATE_LINEAR     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
@@ -47,7 +47,9 @@ MySQL::MySQL(Config* gl_config)
 	problem_id = std::regex_replace(problem_id, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
 	problem_id = std::regex_replace(problem_id, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));	
 	problem_id = std::regex_replace(problem_id, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$SIGNAL"), std::to_string(this->global_config->impulse_shape()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_config->impulse_shape()));
+
+
 
 	error_code = mysql_query(this->connection, problem_id.c_str());
 	MySQL::throw_error_code(error_code);
@@ -70,7 +72,7 @@ MySQL::MySQL(Config* gl_config)
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$SIGNAL"), std::to_string(this->global_config->impulse_shape()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_config->impulse_shape()));
 
 		error_code = mysql_query(this->connection, insert_problem.c_str());
 		MySQL::throw_error_code(error_code);
@@ -179,19 +181,35 @@ void MySQL::throw_error_code (int code)
 	throw std::logic_error(message);
 }
 
+std::string MySQL::to_string(const ImpulseShape& type)
+{
+	switch (type) {
+		case  ImpulseShape::on: 		return "on";
+		case  ImpulseShape::meandr: 	return "meandr";
+		case  ImpulseShape::sin_cycle: 	return "sin";
+		case  ImpulseShape::sinc: 		return "sinc";
+		case  ImpulseShape::gauss: 		return "gauss";
+		case  ImpulseShape::sigmoid: 	return "sigmoid";
+		case  ImpulseShape::duhamel: 	return "duhamel";
+		default: throw std::logic_error("ImpulseShape is not implemented in MySQL::to_string().");
+	}
+}
+
 std::string MySQL::to_string(const FieldComponent& type)
 {
 	switch (type) {
-		case 0: return "Ex";
-		case 1: return "Ey";
-		case 2: return "Ez";
-		case 3: return "Ephi";
-		case 4: return "Erho";
-		case 5: return "Hx";
-		case 6: return "Hy";
-		case 7: return "Hz";
-		case 8: return "Hphi";
-		case 9: return "Hrho";
+		case FieldComponent::Erho: 	return "Erho";
+		case FieldComponent::Ephi: 	return "Ephi";
+		case FieldComponent::Ex: 	return "Ex";
+		case FieldComponent::Ey: 	return "Ey";
+		case FieldComponent::Ez: 	return "Ez";
+		case FieldComponent::Hrho: 	return "Hrho";
+		case FieldComponent::Hphi: 	return "Hphi";
+		case FieldComponent::Hx: 	return "Hx";
+		case FieldComponent::Hy: 	return "Hy";
+		case FieldComponent::Hz: 	return "Hz";
+		case FieldComponent::W: 	return "W";
+		default: throw std::logic_error("FieldComponent is not implemented in MySQL::to_string().");
 	}
 }
 
@@ -264,7 +282,7 @@ void MySQL::set_kerr (double value)
 
 double MySQL::get_value(const std::type_info& type) const
 {
-	if (type == typeid(MissileField)) {
+	if (type == typeid(MissileField) || type == typeid(LinearDuhamel) || type == typeid(SquaredPulse)) {
 		return this->get_linear();
 	} else if (type == typeid(KerrAmendment)) {
 		return this->get_kerr();
@@ -276,7 +294,7 @@ double MySQL::get_value(const std::type_info& type) const
 
 void MySQL::set_value(const std::type_info& type, double value)
 {
-	if (type == typeid(MissileField)) {
+	if (type == typeid(MissileField) || type == typeid(LinearDuhamel) || type == typeid(SquaredPulse)) {
 		this->set_linear(value);
 		return;
 	} else if (type == typeid(KerrAmendment)) {

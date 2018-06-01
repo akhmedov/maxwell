@@ -249,18 +249,9 @@ void Config::medium_superposition (Superposition type)
 	this->superposition = type;
 }
 
-void Config::field_component (std::size_t model_num)
+void Config::field_component (FieldComponent comp)
 {
-	switch (model_num) {
-		case 1: this->working_component = FieldComponent::Ex; break;
-		case 2: this->working_component = FieldComponent::Hy; break;
-		case 3: this->working_component = FieldComponent::Ex; break;
-		case 4: this->working_component = FieldComponent::Hy; break;
-		case 5: this->working_component = FieldComponent::Ex; break;
-		case 6: this->working_component = FieldComponent::Hy; break;
-		case 7: this->working_component = FieldComponent::Hy; break;
-		default: throw std::logic_error("This model number is not implemnted in Config::field_component()");
-	};
+	this->working_component = comp;
 }
 
 void Config::duration (double val)
