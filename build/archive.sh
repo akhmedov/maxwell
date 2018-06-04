@@ -9,7 +9,7 @@
 #!/bin/bash
 
 mkdir -p archive/$1
-mysqldump -umaxwell -pmaxwell > archive/$1/maxwell.sql
+mysqldump --databases maxwell -umaxwell -pmaxwell > archive/$1/maxwell.sql
 mysql -umaxwell -pmaxwell < clean.sql
 mv maxwell-*.log archive/$1/
 mv maxwell.gnp archive/$1/

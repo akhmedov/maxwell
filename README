@@ -125,6 +125,7 @@ libmysqlclient-dev - mysql client connector
 
 ### TODO LIST ###
 
+- stringable enum class
 + secure culculation flag
 + numerics implementaion if Hy(ct,r) in linear medium
 - smart pointers all over the code

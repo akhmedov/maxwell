@@ -44,26 +44,23 @@ using Plot3D = std::vector<std::tuple<T, T, T>>;
 struct GnuPlot {
 	GnuPlot (std::string filename);
 	void set_gnuplot_bin (std::string filename);
-
 	void set_font_size (std::size_t size);
 	void set_ox_label (std::string text);
 	void set_oy_label (std::string text);
 	void set_oz_label (std::string text);
 	void set_title (std::string text);
-
+	void set_colormap (const Colormap &schem);
 	void set_logscale_ox (bool status = true);
 	void set_logscale_oy (bool status = true);
-
 	void grid_on (bool status = true);
 	void cage_on (bool status = true);
 
-	void plot_colormap (const std::vector<std::vector<double>> &array);
 	void plot2d (const std::vector<std::vector<double>> &array);
-	void plot_multi (const std::vector<std::vector<double>> &array, const std::vector<std::string> &title);
+	void plot_multi (const std::vector<std::vector<double>> &array, 
+					 const std::vector<std::string> &title);
 	void plot3d (const std::vector<std::vector<double>> &matrix);
+	void plot_colormap (const std::vector<std::vector<double>> &array);
 	void call_gnuplot ();
-
-	void set_colormap (const Colormap &schem);
 
 protected:
 	static std::vector<std::vector<std::vector<double>>> matrix_from (std::vector<std::vector<double>> array);
@@ -71,16 +68,15 @@ protected:
 
 private:
 	void direct_gnuplot_call (const Text &plot_data) const;
+	void write_script (const std::string &plot_data) const;
 	void write_commants_to_script (const Text &plot_data, const std::vector<std::string> &title = {}) const;
 
 	// templates
 
-	const static std::string GRAY_SURFASE_TMP;
-	const static std::string PARULA_SURFASE_TMP;
-	const static std::string GRAY_PLANE_TMP;
-	const static std::string PARULA_PLANE_TMP;
-	const static std::string GRAY_CMAP_TMP;
-	const static std::string PARULA_CMAP_TMP;
+	const static std::string MULTILINE;
+	const static std::string LINE;
+	const static std::string SURFACE;
+	const static std::string CMAP;
 
 	// variables 
 

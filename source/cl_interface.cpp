@@ -31,7 +31,19 @@ CLI::CLI (Config* conf)
 		{"--shape",		"gauss"},
 		{"--shape",		"sin"},
 		{"--shape",		"sinc"},
-		{"--shape",		"duhamel"}
+		{"--shape",		"duhamel"},
+		/* field component */
+		{"--field",		"Erho"},
+		{"--field",		"Ephi"},
+		{"--field",		"Ex"},
+		{"--field",		"Ey"},
+		{"--field",		"Ez"},
+		{"--field",		"Hrho"},
+		{"--field",		"Hphi"},
+		{"--field",		"Hx"},
+		{"--field",		"Hy"},
+		{"--field",		"Hz"},
+		{"--field",		"W"}
 	};
 
 	this->binar_var_cmd = {
@@ -165,13 +177,34 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 			this->global_conf->impulse_shape(ImpulseShape::gauss);
 		else if (!arg.compare("duhamel"))
 			this->global_conf->impulse_shape(ImpulseShape::duhamel);
-
 	}
 
-	if (!param.compare("--plot")) {
+	if (!param.compare("--plot"))
 		this->global_conf->plot_model(std::stoi(arg));
-		FieldComponent comp = (FieldComponent) std::stoi(arg);
-		this->global_conf->field_component(comp);
+
+	if (!param.compare("--field")) {
+		if (!arg.compare("Erho"))
+			this->global_conf->field_component(FieldComponent::Erho);
+		else if (!arg.compare("Ephi"))
+			this->global_conf->field_component(FieldComponent::Ephi);
+		else if (!arg.compare("Ex"))
+			this->global_conf->field_component(FieldComponent::Ex);
+		else if (!arg.compare("Ey"))
+			this->global_conf->field_component(FieldComponent::Ey);
+		else if (!arg.compare("Ez"))
+			this->global_conf->field_component(FieldComponent::Ey);
+		else if (!arg.compare("Hrho"))
+			this->global_conf->field_component(FieldComponent::Hrho);
+		else if (!arg.compare("Hphi"))
+			this->global_conf->field_component(FieldComponent::Hphi);
+		else if (!arg.compare("Hx"))
+			this->global_conf->field_component(FieldComponent::Hx);
+		else if (!arg.compare("Hy"))
+			this->global_conf->field_component(FieldComponent::Hy);
+		else if (!arg.compare("Hz"))
+			this->global_conf->field_component(FieldComponent::Hz);
+		else if (!arg.compare("W"))
+			this->global_conf->field_component(FieldComponent::W);
 	}
 
 	if (!param.compare("--data"))
@@ -460,6 +493,7 @@ void CLI::print_arguments () const
 	if (z[0] == z[2]) std::cout << z[0] << std::endl;
 	else std::cout << z[0] << ':' << z[1] << ':' << z[2] << std::endl;
 
+	std::cout << "Field component: " << this->global_conf->field_component() << std::endl;
 	std::cout << "Source radius (m): " << this->global_conf->plane_disk_radius() << std::endl;
 	std::cout << "Source magnitude (m): " << this->global_conf->plane_disk_magnitude() << std::endl;
 	std::cout << "Relative epsilon: " << this->global_conf->plane_disk_epsr() << std::endl;
@@ -724,6 +758,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 			MeandrPeriod* source = new MeandrPeriod(R, A0, tau);
 			SquaredPulse* linear = new SquaredPulse(source, linear_medium);
+			linear->set_yterms_num( this->global_conf->magnetic_term_num() );
 			res.push_back(std::make_pair(comp, linear));
 
 			if (this->global_conf->kerr_medium())
@@ -808,7 +843,6 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 
 			throw std::logic_error ("Unknown ImpulseShape:: in CLI::em_problem!");
 	}
-		
 
 	return res;
 }

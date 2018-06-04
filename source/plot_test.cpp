@@ -122,10 +122,10 @@ void PlotTest::signal_spectr ()
 void PlotTest::plot_energy (double z)
 {
 	std::string str_z = std::to_string(z);
-	str_z = str_z.substr(0,3);
+	str_z = str_z.substr(0,4);
 	double R = 1, A0 = 1, tau = 0.5;
 	double eps_r = 1, mu_r = 1;
-	double range = z + R;
+	double range = z/5 + 2*R;
 
 	PlotTest::global_conf->field_component(FieldComponent::W);
 	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
@@ -139,10 +139,6 @@ void PlotTest::plot_energy (double z)
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, log);
 
-	double max0 = duhamel->energy_cart(0,0,0.5);
-	double max = duhamel->energy_cart(0,0,z);
-	std::cout << "Wmax (z=" << str_z << ") = " << max << std::endl;
-
 	SafeManager* thead_core = new SafeManager(4, PlotTest::global_conf, NULL);
 	thead_core->progress_bar(true);
 
@@ -155,10 +151,14 @@ void PlotTest::plot_energy (double z)
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
+	double max = 0, max0 = duhamel->energy_cart(0,0,0.5);
 	for (auto&& i : data) {
+		if (i[3] > max) max = i[3];
 		i[3] *= z*z / max0; // norm W
 		i.erase(i.begin() + 2); // erase z
 	}
+
+	std::cout << "Wmax (z=" << str_z << ") = " << max << std::endl;
 
 	/* std::vector<std::vector<double>> agumentat;
 	for (auto&& i : data) {
@@ -171,6 +171,7 @@ void PlotTest::plot_energy (double z)
 
 	GnuPlot* plot = new GnuPlot( str_z + ".gnp" );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("x, m");
 	plot->set_oy_label("y, m");
 	plot->grid_on();
@@ -444,7 +445,7 @@ void PlotTest::I1_time_partder (double rho, double z, double R)
 
 	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
-	plot->set_colormap(Colormap::parula);
+	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("");
 	plot->grid_on();

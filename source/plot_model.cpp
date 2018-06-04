@@ -55,8 +55,7 @@ void PlotModel::__from_ct (const std::vector<std::pair<Component,AbstractField*>
 	std::vector<std::vector<double>> plot_data;
 	for (auto i : data) {
 		double magnitude = 0;
-		for (std::size_t j = 4; j < i.size(); j++)
-			magnitude += i[j];
+		for (std::size_t j = 4; j < i.size(); j++) magnitude += i[j];
 		plot_data.push_back({i[0], magnitude});
 	}
 

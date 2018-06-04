@@ -1,31 +1,54 @@
 #include "gnu_plot.hpp"
 
-/* const std::string GnuPlot::GRAY_PLANE_TMP = 
-"set term x11 font '$FONT'" 
-"set xlabel '$XLABEL'"
-"set ylabel '$YLABEL'"
-"set zlabel 'oZ' rotate center"
-"set grid layerdefault"
-"$grid << EOD"
-"$DATA"
-"EOD"
-"plot '$grid' using 1:2 with lines linecolor rgb 'black' notitle" 
-"pause -1 'Hit return to continue'"
+const std::string GnuPlot::LINE =
+"set term x11 font '$FONT'\n"
+"set xlabel '$XLABEL'\n"
+"set ylabel '$YLABEL'\n"
+"set zlabel 'oZ' rotate center\n"
+"set grid layerdefault\n"
+"$grid << EOD\n"
+"$DATA\n"
+"EOD\n"
+"plot '$grid' using 1:2 with lines linecolor rgb 'black' notitle\n"
+"pause -1 'Hit return to continue'\n"
 ;
 
-const std::string GnuPlot::GRAY_SURFASE_TMP =
-"TODO"
+const std::string GnuPlot::MULTILINE = 
+"set term x11 font '$FONT'\n"
+"set xlabel '$XLABEL'\n"
+"set ylabel ''\n"
+"set zlabel '' rotate center\n"
+"set grid layerdefault\n"
+"$grid << EOD\n"
+"$DATA\n"
+"EOD\n"
+"$GRAY_LINESTYLE\n"
+"plot \\\n"
+"$PLOT_LINES\n"
+"pause -1 'Hit return to continue'\n"
 ;
 
-const std::string GnuPlot::GRAY_PLANE_TMP =
-"TODO"
+const std::string GnuPlot::SURFACE =
+"set term x11 font '$FONT'\n"
+"set xlabel '$XLABEL'\n"
+"set ylabel '$YLABEL'\n"
+"set zlabel '$YLABEL' rotate center\n"
+"set grid layerdefault\n"
+"$grid << EOD\n"
+"$DATA\n"
+"EOD\n"
+"set hidden3d\n"
+"set dgrid3d 50, 50, 50\n"
+"$GRAY set style data lines\n"
+"$GRAY splot '$grid' using 1:2:3 with lines linecolor rgb 'black' notitle\n"
+"$PALURA set pm3d depthorder border linetype -1 linewidth 0.5\n"
+"$PALURA set style fill transparent solid 0.65 border\n"
+"$PALURA set palette rgb 21,22,23\n"
+"$PALURA splot '$grid' using 1:2:3 with pm3d notitle\n"
+"pause -1 'Hit return to continue'\n"
 ;
 
-const std::string GnuPlot::PALURA_PLANE_TMP =
-"TODO"
-; */
-
-const std::string GnuPlot::GRAY_CMAP_TMP =
+const std::string GnuPlot::CMAP =
 "set term x11 font '$FONT'\n"
 "set border linewidth 0\n"
 "set palette grey\n"
@@ -35,11 +58,12 @@ const std::string GnuPlot::GRAY_CMAP_TMP =
 "unset tics\n"
 "unset colorbox\n"
 "set size square\n"
-"set palette defined (0 'white', 1 'black')\n"
-"# set pm3d map\n"
-"# set pm3d interpolate 10,10\n"
-"# splot '$grid' matrix\n"
-"plot '$grid' matrix with image\n"
+"$COLOR1 set palette defined (0 1 1 1, 1 0 0 0)\n"
+"$COLOR2 set palette defined (0 0 0 0, 1 1 1 0, 2 1 0 0)\n"
+"set pm3d map\n"
+"set pm3d interpolate 10,10\n"
+"splot '$grid' matrix\n"
+"# plot '$grid' matrix with image\n"
 "pause -1 'Hit return to continue'\n"
 ;
 
@@ -125,26 +149,14 @@ void GnuPlot::cage_on ( bool status)
 	this->is_plot_in_cage = status;
 }
 
-void GnuPlot::plot2d (const std::vector<std::vector<double>> &array) 
+void GnuPlot::write_script (const std::string &text) const
 {
-	if (array.empty()) throw std::invalid_argument("Empty plot dataset.");
-	this->is_3d_plot = false;
-	this->is_multi_plot = false;
-	
-	std::vector<std::string> plot_data;
-	for (auto&& point : array) {
-		std::string str_line;
-		std::string x = std::to_string(point[0]).append(" ");
-		std::string y = std::to_string(point[1]).append(" ");
-		str_line.append( x.append(y) );
-		plot_data.push_back(str_line);
-	}
-	
 	std::cout << "Write comands to " << this->script_name << " script... ";
-	std::cout.flush();
-	this->write_commants_to_script(plot_data);
+	std::ofstream script;
+	script.open( this->script_name );
+	script << text;
+	script.close();
 	std::cout << "Done." << std::endl;
-	std::cout.flush();
 }
 
 std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<std::vector<double>> cart)
@@ -217,61 +229,139 @@ void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array)
 		data += "\n";
 	}
 
-	std::string text = GnuPlot::GRAY_CMAP_TMP;
+	std::string text = GnuPlot::CMAP;
 	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
 	text = std::regex_replace(text, std::regex("\\$DATA"), data);
 
-	std::ofstream script;
-	script.open( this->script_name );
-	script << text;
-	script.close();
+	switch (this->color_schem) {
+		case Colormap::gray: {
+			text = std::regex_replace(text, std::regex("\\$COLOR2"), "#");
+			text = std::regex_replace(text, std::regex("\\$COLOR1"), "");
+			} break;
+		case Colormap::parula: {
+			text = std::regex_replace(text, std::regex("\\$COLOR1"), "#");
+			text = std::regex_replace(text, std::regex("\\$COLOR2"), "");
+			} break;
+		default: 
+			throw std::logic_error("This colorshem is not implemented in GnuPlot::plot_colormap()");
+	}
+
+	this->write_script(text);
+}
+
+void GnuPlot::plot2d (const std::vector<std::vector<double>> &array) 
+{
+	if (array.empty()) throw std::invalid_argument("Empty plot dataset.");
+	this->is_3d_plot = false;
+	this->is_multi_plot = false;
+
+	std::string data;
+	for (auto&& line : array) {
+		for (auto&& val : line)
+			data += std::to_string(val) + " ";
+		data += "\n";
+	}
+
+	std::string text = GnuPlot::LINE;
+	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
+	text = std::regex_replace(text, std::regex("\\$DATA"), data);
+	text = std::regex_replace(text, std::regex("\\$XLABEL"), this->ox_label);
+	text = std::regex_replace(text, std::regex("\\$YLABEL"), this->oy_label);
+
+	switch (this->color_schem) {
+		case Colormap::gray: { } break;
+		case Colormap::parula: { } break;
+		default: 
+			throw std::logic_error("This colorshem is not implemented in GnuPlot::plot_colormap()");
+	}
+
+	this->write_script(text);
 }
 
 void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &title) 
 {
+	std::string LT_FOR = "set for [i=1:$LINES] linetype i dt i\n";
+	const std::string LT_ITEM = "set style line $ITEM lt $ITEM lc rgb 'black' lw 1 \n";
+	const std::string PLOT = "'$grid' using 1:1+$ITEM with lines ls $ITEM title '$TITLE',\\\n";
+
 	if (arrays.empty()) throw std::invalid_argument("Empty plot dataset.");
 	if (arrays[0].size()-1 != title.size()) throw std::invalid_argument("Size of input arrays does not match.");
-	this->is_3d_plot = false;
-	this->is_multi_plot = true;
-	
-	std::vector<std::string> plot_data;
+
+	std::string data;
 	for (auto&& line : arrays) {
-		std::string str_line;
-		for (auto&& value : line) {
-			std::string val = std::to_string(value).append(" ");
-			str_line.append(val);
-		}
-		plot_data.push_back(str_line);
+		for (auto&& val : line)
+			data += std::to_string(val) + " ";
+		data += "\n";
 	}
+
+	std::string text = GnuPlot::MULTILINE;
+	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
+	text = std::regex_replace(text, std::regex("\\$DATA"), data);
+	text = std::regex_replace(text, std::regex("\\$XLABEL"), this->ox_label);
+
+	switch (this->color_schem) {
+		case Colormap::gray: {
+			std::string linetype = std::regex_replace(LT_FOR, std::regex("\\$LINES"), std::to_string(title.size()));
+			for (std::size_t i = 1; i <= title.size(); i++) {
+				std::string lti = LT_ITEM;
+				lti = std::regex_replace(lti, std::regex("\\$ITEM"), std::to_string(i));
+				linetype.append(lti);
+			}
+			text = std::regex_replace(text, std::regex("\\$GRAY_LINESTYLE"), linetype);
+		} break;
+		case Colormap::parula: { } break;
+		default: 
+			throw std::logic_error("This colorshem is not implemented in GnuPlot::plot_colormap()");
+	}
+
+	std::string plot_cmd;
+	for (std::size_t i = 1; i <= title.size(); i++) {
+		std::string plot = PLOT;
+		plot = std::regex_replace(plot, std::regex("\\$ITEM"), std::to_string(i));
+		plot = std::regex_replace(plot, std::regex("\\$TITLE"), title[i-1]);
+		plot_cmd.append(plot);
+	}
+
+	plot_cmd = plot_cmd.substr(0, plot_cmd.size()-3);
+	text = std::regex_replace(text, std::regex("\\$PLOT_LINES"), plot_cmd);
 	
-	std::cout << "Write comands to " << this->script_name << " script... ";
-	std::cout.flush();
-	this->write_commants_to_script(plot_data, title);
-	std::cout << "Done." << std::endl;
-	std::cout.flush();
+	this->write_script(text);
 }
 
 void GnuPlot::plot3d (const std::vector<std::vector<double>> &matrix)
 {
 	if (matrix.empty()) throw std::invalid_argument("Empty plot dataset.");
-	this->is_3d_plot = true;
-	this->is_multi_plot = false;
 
-	std::vector<std::string> plot_data;
+	std::string data;
 	for (auto&& point : matrix) {
-		std::string str_line;
 		std::string x = std::to_string(point[1]).append(" ");
 		std::string y = std::to_string(point[2]).append(" ");
 		std::string z = std::to_string(point[0]).append(" ");
-		str_line.append( x.append(y).append(z) );
-		plot_data.push_back(str_line);
+		std::string l = x.append(y).append(z).append("\n");
+		data.append(l);
 	}
 
-	std::cout << "Write comands to " << this->script_name << " script... ";
-	std::cout.flush();
-	this->write_commants_to_script(plot_data);
-	std::cout << "Done." << std::endl;
-	std::cout.flush();
+	std::string text = GnuPlot::SURFACE;
+	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
+	text = std::regex_replace(text, std::regex("\\$DATA"), data);
+	text = std::regex_replace(text, std::regex("\\$XLABEL"), this->ox_label);
+	text = std::regex_replace(text, std::regex("\\$YLABEL"), this->oy_label);
+	text = std::regex_replace(text, std::regex("\\$ZLABEL"), this->oz_label);
+
+	switch (this->color_schem) {
+		case Colormap::gray: {
+			text = std::regex_replace(text, std::regex("\\$PALURA"), "#");
+			text = std::regex_replace(text, std::regex("\\$GRAY"), "");
+		} break;
+		case Colormap::parula: {
+			text = std::regex_replace(text, std::regex("\\$PALURA"), "");
+			text = std::regex_replace(text, std::regex("\\$GRAY"), "#");
+		} break;
+		default: 
+			throw std::logic_error("This colorshem is not implemented in GnuPlot::plot_colormap()");
+	}
+
+	this->write_script(text);
 }
 
 void GnuPlot::call_gnuplot ()
@@ -294,70 +384,3 @@ void GnuPlot::set_colormap (const Colormap &schem)
 	// if (this->is_title_on) cmd_list.("set title \"" << this->title << "\";");
 	if (this->is_3d_plot) thi
 } */
-
-void GnuPlot::write_commants_to_script (const std::vector<std::string> &plot_data, const std::vector<std::string> &title) const
-{
-	std::ofstream script;
-	script.open( this->script_name );
-	script << "set term x11 font \"" << this->font << "\" \n";
-
-	if (this->is_title_on) script << "set title \"" << this->title << "\"\n";
-
-	script << "set xlabel \"" << this->ox_label << "\"\n";
-	script << "set ylabel \"" << this->oy_label << "\"\n";
-	script << "set zlabel \"" << this->oz_label << '\"' << " rotate center" << '\n';
-
-	if (this->is_ox_logscale) script << "set logscale x \n";
-	if (this->is_oy_logscale) script << "set logscale y \n";
-	if (this->is_grid_on) script << "set grid layerdefault" << '\n';
-
-	script << "$grid << EOD \n";
-	for (auto i : plot_data) script << i << '\n';
-	script << "EOD \n";
-
-	if (this->is_3d_plot) {
-		if (this->color_schem == Colormap::gray) {
-			script << "set hidden3d \n"; // pm3d
-			script << "set dgrid3d 50, 50, 50 \n";
-			script << "set style data lines \n";
-			script << "splot '$grid' using 1:2:3 with lines linecolor rgb \"black\" notitle \n";
-		} else if (this->color_schem == Colormap::parula) {
-			script << "set dgrid3d 50, 50, 50 \n";
-			script << "set pm3d depthorder border linetype -1 linewidth 0.5\n";
-			script << "set style fill  transparent solid 0.65 border\n";
-			script << "set palette rgb 21,22,23\n";
-			script << "set hidden3d\n";
-			script << "splot '$grid' using 1:2:3 with pm3d notitle \n";
-		}
-
-	} else if (this->is_multi_plot) {
-
-		std::size_t curves = std::count_if(plot_data[0].begin(), plot_data[0].end(),
-			[] (char c) { return std::isspace(c); }
-		) - 1;
-
-		if (this->color_schem == Colormap::gray) {
-			script << "set for [i=1:" << std::to_string(curves) << "] linetype i dt i \n";
-			for (std::size_t i = 1; i <= curves; i++)
-				script << "set style line " << std::to_string(i) << " lt " << std::to_string(i) << " lc rgb \"black\" lw 1 \n";
-		}
-
-		std::string plot_conf = "'$grid' using 1:COLUMN";
-		std::string options = " with lines ls STYLE title \"LABLE\"";
-
-		for (std::size_t i = 1; i <= curves; i++) {
-			std::string prefix = (i == 1) ? "plot " : " ";
-			std::string postfix = (i != curves) ? "," : "\n";
-			std::string cmd = prefix.append(plot_conf).append(options).append(postfix);
-			cmd.replace(cmd.find("STYLE"), std::string("STYLE").length(), std::to_string(i));
-			cmd.replace(cmd.find("COLUMN"), std::string("COLUMN").length(), std::to_string(i+1));
-			cmd.replace(cmd.find("LABLE"), std::string("LABLE").length(), title[i-1]);
-			script << cmd;
-		}
-	} else {
-		script << "plot '$grid' using 1:2 with lines linecolor rgb \"black\" notitle \n";
-	}
-
-	script << "pause -1 \"Hit return to continue\" \n";
-	script.close();
-}

@@ -81,4 +81,4 @@ gnump:
 	rm -fr $(PROJECT_DIR)/gmp-6.1.2
 
 clean:
-	rm -f build/*.o *.gnp maxwell-*.log build/maxwell build/unit_test build/plot_test
+	rm -f build/*.o *.gnp *.log build/maxwell build/unit_test build/plot_test
