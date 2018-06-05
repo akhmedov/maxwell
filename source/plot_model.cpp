@@ -40,9 +40,9 @@ void PlotModel::__from_ct (const std::vector<std::pair<Component,AbstractField*>
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager(thread_num, this->global_log);
-	else thead_core = new SafeManager( thread_num, this->global_conf, this->global_log);
+	Manager<0>* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager<0>(thread_num, this->global_log);
+	else thead_core = new SafeManager<0>( thread_num, this->global_conf, this->global_log);
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double ct = ct_from; ct <= ct_to; ct += ct_step)
@@ -82,9 +82,9 @@ void PlotModel::__from_ct_rho (const std::vector<std::pair<Component,AbstractFie
 	double phi = this->global_conf->receiver_phi()[0];
 	double z = this->global_conf->receiver_z()[0];
 
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
-	else thead_core = new SafeManager( thread_num, this->global_conf );
+	Manager<0>* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager<0>( thread_num );
+	else thead_core = new SafeManager<0>( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double rho = rho_from; rho <= rho_to; rho += rho_step)
@@ -127,9 +127,9 @@ void PlotModel::__from_ct_z (const std::vector<std::pair<Component,AbstractField
 	double z_step = this->global_conf->receiver_z()[1];
 	double z_to = this->global_conf->receiver_z()[2];
 
-	Manager* thead_core;
-	if (!this->global_conf->safe_mode()) thead_core = new Manager( thread_num );
-	else thead_core = new SafeManager( thread_num, this->global_conf );
+	Manager<0>* thead_core;
+	if (!this->global_conf->safe_mode()) thead_core = new Manager<0>( thread_num );
+	else thead_core = new SafeManager<0>( thread_num, this->global_conf );
 	thead_core->progress_bar( this->global_conf->print_progress() );
 
 	for (double z = z_from; z <= z_to; z += z_step)

@@ -27,7 +27,8 @@
 struct PlotTest : private Math, private Integral, private KerrAmendment {
 
 	static void signal_spectr ();
-	static void plot_energy (double z);
+	static void plot_energy_slyse (double z);
+	static void plot_energy_max (double tau);
 	static void Ex_derivative (double tau);
 	static void plot_source ();
 	static void kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R = 1);

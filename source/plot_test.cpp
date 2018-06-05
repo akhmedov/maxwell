@@ -93,14 +93,18 @@ int main()
 	// PlotTest::signal_spectr();
 
 	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "plot_energy(z=5,10,20) " << std::endl;
-	PlotTest::plot_energy(0.50);
-	PlotTest::plot_energy(1.00);
-	PlotTest::plot_energy(2.50);
-	PlotTest::plot_energy(5.00);
-	PlotTest::plot_energy(10.0);
-	PlotTest::plot_energy(15.0);
-	PlotTest::plot_energy(20.0);
+	// std::cout << "plot_energy_slyse(z=5,10,20) " << std::endl;
+	/* PlotTest::plot_energy_slyse(0.50);
+	PlotTest::plot_energy_slyse(1.00);
+	PlotTest::plot_energy_slyse(2.50);
+	PlotTest::plot_energy_slyse(5.00);
+	PlotTest::plot_energy_slyse(10.0);
+	PlotTest::plot_energy_slyse(15.0);
+	PlotTest::plot_energy_slyse(20.0); */
+
+	std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
+	PlotTest::plot_energy_max(1.0);
+	std::cout << "Done." << std::endl;
 }
 
 void PlotTest::signal_spectr ()
@@ -119,7 +123,52 @@ void PlotTest::signal_spectr ()
 	}
 }
 
-void PlotTest::plot_energy (double z)
+void PlotTest::plot_energy_max (double tau)
+{
+	double R = 1, A0 = 1;
+	double eps_r = 1, mu_r = 1;
+
+	PlotTest::global_conf->field_component(FieldComponent::W);
+	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
+	PlotTest::global_conf->duration(tau);
+
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, medium);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+
+	SafeManager<2>* thead_core = new SafeManager<2>(4, PlotTest::global_conf, NULL);
+	thead_core->progress_bar(true);
+
+	for (double z = 0; z <= 15; z += 0.1)
+			thead_core->add_argument( {0,0,z} );
+
+	auto property = &AbstractField::energy_cart;
+	auto function = std::make_pair(property, duhamel);
+	thead_core->call({function});
+	std::vector<std::vector<double>> data = thead_core->get_value();
+	
+	double max0 = 0;
+	for (auto i : data) if (std::abs(i[2] - 0.5) < 1e-5) max0 = i[3];
+
+	for (auto&& i : data) {
+		i[3] *= i[2] * i[2] / max0; // norm W
+		i.erase(i.begin(), i.begin() + 2); // erase x and y
+	}
+
+	GnuPlot* plot = new GnuPlot( "Wmax.gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("z, m");
+	plot->set_oy_label("W, V*V");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot2d(data);
+}
+
+void PlotTest::plot_energy_slyse (double z)
 {
 	std::string str_z = std::to_string(z);
 	str_z = str_z.substr(0,4);
@@ -139,7 +188,7 @@ void PlotTest::plot_energy (double z)
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, log);
 
-	SafeManager* thead_core = new SafeManager(4, PlotTest::global_conf, NULL);
+	SafeManager<0>* thead_core = new SafeManager<0>(4, PlotTest::global_conf, NULL);
 	thead_core->progress_bar(true);
 
 	for (double x = -range; x <= range; x += 0.05)
