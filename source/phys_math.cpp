@@ -7,6 +7,11 @@
 //
 
 #include "phys_math.hpp"
+
+double  Math::log (double base, double arg)
+{
+	return std::log(arg) / std::log(base);
+}
  
 double Math::deg2rad (double deg_angle)
 {

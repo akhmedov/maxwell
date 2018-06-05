@@ -8,7 +8,7 @@
 
 #include "abstract_field.hpp"
 
-const std::string AbstractField::int_exept_mgs = "Energy integral is not trusted at $RHO, $PHI, $Z";
+const std::string AbstractField::int_exept_mgs = "Integral in $NAME is not trusted at $RHO, $PHI, $Z";
 
 AbstractField::AbstractField (Logger* log, double acc)
 : accuracy(acc), global_log(log) { }
@@ -97,11 +97,14 @@ double AbstractField::energy (double rho, double phi, double z) const
 	try { 
 		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
 	} catch (double not_trusted) {
-		std::string mesg = AbstractField::int_exept_mgs;
-		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
-		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-		global_log->warning(mesg);
+		if (this->global_log) {
+			std::string mesg = AbstractField::int_exept_mgs;
+			mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "AbstractField::energy");
+			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
+			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+			this->global_log->warning(mesg);
+		}
 		return not_trusted; 
 	}
 }
@@ -126,11 +129,14 @@ double AbstractField::energy_cart (double x, double y, double z) const
 	try { 
 		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
 	} catch (double not_trusted) {
-		std::string mesg = AbstractField::int_exept_mgs;
-		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
-		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-		global_log->warning(mesg);
+		if (this->global_log) {
+			std::string mesg = AbstractField::int_exept_mgs;
+			mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "AbstractField::energy_cart");
+			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
+			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
+			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
+			this->global_log->warning(mesg);
+		}
 		return not_trusted; 
 	}
 }

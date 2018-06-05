@@ -18,16 +18,22 @@ const std::string MySQL::UPDATE_KERR       = "UPDATE maxwell.maxwell_data SET ke
 const std::string MySQL::USE_MAXWELL       = "USE maxwell;";
 const std::string MySQL::SET_WAIT_TIMEOUT  = "SET wait_timeout=9999999;";
 
-MySQL::MySQL(Config* gl_config)
-{
+MySQL::MySQL (const std::vector<Config*> &vect)
+: global_conf(vect) {
+
+	for (std::size_t i = 0; i < vect.size(); i++) {
+		this->linear.push_back(NAN);
+		this->square.push_back(NAN);
+		this->kerr.push_back(NAN);
+	}
+
 	this->connection = mysql_init(NULL);
-	this->global_config = gl_config;
 
 	auto connected = mysql_real_connect(this->connection,
-										this->global_config->mysql_hostname().c_str(), 
-										this->global_config->mysql_username().c_str(), 
-										this->global_config->mysql_password().c_str(), 
-										this->global_config->mysql_database().c_str(), 
+										this->global_conf[0]->mysql_hostname().c_str(), 
+										this->global_conf[0]->mysql_username().c_str(), 
+										this->global_conf[0]->mysql_password().c_str(), 
+										this->global_conf[0]->mysql_database().c_str(), 
 										0, NULL, 0);
 
 	if (!connected) throw std::logic_error("Connection failed! MySQL is not connected.");
@@ -40,16 +46,14 @@ MySQL::MySQL(Config* gl_config)
 
 	std::string problem_id = MySQL::SELECT_PROBLEM_ID;
 	problem_id = std::regex_replace(problem_id, std::regex("\\$RADIATOR_TYPE"), "uni_disk");
-	problem_id = std::regex_replace(problem_id, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_config->field_component()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_config->plane_disk_radius()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_config->plane_disk_magnitude()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));	
-	problem_id = std::regex_replace(problem_id, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
-	problem_id = std::regex_replace(problem_id, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_config->impulse_shape()));
-
-
+	problem_id = std::regex_replace(problem_id, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_conf[0]->field_component()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_conf[0]->plane_disk_radius()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_conf[0]->plane_disk_magnitude()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$MUR_VAL"), std::to_string(this->global_conf[0]->plane_disk_mur()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$EPSR_VAL"), std::to_string(this->global_conf[0]->plane_disk_epsr()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$KERR_VAL"), std::to_string(this->global_conf[0]->kerr_value()));	
+	problem_id = std::regex_replace(problem_id, std::regex("\\$TAU_VAL"), std::to_string(this->global_conf[0]->duration()));
+	problem_id = std::regex_replace(problem_id, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_conf[0]->impulse_shape()));
 
 	error_code = mysql_query(this->connection, problem_id.c_str());
 	MySQL::throw_error_code(error_code);
@@ -58,21 +62,22 @@ MySQL::MySQL(Config* gl_config)
 
 	if (row_init != NULL) {
 
-		this->problem_id = std::stoi(row_init[0]);
+		std::size_t id = std::stoi(row_init[0]);
+		this->item.push_back(std::make_pair(id,NAN));
 		mysql_free_result(result_init);
 
 	} else {
 
 		std::string insert_problem = MySQL::INSERT_PROBLEM;
 		insert_problem = std::regex_replace(insert_problem, std::regex("\\$RADIATOR_TYPE"), "uni_disk");
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_config->field_component()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_config->plane_disk_radius()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_config->plane_disk_magnitude()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MUR_VAL"), std::to_string(this->global_config->plane_disk_mur()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$EPSR_VAL"), std::to_string(this->global_config->plane_disk_epsr()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$KERR_VAL"), std::to_string(this->global_config->kerr_value()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$TAU_VAL"), std::to_string(this->global_config->duration()));
-		insert_problem = std::regex_replace(insert_problem, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_config->impulse_shape()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$FIELD_COMP"), MySQL::to_string(this->global_conf[0]->field_component()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$RADIUS_VAL"), std::to_string(this->global_conf[0]->plane_disk_radius()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MAGNITUDE_VAL"), std::to_string(this->global_conf[0]->plane_disk_magnitude()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$MUR_VAL"), std::to_string(this->global_conf[0]->plane_disk_mur()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$EPSR_VAL"), std::to_string(this->global_conf[0]->plane_disk_epsr()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$KERR_VAL"), std::to_string(this->global_conf[0]->kerr_value()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$TAU_VAL"), std::to_string(this->global_conf[0]->duration()));
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$SIGNAL"), MySQL::to_string(this->global_conf[0]->impulse_shape()));
 
 		error_code = mysql_query(this->connection, insert_problem.c_str());
 		MySQL::throw_error_code(error_code);
@@ -85,83 +90,67 @@ MySQL::MySQL(Config* gl_config)
 		MYSQL_ROW row_new = mysql_fetch_row(result_new);
 
 		if (row_new != NULL) {
-			this->problem_id = std::stoi(row_new[0]);
+			std::size_t id = std::stoi(row_new[0]);
+			this->item.push_back(std::make_pair(id,NAN));
 			mysql_free_result(result_new);
 		} else throw std::logic_error("Internal maxwell error in MySQL module");
 	}
 }
 
+MySQL::MySQL(Config* gl_config)
+: MySQL (std::vector<Config*>({gl_config})) { }
+
 void MySQL::select_point (double ct, double rho, double phi, double z)
 {
-	std::string select_point = MySQL::SELECT_POINT;
-	select_point = std::regex_replace(select_point, std::regex("\\$HEAD"), std::to_string(this->problem_id));
-	select_point = std::regex_replace(select_point, std::regex("\\$TIME"), std::to_string(ct));
-	select_point = std::regex_replace(select_point, std::regex("\\$RADIAL"), std::to_string(rho));
-	select_point = std::regex_replace(select_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
-	select_point = std::regex_replace(select_point, std::regex("\\$DISTANCE"), std::to_string(z));
+	for (std::size_t problem = 0; problem < this->item.size(); problem++ ) {
 
-	int error_code = mysql_query(this->connection, select_point.c_str());
-	MySQL::throw_error_code(error_code);
+		std::size_t problem_id = this->item[problem].first;
+		
+		std::string select_point = MySQL::SELECT_POINT;
+		select_point = std::regex_replace(select_point, std::regex("\\$HEAD"), std::to_string(problem_id));
+		select_point = std::regex_replace(select_point, std::regex("\\$TIME"), std::to_string(ct));
+		select_point = std::regex_replace(select_point, std::regex("\\$RADIAL"), std::to_string(rho));
+		select_point = std::regex_replace(select_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
+		select_point = std::regex_replace(select_point, std::regex("\\$DISTANCE"), std::to_string(z));
 
-	MYSQL_RES* serch_result = mysql_store_result(this->connection);
-	MYSQL_ROW serch_row = mysql_fetch_row(serch_result);
-
-	if (serch_row != NULL) {
-
-		this->point_id = std::stod(serch_row[0]);
-		this->linear   = serch_row[1] ? std::stod(serch_row[1]) : NAN;
-		this->square   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
-		this->kerr     = serch_row[3] ? std::stod(serch_row[3]) : NAN;
-		mysql_free_result(serch_result);
-
-	} else {
-
-		std::string insert_point = MySQL::INSERT_POINT;
-		insert_point = std::regex_replace(insert_point, std::regex("\\$HEAD"), std::to_string(this->problem_id));
-		insert_point = std::regex_replace(insert_point, std::regex("\\$TIME"), std::to_string(ct));
-		insert_point = std::regex_replace(insert_point, std::regex("\\$RADIAL"), std::to_string(rho));
-		insert_point = std::regex_replace(insert_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
-		insert_point = std::regex_replace(insert_point, std::regex("\\$DISTANCE"), std::to_string(z));
-
-		error_code = mysql_query(this->connection, insert_point.c_str());
+		int error_code = mysql_query(this->connection, select_point.c_str());
 		MySQL::throw_error_code(error_code);
-		mysql_free_result(serch_result);
 
-		/* error_code = mysql_query(this->connection, select_point.c_str());
-		MySQL::throw_error_code(error_code);
-		serch_result = mysql_store_result(this->connection);
-		serch_row = mysql_fetch_row(serch_result);
+		MYSQL_RES* serch_result = mysql_store_result(this->connection);
+		MYSQL_ROW serch_row = mysql_fetch_row(serch_result);
 
 		if (serch_row != NULL) {
-			this->point_id = std::stod(serch_row[0]);
-			this->linear   = serch_row[1] ? std::stod(serch_row[1]) : NAN;
-			this->square   = serch_row[2] ? std::stod(serch_row[2]) : NAN;
-			this->kerr     = serch_row[3] ? std::stod(serch_row[3]) : NAN;
+
+			this->item[problem].second = std::stod(serch_row[0]);
+			this->linear[problem] = serch_row[1] ? std::stod(serch_row[1]) : NAN;
+			this->square[problem] = serch_row[2] ? std::stod(serch_row[2]) : NAN;
+			this->kerr[problem]   = serch_row[3] ? std::stod(serch_row[3]) : NAN;
 			mysql_free_result(serch_result);
-		} else throw std::logic_error("Internal maxwell error in MySQL module"); */
 
-		/* LAST_INSERTED_ID() with multi threading and several connected cliets?
-		The ID that was generated is maintained in the server on a per-connection 
-		basis. This means that the value returned by the function to a given 
-		client is the first AUTO_INCREMENT value generated for most recent 
-		statement affecting an AUTO_INCREMENT column by that client. This value 
-		cannot be affected by other clients, even if they generate AUTO_INCREMENT 
-		values of their own. This behavior ensures that each client can retrieve 
-		its own ID without concern for the activity of other clients, and without 
-		the need for locks or transactions. So unless your inserts for multiple 
-		users would happen to be made over the same database connection, you have 
-		nothing to worry about. */
+		} else {
 
-		this->point_id = mysql_insert_id(this->connection);
-		this->linear   = NAN;
-		this->square   = NAN;
-		this->kerr     = NAN;
+			std::string insert_point = MySQL::INSERT_POINT;
+			insert_point = std::regex_replace(insert_point, std::regex("\\$HEAD"), std::to_string(problem_id));
+			insert_point = std::regex_replace(insert_point, std::regex("\\$TIME"), std::to_string(ct));
+			insert_point = std::regex_replace(insert_point, std::regex("\\$RADIAL"), std::to_string(rho));
+			insert_point = std::regex_replace(insert_point, std::regex("\\$AZIMUTH"), std::to_string(phi));
+			insert_point = std::regex_replace(insert_point, std::regex("\\$DISTANCE"), std::to_string(z));
+
+			error_code = mysql_query(this->connection, insert_point.c_str());
+			MySQL::throw_error_code(error_code);
+			mysql_free_result(serch_result);
+
+			this->item[problem].second = mysql_insert_id(this->connection);
+			this->linear[problem]   = NAN;
+			this->square[problem]   = NAN;
+			this->kerr[problem]     = NAN;
+		}
 	}
 }
 
 std::string MySQL::get_hostname() const
 {
-	return this->global_config->mysql_username() + "@" + this->global_config->mysql_hostname();
+	return this->global_conf[0]->mysql_username() + "@" + this->global_conf[0]->mysql_hostname();
 }
 
 void MySQL::reconnect () const
@@ -217,24 +206,25 @@ MySQL::~MySQL ()
 {
 	mysql_close(this->connection);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	delete this->global_config;
+	for (auto i : this->global_conf) delete i;
 	delete this->connection;
 }
 
 //=======================================================================================
 
-double MySQL::get_linear () const
+double MySQL::get_linear (std::size_t problem) const
 {
-	return this->linear;
+	return this->linear[problem];
 }
 
-void MySQL::set_linear (double value)
+void MySQL::set_linear (std::size_t problem, double value)
 {
-	this->linear = value;
+	this->linear[problem] = value;
+	std::size_t point_id = this->item[problem].second;
 	
 	std::string update_linear = MySQL::UPDATE_LINEAR;
 	update_linear = std::regex_replace(update_linear, std::regex("\\$VALUE"), std::to_string(value));
-	update_linear = std::regex_replace(update_linear, std::regex("\\$POINT"), std::to_string(this->point_id));
+	update_linear = std::regex_replace(update_linear, std::regex("\\$POINT"), std::to_string(point_id));
 	
 	int error_code = mysql_query(this->connection, update_linear.c_str());
 	MySQL::throw_error_code(error_code);
@@ -242,18 +232,19 @@ void MySQL::set_linear (double value)
 
 //=======================================================================================
 
-double MySQL::get_square () const
+double MySQL::get_square (std::size_t problem) const
 {
-	return this->square;
+	return this->square[problem];
 }
 
-void MySQL::set_square (double value)
+void MySQL::set_square (std::size_t problem, double value)
 {
-	this->square = value;
+	this->square[problem] = value;
+	std::size_t point_id = this->item[problem].second;
 
 	std::string update_square = MySQL::UPDATE_SQUARE;
 	update_square = std::regex_replace(update_square, std::regex("\\$VALUE"), std::to_string(value));
-	update_square = std::regex_replace(update_square, std::regex("\\$POINT"), std::to_string(this->point_id));
+	update_square = std::regex_replace(update_square, std::regex("\\$POINT"), std::to_string(point_id));
 
 	int error_code = mysql_query(this->connection, update_square.c_str());
 	MySQL::throw_error_code(error_code);
@@ -261,18 +252,19 @@ void MySQL::set_square (double value)
 
 //=======================================================================================
 
-double MySQL::get_kerr () const
+double MySQL::get_kerr (std::size_t problem) const
 {
-	return this->kerr;
+	return this->kerr[problem];
 }
 
-void MySQL::set_kerr (double value)
+void MySQL::set_kerr (std::size_t problem, double value)
 {
-	this->kerr = value;
+	this->kerr[problem] = value;
+	std::size_t point_id = this->item[problem].second;
 	
 	std::string update_kerr = MySQL::UPDATE_KERR;
 	update_kerr = std::regex_replace(update_kerr, std::regex("\\$VALUE"), std::to_string(value));
-	update_kerr = std::regex_replace(update_kerr, std::regex("\\$POINT"), std::to_string(this->point_id));
+	update_kerr = std::regex_replace(update_kerr, std::regex("\\$POINT"), std::to_string(point_id));
 	
 	int error_code = mysql_query(this->connection, update_kerr.c_str());
 	MySQL::throw_error_code(error_code);
@@ -280,25 +272,25 @@ void MySQL::set_kerr (double value)
 
 //=======================================================================================
 
-double MySQL::get_value(const std::type_info& type) const
+double MySQL::get_value(std::size_t problem, const std::type_info& type) const
 {
 	if (type == typeid(MissileField) || type == typeid(LinearDuhamel) || type == typeid(SquaredPulse)) {
-		return this->get_linear();
+		return this->get_linear(problem);
 	} else if (type == typeid(KerrAmendment)) {
-		return this->get_kerr();
+		return this->get_kerr(problem);
 	} else {
 		std::string type_name = type.name();
 		throw std::logic_error(type_name + " is not implemented in MySQL::get_value");
 	}
 }
 
-void MySQL::set_value(const std::type_info& type, double value)
+void MySQL::set_value(std::size_t problem, const std::type_info& type, double value)
 {
 	if (type == typeid(MissileField) || type == typeid(LinearDuhamel) || type == typeid(SquaredPulse)) {
-		this->set_linear(value);
+		this->set_linear(problem, value);
 		return;
 	} else if (type == typeid(KerrAmendment)) {
-		this->set_kerr(value);
+		this->set_kerr(problem, value);
 		return;
 	} else {
 		std::string type_name = type.name();

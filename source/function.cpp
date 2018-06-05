@@ -33,10 +33,12 @@ double Function::sinc (double x, double duration, std::size_t cycles)
 
 double Function::gauss (double x, double duration)
 {
-	double mu = std::abs(duration) / 2;
-	double sigma = 2 * std::pow(std::abs(duration)/7,2);;
-	double pow = std::pow(x-mu,2) / sigma;
-	return std::exp(-pow); // / std::sqrt(M_PI * sigma);
+	if (x >= 0 && x <= duration) {
+		double mu = std::abs(duration) / 2;
+		double sigma = 2 * std::pow(std::abs(duration)/7,2);;
+		double pow = std::pow(x-mu,2) / sigma;
+		return std::exp(-pow); // / std::sqrt(M_PI * sigma);
+	} return 0;
 }
 
 double Function::sigmoid (double x, double duration)
@@ -49,4 +51,10 @@ double Function::sigmoid (double x, double duration)
 	
 	if (x > duration) return 1;
 	return 0;
+}
+
+double Function::smoozed_rect (double x, double duration, double sensivity)
+{
+	duration -= sensivity;
+	return Function::sigmoid (x, sensivity) - Function::sigmoid (x - duration, sensivity);	
 }

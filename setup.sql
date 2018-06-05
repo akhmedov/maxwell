@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS maxwell_header (
 	eps_r		DOUBLE(20,7) NOT NULL,
 	kerr_r		DOUBLE(20,7) NOT NULL,
 	duration	DOUBLE(20,7) NOT NULL,
-	signal_type	ENUM('on','meandr','sin','sinc','gauss','sigmoid','duhamel') NOT NULL,
+	signal_type	ENUM('on','meandr','sin','sinc','gauss','sigmoid','duhamel','smoozed') NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT UC_maxwell_header UNIQUE (radiator, component, radius, 
 		magnitude, mu_r, eps_r, kerr_r, duration, signal_type)

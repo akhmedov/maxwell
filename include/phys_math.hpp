@@ -25,6 +25,7 @@
 typedef std::pair<std::size_t,std::size_t> Binom;
 
 struct Math {
+	static double log (double base, double deg_angle);
 	static double deg2rad (double deg_angle);
 	static bool compare (double val1, double val2);
 	static double kronecker_delta (double arg, double param);

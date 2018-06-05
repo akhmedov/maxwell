@@ -45,9 +45,6 @@ template <std::size_t N> struct Manager {
 	virtual std::vector<std::vector<double>> get_value ();
 
 	void call ( std::function<double(double)> );
-	void call ( std::vector<std::function<double(double)>> funcs);
-	void call ( std::function<double(double,double,double,double)> );
-	void call ( Component, AbstractField*);
 	virtual void call ( std::vector<std::pair<Component,AbstractField*>>);
 	virtual void call ( std::vector<std::pair<Energy,AbstractField*>>);
 
@@ -74,12 +71,14 @@ template <std::size_t N> struct SafeManager : public Manager<N> {
 
 	// SafeManger (Config* global, Logger* global_logger = NULL);
 	SafeManager (std::size_t threads, Config* global, Logger* global_logger = NULL);
+	SafeManager (std::size_t threads, std::vector<Config*> gl_config, Logger* logger_ptr = NULL);
 	std::vector<std::vector<double>> get_value ();
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
 	void call ( std::vector<std::pair<Energy,AbstractField*>>);
 	~SafeManager ();
 
 private:
+	const std::size_t problems;
 	std::vector<MySQL*> client;
 };
 
@@ -215,155 +214,6 @@ template <std::size_t N> void Manager<N>::call ( std::function<double(double)> f
 
 //=============================================================================
 
-template <std::size_t N> void Manager<N>::call ( std::function<double(double,double,double,double)> func)
-{
-
-	auto call_thread = [&] (std::size_t i) {
-		while (!this->argument[i].empty()) {
-			this->active_thread.lock();
-			this->is_active[i] = true;
-			this->active_thread.unlock();
-			std::vector<double> arg = this->argument[i].top();
-			this->argument[i].pop();
-
-			double res = func(arg[0], arg[1], arg[2], arg[3]);
-			arg.insert( arg.begin(), res );
-
-			this->result_write.lock();
-			this->data_left--;
-			this->result.insert( arg );
-			this->result_write.unlock();
-			this->active_thread.lock();
-			this->is_active[i] = false;
-			this->active_thread.unlock();
-		}
-	};
-
-	this->thread_list = std::vector<std::thread>(this->thread_number);
-
-	std::size_t num = 0;
-	for (auto& i : this->thread_list) {
-		i = std::thread(call_thread, num++);
-		i.detach();
-	}
-
-	std::size_t last_printed = 101;
-	while (!this->is_ready()) {
-		if (this->print_progtess) {
-			double progress = (double) this->data_left / (double) this->total_data;
-			progress *= 100;
-			if ((std::size_t)progress != last_printed) {
-				last_printed = (std::size_t) progress;
-				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
-				std::cout.flush();
-			}
-		}
-	}
-	std::cout << std::endl;
-}
-
-//=============================================================================
-
-template <std::size_t N> void Manager<N>::call ( std::vector<std::function<double(double)>> funcs)
-{
-
-	auto call_thread = [&] (std::size_t i) {
-		while (!this->argument[i].empty()) {
-			this->active_thread.lock();
-			this->is_active[i] = true;
-			this->active_thread.unlock();
-			std::vector<double> arg = this->argument[i].top();
-			argument[i].pop();
-
-			for (auto f : funcs) {
-				double res = f(arg.front());
-				arg.push_back(res);
-			}
-
-			this->result_write.lock();
-			this->data_left--;
-			this->result.insert( arg );
-			result_write.unlock();
-			this->active_thread.lock();
-			this->is_active[i] = false;
-			this->active_thread.unlock();
-		}
-	};
-
-	this->thread_list = std::vector<std::thread>(this->thread_number);
-
-	std::size_t num = 0;
-	for (auto& i : this->thread_list) {
-		i = std::thread(call_thread, num++);
-		i.detach();
-	}
-
-	std::size_t last_printed = 101;
-	while (!this->is_ready()) {
-		if (this->print_progtess) {
-			double progress = (double) this->data_left / (double) this->total_data;
-			progress *= 100;
-			if ((std::size_t)progress != last_printed) {
-				last_printed = (std::size_t) progress;
-				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
-				std::cout.flush();
-			}
-		}
-	}
-	std::cout << std::endl;
-
-}
-
-//=============================================================================
-
-template <std::size_t N> void Manager<N>::call ( std::function<double(AbstractField*,double,double,double,double)> component, AbstractField* field)
-{
-	auto call_thread = [&] (std::size_t i) {
-		while (!this->argument[i].empty()) {
-			this->active_thread.lock();
-			this->is_active[i] = true;
-			this->active_thread.unlock();
-			std::vector<double> arg = this->argument[i].top();
-			argument[i].pop();
-			double res = component(field, arg[0], arg[1], arg[2], arg[3]);
-			if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
-			arg.push_back(res);
-			this->result_write.lock();
-			this->data_left--;
-			this->result.insert( arg );
-			result_write.unlock();
-			this->active_thread.lock();
-			this->is_active[i] = false;
-			this->active_thread.unlock();
-		}
-	};
-
-	this->thread_list = std::vector<std::thread>(this->thread_number);
-
-	std::size_t num = 0;
-	for (auto& i : this->thread_list) {
-		i = std::thread(call_thread, num++);
-		i.detach();
-	}
-
-	std::size_t last_printed = 101;
-	while (!this->is_ready()) {
-		if (this->print_progtess) {
-			double progress = (double) this->data_left / (double) this->total_data;
-			progress *= 100;
-			if ((std::size_t)progress != last_printed) {
-				last_printed = (std::size_t) progress;
-				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
-				std::cout.flush();
-			}
-		}
-	}
-	std::cout << std::endl;
-	// std::this_thread::sleep_for(3s);
-}
-
-//=============================================================================
-
 template <std::size_t N> void Manager<N>::call ( std::vector<std::pair<Component,AbstractField*>> field )
 {
 	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
@@ -468,21 +318,32 @@ template <std::size_t N> void Manager<N>::call ( std::vector<std::pair<Energy,Ab
 	std::cout << std::endl;
 }
 
-//=============================================================================
-//== SafeManger ===============================================================
-//=============================================================================
+//============================================================================================================
+//== SafeManger ==============================================================================================
+//============================================================================================================
 
 /* SafeManager::SafeManager (Config* gl_config, Logger* logger_ptr) 
 : Manager(), client(gl_config) { } */
 
-template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, Config* gl_config, Logger* logger_ptr) 
-: Manager<N>(threads,logger_ptr), client()
+template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, std::vector<Config*> gl_config, Logger* logger_ptr) 
+: Manager<N>(threads,logger_ptr), problems(1), client()
 {
 	for (std::size_t c = 0; c < this->thread_number; c++) {
 		MySQL* thread_client = new MySQL(gl_config);
 		this->client.push_back(thread_client);
 	}
 }
+
+template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, Config* gl_config, Logger* logger_ptr) 
+: Manager<N>(threads,logger_ptr), problems(1), client()
+{
+	for (std::size_t c = 0; c < this->thread_number; c++) {
+		MySQL* thread_client = new MySQL(gl_config);
+		this->client.push_back(thread_client);
+	}
+}
+
+//============================================================================================================
 
 template <std::size_t N> void SafeManager<N>::call (std::vector<std::pair<Component,AbstractField*>> field)
 {
@@ -498,21 +359,23 @@ template <std::size_t N> void SafeManager<N>::call (std::vector<std::pair<Compon
 			
 			this->client[i]->select_point(arg[0], arg[1], arg[2], arg[3]);
 
-			for (auto f : field) {
+			for (std::size_t j = 0; j < this->problems; j++) {
+				for (auto f : field) {
 
-				const std::type_info& type = typeid(*f.second);
-				double db_res = this->client[i]->get_value(type);
-				double res;
+					const std::type_info& type = typeid(*f.second);
+					double db_res = this->client[i]->get_value(j,type);
+					double res;
 
-				if ( std::isnan(db_res) ) {
-					res = f.first(f.second, arg[0], arg[1], arg[2], arg[3]);
-					if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
-					this->client[i]->set_value(type,res);
-				} else {
-					res = db_res;
+					if ( std::isnan(db_res) ) {
+						res = f.first(f.second, arg[0], arg[1], arg[2], arg[3]);
+						if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+						this->client[i]->set_value(j,type,res);
+					} else {
+						res = db_res;
+					}
+
+					arg.push_back(res);
 				}
-
-				arg.push_back(res);
 			}
 
 			this->result_write.lock();
@@ -547,6 +410,76 @@ template <std::size_t N> void SafeManager<N>::call (std::vector<std::pair<Compon
 	}
 	std::cout << std::endl;
 }
+
+//============================================================================================================
+
+template <std::size_t N> void SafeManager<N>::call ( std::vector<std::pair<Energy,AbstractField*>> field )
+{
+	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
+
+	auto call_thread = [&] (std::size_t i) {
+		while (!this->argument[i].empty()) {
+			this->active_thread.lock();
+			this->is_active[i] = true;
+			this->active_thread.unlock();
+			std::vector<double> arg = this->argument[i].top();
+			this->argument[i].pop();
+
+			this->client[i]->select_point(0, arg[0], arg[1], arg[2]);
+
+			for (std::size_t j = 0; j < this->problems; j++) {
+				for (auto f : field) {
+
+					const std::type_info& type = typeid(*f.second);
+					double db_res = this->client[i]->get_value(j,type);
+					double res;
+
+					if ( std::isnan(db_res) ) {
+						res = f.first(f.second, arg[0], arg[1], arg[2]);
+						if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+						this->client[i]->set_value(j,type,res);
+					} else {
+						res = db_res;
+					}
+
+					arg.push_back(res);
+				}
+			}
+
+			this->result_write.lock();
+			this->data_left--;
+			this->result.insert( arg );
+			this->result_write.unlock();
+			this->active_thread.lock();
+			this->is_active[i] = false;
+			this->active_thread.unlock();
+		}
+	};
+
+	this->thread_list = std::vector<std::thread>(this->thread_number);
+
+	std::size_t num = 0;
+	for (auto& i : this->thread_list) {
+		i = std::thread(call_thread, num++);
+		i.detach();
+	}
+
+	std::size_t last_printed = 101;
+	while (!this->is_ready()) {
+		if (this->print_progtess) {
+			double progress = (double) this->data_left / (double) this->total_data;
+			progress *= 100;
+			if ((std::size_t)progress != last_printed) {
+				last_printed = (std::size_t) progress;
+				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
+				std::cout.flush();
+			}
+		}
+	}
+	std::cout << std::endl;
+}
+
+//============================================================================================================
 
 template <std::size_t N> std::vector<std::vector<double>> SafeManager<N>::get_value ()
 {
@@ -566,75 +499,7 @@ template <std::size_t N> std::vector<std::vector<double>> SafeManager<N>::get_va
 	return res;
 }
 
-template <std::size_t N> void SafeManager<N>::call ( std::vector<std::pair<Energy,AbstractField*>> field )
-{
-	if (!field.size()) throw std::invalid_argument("Manager::call argument must not be empty");
-
-	auto call_thread = [&] (std::size_t i) {
-		while (!this->argument[i].empty()) {
-			this->active_thread.lock();
-			this->is_active[i] = true;
-			this->active_thread.unlock();
-			std::vector<double> arg = this->argument[i].top();
-			this->argument[i].pop();
-
-			/* for (auto f : field) {
-				double res = f.first(f.second, arg[0], arg[1], arg[2]);
-				if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
-				arg.push_back(res);
-			} */
-
-			this->client[i]->select_point(0, arg[0], arg[1], arg[2]);
-
-			for (auto f : field) {
-
-				const std::type_info& type = typeid(*f.second);
-				double db_res = this->client[i]->get_value(type);
-				double res;
-
-				if ( std::isnan(db_res) ) {
-					res = f.first(f.second, arg[0], arg[1], arg[2]);
-					if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
-					this->client[i]->set_value(type,res);
-				} else {
-					res = db_res;
-				}
-
-				arg.push_back(res);
-			}
-
-			this->result_write.lock();
-			this->data_left--;
-			this->result.insert( arg );
-			this->result_write.unlock();
-			this->active_thread.lock();
-			this->is_active[i] = false;
-			this->active_thread.unlock();
-		}
-	};
-
-	this->thread_list = std::vector<std::thread>(this->thread_number);
-
-	std::size_t num = 0;
-	for (auto& i : this->thread_list) {
-		i = std::thread(call_thread, num++);
-		i.detach();
-	}
-
-	std::size_t last_printed = 101;
-	while (!this->is_ready()) {
-		if (this->print_progtess) {
-			double progress = (double) this->data_left / (double) this->total_data;
-			progress *= 100;
-			if ((std::size_t)progress != last_printed) {
-				last_printed = (std::size_t) progress;
-				std::cout << '\r' << "Evaluation progress: " << 100 - (std::size_t) progress << '%';
-				std::cout.flush();
-			}
-		}
-	}
-	std::cout << std::endl;
-}
+//============================================================================================================
 
 template <std::size_t N> SafeManager<N>::~SafeManager ()
 {

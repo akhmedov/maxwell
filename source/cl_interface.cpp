@@ -32,6 +32,7 @@ CLI::CLI (Config* conf)
 		{"--shape",		"sin"},
 		{"--shape",		"sinc"},
 		{"--shape",		"duhamel"},
+		{"--shape",		"smoozed"},
 		/* field component */
 		{"--field",		"Erho"},
 		{"--field",		"Ephi"},
@@ -175,6 +176,8 @@ void CLI::update_config (const std::string& param, const std::string& arg) const
 			this->global_conf->impulse_shape(ImpulseShape::sinc);
 		else if (!arg.compare("gauss"))
 			this->global_conf->impulse_shape(ImpulseShape::gauss);
+		else if (!arg.compare("smoozed"))
+			this->global_conf->impulse_shape(ImpulseShape::smoozed);
 		else if (!arg.compare("duhamel"))
 			this->global_conf->impulse_shape(ImpulseShape::duhamel);
 	}
@@ -830,6 +833,23 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			if (this->global_conf->kerr_medium()) {
 				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
 				throw std::logic_error ("Meandr propagation in Kerr medium is not implemented!");
+			}
+
+			break;
+
+		} case ImpulseShape::smoozed: {
+
+			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+			MissileField* linear = new MissileField(source, medium);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			free_shape->set_time_depth([tau] (double vt) {return Function::smoozed_rect(vt,tau,tau*0.3);});
+			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
+			res.push_back(std::make_pair(comp, duhamel));
+
+			if (this->global_conf->kerr_medium()) {
+				KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, sigma);
+				throw std::logic_error ("smoozed_rect propagation in Kerr medium is not implemented!");
 			}
 
 			break;

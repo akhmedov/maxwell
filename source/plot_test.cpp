@@ -89,10 +89,6 @@ int main()
 	/* ENERGY PLOT */
 
 	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "signal_spectr() " << std::endl;
-	// PlotTest::signal_spectr();
-
-	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "plot_energy_slyse(z=5,10,20) " << std::endl;
 	/* PlotTest::plot_energy_slyse(0.50);
 	PlotTest::plot_energy_slyse(1.00);
@@ -100,33 +96,189 @@ int main()
 	PlotTest::plot_energy_slyse(5.00);
 	PlotTest::plot_energy_slyse(10.0);
 	PlotTest::plot_energy_slyse(15.0);
-	PlotTest::plot_energy_slyse(20.0); */
+	PlotTest::plot_energy_slyse(20.0); 
+	PlotTest::plot_energy_slyse(30.0); 
+	PlotTest::plot_energy_slyse(40.0); */
 
-	std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
-	PlotTest::plot_energy_max(1.0);
-	std::cout << "Done." << std::endl;
+	PlotTest::plot_energy_slyse(5.0,20.0);
+
+	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
+	PlotTest::plot_energy_max();
+	std::cout << "Done." << std::endl; */
+
+	/* PLOT FIELD FROM VT FOR TAU1 TAU2 TAU3 */
+
+	// std::cout << "PlotTest::plot_Ex_from_tau" << std::endl;
+	// PlotTest::plot_Ex_from_tau();
+	// PlotTest::recive_emp(0, 0, 2);
 }
 
-void PlotTest::signal_spectr ()
+void PlotTest::set_options ()
 {
-	double tau = 0.5;
-	auto f = [tau] (double vt) { return Function::gauss(vt,tau); };
+	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
+	/* TODO: BUG - not used config param
+	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
 
-	for (double w0 = 1e5; w0 < 1e7; w0 += 1) {
-		auto re = [f,w0] (double w) { return f(w) * cos(w0 * w); };
-		auto im = [f,w0] (double w) { return f(w) * sin(w0 * w); };
-		double spec = 0;
-		double norm = Math::inv_sqrt(2*M_PI);
-		spec += SimpsonRunge(1e2,1,1e4).value(0,1e3,re);
-		spec -= SimpsonRunge(1e2,1,1e4).value(0,1e3,im);
-		if (spec) std::cout << w0 << " -> " << spec/norm << std::endl;
+void PlotTest::recive_emp (double rho, double phi, double z)
+{
+	double R = 1, A0 = 1, tau = 0.5;
+	double eps_r = 1, mu_r = 1;
+
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, medium);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+
+	auto emp = [duhamel, rho, phi, z] (double vt) {
+		return duhamel->electric_x(vt, rho, phi, z);
+	};
+
+	for (double vt = z + tau - 0.5; vt < z + tau; vt += 0.0001) {
+		// line = {vt, emp(vt)};
+		line = {vt, Math::derivat4(emp, vt)};
+		std::cout << line[0] << ' ' << line[1] << std::endl;
+		plot_data.push_back(line);
+		line.clear();
 	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("f(ct)");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot2d(plot_data);
+	plot->call_gnuplot();
 }
 
-void PlotTest::plot_energy_max (double tau)
+void PlotTest::plot_log_from_n ()
 {
+	std::vector<std::vector<double>> data;
+	for (int n = 1; n <= 16; n++) {
+		std::vector<double> line = {(float)n};
+		line.push_back(Math::log(n,1000));
+		data.push_back(line);
+	}
+
+	GnuPlot* plot = new GnuPlot( "log_n.gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("n");
+	plot->set_oy_label("log_n(1e3)");
+	plot->grid_on(false);
+	plot->plot2d(data);
+}
+
+void PlotTest::plot_Ex_from_tau ()
+{
+	auto field = [] (double tau) {
+		double R = 1, A0 = 1;
+		double eps_r = 1, mu_r = 1;
+		Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+		UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+		MissileField* on = new MissileField(source, medium);
+		auto property = &AbstractField::electric_x;
+		if (tau == 0) {
+			MeandrPeriod* rect = new MeandrPeriod(R, A0, 0.7);
+			SquaredPulse* meandr = new SquaredPulse(rect, medium);
+			return std::make_pair(property, (AbstractField*)meandr);
+		}
+		FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+		free_shape->set_time_depth([tau] (double vt) {return Function::smoozed_rect(vt,0.5,tau);});
+		LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, on, NULL);
+		return std::make_pair(property, (AbstractField*)duhamel);
+	};
+
+	Manager<0>* thead_core = new Manager<0>(4, NULL);
+	thead_core->progress_bar(true);
+
+	for (double vt = 1.8; vt <= 3; vt += 0.01)
+			thead_core->add_argument( {vt,0,0,2} );
+
+	thead_core->call({field(0), field(0.1), field(0.2)});
+	std::vector<std::vector<double>> data = thead_core->get_value();
+
+	for (auto&& i : data)
+		i.erase(i.begin() + 1, i.begin() + 4); // erase rho phi z
+
+	GnuPlot* plot = new GnuPlot( "Ex_from_tau.gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("vt, m");
+	plot->set_oy_label("Ex, V/m");
+	// plot->grid_on(false);
+	// plot->cage_on();
+	std::vector<std::string> title = {"tau = 0 vt",
+									  "tau = 0.1 vt", 
+									  "tau = 0.2 vt"};
+	plot->plot_multi(data, title);
+}
+
+void PlotTest::plot_energy_max ()
+{
+
+	PlotTest::global_conf->field_component(FieldComponent::W);
+	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
+	// PlotTest::global_conf->duration(0);
+	
+	auto field = [] (double tau) {
+		double R = 1, A0 = 1;
+		double eps_r = 1, mu_r = 1;
+		Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+		UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+		MissileField* linear = new MissileField(source, medium);
+		FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+		free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
+		LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+		auto property = &AbstractField::energy_cart;
+		return std::make_pair(property, duhamel);
+	};
+
+	Manager<2>* thead_core = new Manager<2>(4, NULL);
+	thead_core->progress_bar(true);
+
+	for (double z = 0.5; z <= 15; z += 0.1)
+			thead_core->add_argument( {0,0,z} );
+
+	thead_core->call({field(0.5), field(1)});
+	std::vector<std::vector<double>> data = thead_core->get_value();
+	
+	double max0 = 0;
+	for (auto i : data) 
+		if (std::abs(i[2] - 15) < 1e-5) 
+			max0 = i[3] * i[2] * i[2];
+
+	for (auto&& i : data) {
+		i[3] *= i[2] * i[2] / max0; // norm W
+		i[4] *= i[2] * i[2] / max0; // norm W
+		i.erase(i.begin(), i.begin() + 2); // erase x and y
+	}
+
+	GnuPlot* plot = new GnuPlot( "Wmax.gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("z, m");
+	plot->set_oy_label("W, V*V");
+	plot->grid_on();
+	plot->cage_on();
+	std::vector<std::string> title = {"tau = 0.5 vt", 
+									  "tau = 1.0 vt"};
+	plot->plot_multi(data, title);
+}
+
+void PlotTest::plot_energy_slyse (double tau, double z)
+{
+	auto str_of = [] (double a) {return std::to_string(a).substr(0,5);};
+
 	double R = 1, A0 = 1;
 	double eps_r = 1, mu_r = 1;
+	double range = z/4 + 2*R;
 
 	PlotTest::global_conf->field_component(FieldComponent::W);
 	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
@@ -138,55 +290,6 @@ void PlotTest::plot_energy_max (double tau)
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
-
-	SafeManager<2>* thead_core = new SafeManager<2>(4, PlotTest::global_conf, NULL);
-	thead_core->progress_bar(true);
-
-	for (double z = 0; z <= 15; z += 0.1)
-			thead_core->add_argument( {0,0,z} );
-
-	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, duhamel);
-	thead_core->call({function});
-	std::vector<std::vector<double>> data = thead_core->get_value();
-	
-	double max0 = 0;
-	for (auto i : data) if (std::abs(i[2] - 0.5) < 1e-5) max0 = i[3];
-
-	for (auto&& i : data) {
-		i[3] *= i[2] * i[2] / max0; // norm W
-		i.erase(i.begin(), i.begin() + 2); // erase x and y
-	}
-
-	GnuPlot* plot = new GnuPlot( "Wmax.gnp" );
-	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
-	plot->set_colormap(Colormap::gray);
-	plot->set_ox_label("z, m");
-	plot->set_oy_label("W, V*V");
-	plot->grid_on();
-	plot->cage_on();
-	plot->plot2d(data);
-}
-
-void PlotTest::plot_energy_slyse (double z)
-{
-	std::string str_z = std::to_string(z);
-	str_z = str_z.substr(0,4);
-	double R = 1, A0 = 1, tau = 0.5;
-	double eps_r = 1, mu_r = 1;
-	double range = z/5 + 2*R;
-
-	PlotTest::global_conf->field_component(FieldComponent::W);
-	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
-	PlotTest::global_conf->duration(tau);
-
-	Logger* log = new Logger(str_z + ".log");
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
-	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, log);
 
 	SafeManager<0>* thead_core = new SafeManager<0>(4, PlotTest::global_conf, NULL);
 	thead_core->progress_bar(true);
@@ -200,25 +303,29 @@ void PlotTest::plot_energy_slyse (double z)
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
-	double max = 0, max0 = duhamel->energy_cart(0,0,0.5);
+
+	std::vector<double> max0 = data[0];
+	for (auto point : data)
+		if (point[3] > max0[3])
+			max0 = point;
+
 	for (auto&& i : data) {
-		if (i[3] > max) max = i[3];
-		i[3] *= z*z / max0; // norm W
+		i[3] *= z*z / max0[3]; // norm W
 		i.erase(i.begin() + 2); // erase z
 	}
 
-	std::cout << "Wmax (z=" << str_z << ") = " << max << std::endl;
+	std::cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << std::endl;
 
-	/* std::vector<std::vector<double>> agumentat;
+	/* std::vector<std::vector<double>> agumented;
 	for (auto&& i : data) {
 		double x = i[0], y = i[1], W = i[2];
-		if (x > 1e-8) agumentat.push_back( {-x,y,W} );
-		if (y > 1e-8) agumentat.push_back( {x,-y,W} );
-		if (x > 1e-8 && y > 1e-8) agumentat.push_back( {-x,-y,W} );
+		if (x > 1e-8) agumented.push_back( {-x,y,W} );
+		if (y > 1e-8) agumented.push_back( {x,-y,W} );
+		if (x > 1e-8 && y > 1e-8) agumented.push_back( {-x,-y,W} );
 	}
-	data.insert(std::end(data), std::begin(agumentat), std::end(agumentat)); */
+	data.insert(std::end(data), std::begin(agumented=), std::end(agumentat)); */
 
-	GnuPlot* plot = new GnuPlot( str_z + ".gnp" );
+	GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(z) + ".gnp" );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
 	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("x, m");
@@ -226,7 +333,6 @@ void PlotTest::plot_energy_slyse (double z)
 	plot->grid_on();
 	plot->cage_on();
 	plot->plot_colormap(data);
-	delete log;
 }
 
 void PlotTest::Ex_derivative (double tau)
@@ -260,13 +366,6 @@ void PlotTest::Ex_derivative (double tau)
 
 }
 
-void PlotTest::set_options ()
-{
-	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
-	/* TODO: BUG - not used config param
-	PlotTest::global_conf->plot_color_map(Colormap::parula); */
-}
-
 void PlotTest::plot_source ()
 {
 	std::vector<std::vector<double>> plot_data;
@@ -276,7 +375,8 @@ void PlotTest::plot_source ()
 	// auto f = [] (double x) { return Function::sin(x, 1); };
 	// auto f = [] (double x) { return Function::sinc(x, 1); };
 	// auto f = [] (double x) { return Function::gauss(x, 1); };
-	auto f = [] (double x) { return Function::sigmoid(x, 1); };
+	auto f = [] (double x) { return Function::smoozed_rect(x, 1, 0.2); };
+	// auto f = [] (double x) { return Function::gauss(x, 1); };
 	// auto f = [] (double x) { return Function::gauss(x, 2) * Function::sinc(x, 2, 10); };
 
 	for (double vt = -1; vt < 3; vt += 0.01) {

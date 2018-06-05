@@ -68,7 +68,7 @@ double LinearDuhamel::electric_rho (double vt, double rho, double phi, double z)
 	};
 
 	try { 
-		return integral.value(0, vt, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;
@@ -98,7 +98,7 @@ double LinearDuhamel::electric_phi (double vt, double rho, double phi, double z)
 	};
 
 	try { 
-		return integral.value(0, vt, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;
@@ -128,7 +128,7 @@ double LinearDuhamel::electric_z (double vt, double rho, double phi, double z) c
 	};
 
 	try { 
-		return integral.value(0, tau0, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;
@@ -158,7 +158,7 @@ double LinearDuhamel::magnetic_rho (double vt, double rho, double phi, double z)
 	};
 
 	try { 
-		return integral.value(0, tau0, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;
@@ -188,7 +188,7 @@ double LinearDuhamel::magnetic_phi (double vt, double rho, double phi, double z)
 	};
 
 	try { 
-		return integral.value(0, tau0, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;
@@ -218,7 +218,7 @@ double LinearDuhamel::magnetic_z (double vt, double rho, double phi, double z) c
 	};
 
 	try { 
-		return integral.value(0, tau0, core);
+		return integral.value(0, vt-z, core);
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = LinearDuhamel::WARNING_MSG;

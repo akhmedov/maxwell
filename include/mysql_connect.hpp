@@ -29,24 +29,28 @@
 #include <string>
 #include <exception>
 
+typedef std::pair<std::size_t,std::size_t> id_id;
+
 struct MySQL {
 
 	MySQL (Config* global_config);
+	MySQL (const std::vector<Config*> &vect);
+	
 	std::string get_hostname() const;
 	void select_point (double ct, double rho, double phi, double z);
 	~MySQL ();
 
-	double get_linear () const;
-	void set_linear (double value);
+	double get_linear (std::size_t problem) const;
+	void set_linear (std::size_t problem, double value);
 
-	double get_square () const;
-	void set_square (double value);
+	double get_square (std::size_t problem) const;
+	void set_square (std::size_t problem, double value);
 
-	double get_kerr () const;
-	void set_kerr (double value);
+	double get_kerr (std::size_t problem) const;
+	void set_kerr (std::size_t problem, double value);
 
-	double get_value(const std::type_info&) const;
-	void set_value(const std::type_info&, double value);
+	double get_value(std::size_t problem, const std::type_info&) const;
+	void set_value(std::size_t problem, const std::type_info&, double value);
 
 protected:
 
@@ -57,15 +61,14 @@ protected:
 
 private:
 
-	std::size_t problem_id;
-	std::size_t point_id;
-	Config* global_config;
+	std::vector<id_id> item;
+	std::vector<Config*> global_conf;
 	MYSQL* connection;
 
 	// double noise;
-	double linear;
-	double square;
-	double kerr;
+	std::vector<double> linear;
+	std::vector<double> square;
+	std::vector<double> kerr;
 
 	static const std::string USE_MAXWELL;
 	static const std::string SELECT_PROBLEM_ID;

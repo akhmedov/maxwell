@@ -20,6 +20,7 @@ namespace Function {
 	double sinc (double x, double duration, std::size_t cycles = 10);
 	double gauss (double x, double duration);
 	double sigmoid (double x, double duration);
+	double smoozed_rect (double x, double duration, double sensivity);
 };
 
 #endif /* function_hpp */
