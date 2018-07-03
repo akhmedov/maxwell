@@ -29,7 +29,7 @@
 #include <string>
 
 struct FreeTimeCurrent : public LinearCurrent {
-	FreeTimeCurrent (LinearCurrent* on_source, double duration);
+	FreeTimeCurrent (LinearCurrent* on_source);
 	void set_time_depth (const std::function<double(double)>& func);
 	double time_shape (double vt) const;
 	double rho (double rho, double phi, double z) const;

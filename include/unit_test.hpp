@@ -23,14 +23,18 @@
 #include <vector>
 #include <fstream>
 
+#include "dataset.hpp"
 #include "phys_math.hpp"
 #include "integral.hpp"
 #include "gnu_plot.hpp"
+#include "function.hpp"
+#include "linear_duhamel.hpp"
 #include "uniform_disk_current.hpp"
 #include "kerr_amendment.hpp"
 
 struct UnitTest : private GnuPlot, private Math, private Integral, private KerrAmendment {
 	
+	static bool dataset ();
 	static bool next_prime ();
 	static bool binom_prod ();
 	static bool bessel_perp ();

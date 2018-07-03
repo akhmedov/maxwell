@@ -2,8 +2,8 @@
 /**/.*
 !/.gitignore
 
-# Default outputfile
-/maxwell.gnp
+# Plot output for gnuplot
+/*.gnp
 
 # Project build dirictorice with contents
 /gnump/
@@ -18,3 +18,12 @@
 
 # All temporary MS Exel Files
 /**/~$*
+
+# Export files to python ML
+/*.json
+
+# Saving database files
+/*.sql
+!/clean.sql
+!/setup.sql
+!/purge.sql

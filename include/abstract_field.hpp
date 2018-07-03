@@ -48,4 +48,16 @@ protected:
 	double accuracy;
 };
 
+struct ZeroField : public AbstractField {
+	ZeroField ();
+	double electric_rho (double ct, double rho, double phi, double z) const;
+	double electric_phi (double ct, double rho, double phi, double z) const;
+	double electric_z (double ct, double rho, double phi, double z) const;
+	double magnetic_rho (double ct, double rho, double phi, double z) const;
+	double magnetic_phi (double ct, double rho, double phi, double z) const;
+	double magnetic_z (double ct, double rho, double phi, double z) const;
+	double energy_cart (double x, double y, double z) const;
+	double energy (double rho, double phi, double z) const;
+};
+
 #endif /* abstract_field_hpp */

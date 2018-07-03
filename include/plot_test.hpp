@@ -15,6 +15,7 @@
 
 #include "config.hpp"
 #include "manager.hpp"
+#include "dataset.hpp"
 #include "function.hpp"
 #include "gnu_plot.hpp"
 #include "integral.hpp"
@@ -24,8 +25,11 @@
 #include "linear_duhamel.hpp"
 #include "uniform_disk_current.hpp"
 
-struct PlotTest : private Math, private Integral, private KerrAmendment {
+struct PlotTest : private Math, private Integral, private KerrAmendment, private serial::dataset {
 
+	static void emp_duration (double rho, double tau0 = 1);
+	static void energy_iterfer_sinc ();
+	static void energy_compare (double tau1, double tau2);
 	static void recive_emp (double rho, double phi, double z);
 	static void plot_log_from_n ();
 	static void plot_Ex_from_tau ();

@@ -774,7 +774,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
-			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sin(vt,tau);});
 			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
@@ -791,7 +791,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
-			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
 			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
@@ -808,7 +808,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
-			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 			free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
 			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
@@ -825,7 +825,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
-			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 			free_shape->set_time_depth([tau] (double vt) {return Function::sigmoid(vt,tau);});
 			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));
@@ -842,7 +842,7 @@ std::vector<std::pair<Component,AbstractField*>> CLI::em_problem (const ImpulseS
 			Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 			UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 			MissileField* linear = new MissileField(source, medium);
-			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source, tau);
+			FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 			free_shape->set_time_depth([tau] (double vt) {return Function::smoozed_rect(vt,tau,tau*0.3);});
 			LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, this->global_log);
 			res.push_back(std::make_pair(comp, duhamel));

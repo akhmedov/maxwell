@@ -140,3 +140,47 @@ double AbstractField::energy_cart (double x, double y, double z) const
 		return not_trusted; 
 	}
 }
+
+// Zero Field
+
+ZeroField::ZeroField () : AbstractField() { }
+
+double ZeroField::electric_rho (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::electric_phi (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::electric_z (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::magnetic_rho (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::magnetic_phi (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::magnetic_z (double vt, double rho, double phi, double z) const
+{
+	return 0;
+}
+
+double ZeroField::energy_cart (double x, double y, double z) const
+{
+	return 0;
+}
+
+double ZeroField::energy (double rho, double phi, double z) const
+{
+	return 0;
+}

@@ -10,8 +10,8 @@
 
 const std::string LinearDuhamel::WARNING_MSG = "$COMP is not trusted at $TIME, $RHO, $PHI, $Z.";
 
-FreeTimeCurrent::FreeTimeCurrent(LinearCurrent* on_source, double tau)
-: LinearCurrent(tau), base(on_source) { }
+FreeTimeCurrent::FreeTimeCurrent(LinearCurrent* on_source)
+: base(on_source) { }
 
 void FreeTimeCurrent::set_time_depth (const std::function<double(double)>& func)
 {
@@ -20,7 +20,6 @@ void FreeTimeCurrent::set_time_depth (const std::function<double(double)>& func)
 
 double FreeTimeCurrent::time_shape (double vt) const
 {
-	if (vt < 0 || vt > this->duration) return 0;
 	return this->time_fnc(vt);
 }
 

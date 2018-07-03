@@ -567,9 +567,45 @@ bool UnitTest::vector_to_matrix ()
 	return true;
 }
 
+bool UnitTest::dataset ()
+{
+	double mu = 0, sigma = 0;
+	double tau = 0.5, pulses = 1e2;
+	std::pair<double,double> rho = std::make_pair(0,20);
+	std::pair<double,double> phi = std::make_pair(0,90);
+	std::pair<double,double> z = std::make_pair(0,20);
+	double duty_cycle = 0.7, step = 0.1;
+
+	std::vector<std::function<double(double)>> domain = {
+		[tau] (double vt) { return   Function::gauss (vt,tau); },
+		[tau] (double vt) { return - Function::gauss (vt,tau); },
+		[tau] (double vt) { return   Function::sinc  (vt,tau); }
+	};
+
+	AdditiveWhiteGaussian* noise = new AdditiveWhiteGaussian(mu,sigma);
+
+	serial::dataset series(domain, tau, noise, duty_cycle, step);
+	
+	for (std::size_t i = 0; i < pulses; i++) {
+		std::size_t rnd_id = 1;
+		double rnd_rho = 0.5;
+		double rnd_phi = 20;
+		double rnd_z   = 2;
+		series.set_char(rnd_rho, rnd_phi, rnd_z, 1);
+	}
+
+	json dataset = serial::json_from(series,rho,phi,z);
+	serial::serialize("test_dataset.json",dataset);
+	return true;
+}
+
 int main()
 {
 	cout << boolalpha;
+
+	cout << "GnuPlot::UnitTest::dataset \t\t\t"; 
+	cout.flush();
+	cout << UnitTest::dataset() << endl;
 
 	cout << "GnuPlot::UnitTest::vector_to_matrix \t\t"; 
 	cout.flush();
