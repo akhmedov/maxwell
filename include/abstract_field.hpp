@@ -38,8 +38,8 @@ struct AbstractField {
 	std::vector<double> magnetic_cylindric (double ct, double rho, double phi, double z) const;
 	std::vector<double> magnetic_cartesian (double ct, double rho, double phi, double z) const;
 
-	virtual double energy_cart (double x, double y, double z) const;
-	virtual double energy (double rho, double phi, double z) const;
+	virtual double energy_cart (double x, double y, double z, double from, double to) const;
+	virtual double energy (double rho, double phi, double z, double from, double to) const;
 
 protected:
 

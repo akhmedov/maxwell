@@ -17,6 +17,7 @@ serial::dataset::dataset (const std::vector<std::function<double(double)>>& emp_
 	this->component = &AbstractField::electric_x;
 	this->characters = {new ZeroField()};
 	this->duty_cycle = dc;
+	this->sparks_number = 0;
 
 	for (auto i : emp_shape)
 		this->characters.push_back(dataset::updisk_field(i));
@@ -68,7 +69,6 @@ void serial::dataset::set_char (double rho, double phi, double z, std::size_t id
 
 	while (vt < pulse_wides) {
 		double noise = (this->background) ? this->background->value(vt, 0, 0, 0) : 0;
-		// double field = this->component(this->characters[id],vt0,rho,M_PI*phi/180,z);
 		std::vector<double> item = {vt, noise, vt0, rho, phi, z, 0, (double)id};
 		this->series.push_back(item);
 		vt += this->time_step; vt0 += this->time_step;
@@ -80,6 +80,8 @@ void serial::dataset::set_char (double rho, double phi, double z, std::size_t id
 		this->series.push_back(item);
 		vt += this->time_step;
 	}
+
+	this->sparks_number++;
 }
 
 void serial::dataset::set_char (double rho, double phi, double z, std::size_t id1, std::size_t id2, double cross_section)
@@ -93,28 +95,28 @@ void serial::dataset::evaluate ()
 
 	if (!called) {
 
-		std::vector<Manager<0>*> manager(this->get_radix()-1, new Manager<0>());
-		for (auto m : manager) m->progress_bar(true);
+		std::vector<Manager<0>*> manager;
+		for (std::size_t c = 1; c < this->get_radix(); c++) {
+			Manager<0>* tmp = new Manager<0>();
+			tmp->progress_bar(true);
+			manager.push_back(tmp);
+		}
 
-		for (std::size_t t = 0; t < this->series.size(); t++) {
-			for (auto c : this->get_signal_at(t)) {
-				if (c != 0) {
-					double vt  = this->get_real_vt(t);
-					double rho = this->get_rho(t);
-					double phi = M_PI * this->get_phi(t) / 180;
-					double z   = this->get_z(t);
-					manager[c-1]->add_argument({vt,rho,phi,z,(double)t});		
-				}			
+		for (std::size_t idx = 0; idx < this->series.size(); idx++) {
+			std::vector<std::size_t> unit = this->get_signal_at(idx);
+			for (std::size_t c = 1; c < unit.size(); c++) {
+				double vt  = this->get_real_vt(idx);
+				double rho = this->get_rho(idx);
+				double phi = M_PI * this->get_phi(idx) / 180;
+				double z   = this->get_z(idx);
+				manager[unit[c]-1]->add_argument({vt,rho,phi,z,(double)idx});			
 			}
 		}
 
 		for (std::size_t c = 1; c < this->get_radix(); c++) {
 			auto pair = std::make_pair(this->component,this->characters[c]);
 			manager[c-1]->call({pair});
-		}
-
-		for (auto m : manager) {
-			auto res = m->get_value();
+			auto res = manager[c-1]->get_value();
 			for (auto i : res) {
 				double id    = i[4];
 				double field = i[5];
@@ -151,6 +153,11 @@ double serial::dataset::get_amplitude (std::size_t vt)
 	return series[vt][1];
 }
 
+std::size_t serial::dataset::get_sparks ()
+{
+	return this->sparks_number;
+}
+
 std::size_t serial::dataset::get_radix ()
 {
 	return this->characters.size();
@@ -174,17 +181,35 @@ std::vector<double> serial::dataset::get_series ()
 	return time;
 }
 
-void serial::randomized_sequental (std::size_t radix, double sigma, const std::string& file_name,
+/*
+
+std::random_device rd;
+std::mt19937_64 gen(rd());
+std::uniform_int_distribution<> dis(1, 6);
+dis(gen) // generation
+
+*/
+
+void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double sigma, const std::string& file_name,
 								   min_max rho, min_max phi, min_max z)
 {
 	double mu = 0;
-	double tau = 0.5, pulses = 1e2;
-	double duty_cycle = 0.7, step = 0.1;
+	double tau = 0.5;
+	double duty_cycle = 0.6; 
+	double step = 0.01;
+	
+	std::mt19937_64 gen1(std::random_device{}());
+	std::mt19937_64 gen2(std::random_device{}());
+	std::mt19937_64 gen3(std::random_device{}());
+	std::mt19937_64 gen4(std::random_device{}());
+	std::uniform_real_distribution<double> dist_rho(rho.first, rho.second);
+	std::uniform_real_distribution<double> dist_phi(phi.first, phi.second);
+	std::uniform_real_distribution<double> dist_z(z.first, z.second);
+	std::uniform_int_distribution<>  dist_id(1, radix-1);
 
 	std::vector<std::function<double(double)>> domain = {
-		[tau] (double vt) { return   Function::gauss (vt,tau); },
-		[tau] (double vt) { return - Function::gauss (vt,tau); },
-		[tau] (double vt) { return   Function::sinc  (vt,tau); }
+		[tau] (double vt) { return   Function::sinc  (vt,tau); },
+		[tau] (double vt) { return   Function::gauss (vt,tau); }
 	};
 
 	AdditiveWhiteGaussian* noise = new AdditiveWhiteGaussian(mu,sigma);
@@ -192,11 +217,11 @@ void serial::randomized_sequental (std::size_t radix, double sigma, const std::s
 	serial::dataset series(domain, tau, noise, duty_cycle, step);
 	
 	for (std::size_t i = 0; i < pulses; i++) {
-		std::size_t rnd_id = 1;
-		double rnd_rho = 0.5;
-		double rnd_phi = 20;
-		double rnd_z   = 2;
-		series.set_char(rnd_rho, rnd_phi, rnd_z, 1);
+		std::size_t rnd_id = dist_id(gen1);
+		double rnd_rho = dist_rho(gen2);
+		double rnd_phi = dist_phi(gen3);
+		double rnd_z   = dist_z(gen4);
+		series.set_char(rnd_rho, rnd_phi, rnd_z, rnd_id);
 	}
 
 	json dataset = serial::json_from(series,rho,phi,z);
@@ -222,6 +247,7 @@ json serial::json_from (dataset ds, min_max rho, min_max phi, min_max z)
 	json js;
 	js["component"] = "unknown";
 	js["radix"]     = ds.get_radix();
+	js["sparks"]	= ds.get_sparks();
 	js["SNR"]       = NAN;
 	js["max_rho"]   = rho.second;
 	js["min_rho"]   = rho.first;

@@ -80,5 +80,12 @@ gnump:
 	make && make check && make install; \
 	rm -fr $(PROJECT_DIR)/gmp-6.1.2
 
+meep:
+	tar -xvzf archive/meep-1.5.tar.gz
+	mkdir -p meep && cd meep-1.5; \
+	./configure --prefix=$(PROJECT_DIR)/meep --without-python --without-hdf5 --without-libctl; \
+	make && make install; \
+	rm -fr $(PROJECT_DIR)/meep-1.5
+
 clean:
 	rm -f build/*.o *.gnp *.log *.json build/maxwell build/unit_test build/plot_test

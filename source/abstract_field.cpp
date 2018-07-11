@@ -81,12 +81,8 @@ std::vector<double> AbstractField::magnetic_cartesian (double ct, double rho, do
 	return array;
 }
 
-double AbstractField::energy (double rho, double phi, double z) const
+double AbstractField::energy (double rho, double phi, double z, double from, double to) const
 {
-	double min_vt = 0;
-	double tau1 = std::sqrt((rho-1)*(rho-1) + z*z);
-	double tau2 = tau1 + 0.5;
-
 	auto f = [this, rho, phi, z] (double vt) {
 		double Erho = this->electric_rho(vt,rho,phi,z);
 		double Ephi = this->electric_phi(vt,rho,phi,z);
@@ -95,7 +91,7 @@ double AbstractField::energy (double rho, double phi, double z) const
 	};
 
 	try { 
-		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
+		return SimpsonRunge(5e1, this->accuracy, 1e5).value(from,to,f); 
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = AbstractField::int_exept_mgs;
@@ -109,15 +105,10 @@ double AbstractField::energy (double rho, double phi, double z) const
 	}
 }
 
-double AbstractField::energy_cart (double x, double y, double z) const
+double AbstractField::energy_cart (double x, double y, double z, double from, double to) const
 {
-	double R = 1;
-	double tau = 0.5;
-
 	double rho = std::sqrt(x*x + y*y);
 	double phi = std::atan2(y, x);
-	double tau1 = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
-	double tau2 = tau1 + 2*tau;
 
 	auto f = [this, rho, phi, z] (double vt) {
 		double Erho = this->electric_rho(vt,rho,phi,z);
@@ -127,7 +118,7 @@ double AbstractField::energy_cart (double x, double y, double z) const
 	};
 
 	try { 
-		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
+		return SimpsonRunge(5e1, this->accuracy, 1e5).value(from, to,f); 
 	} catch (double not_trusted) {
 		if (this->global_log) {
 			std::string mesg = AbstractField::int_exept_mgs;

@@ -20,7 +20,8 @@
 #include "linear_duhamel.hpp"
 #include "uniform_disk_current.hpp"
 
-
+#include <algorithm>
+#include <random>
 #include <iostream>
 #include <functional>
 #include <vector>
@@ -52,7 +53,8 @@ namespace serial {
 		double get_z (std::size_t id_vt);
 
 		double get_amplitude (std::size_t id_vt);
-		std::size_t get_radix ();
+		std::size_t get_sparks ();
+		std::size_t get_radix  ();
 		std::vector<std::size_t> get_signal_at (std::size_t id_vt);
 		std::vector<double> get_series ();
 
@@ -64,6 +66,7 @@ namespace serial {
 
 	private:
 
+		std::size_t sparks_number;
 		double time_step;
 		double duty_cycle;
 		double effective_duration;
@@ -75,7 +78,8 @@ namespace serial {
 		// series[i] = {vt, field, real_vt, rho, phi, z, id1}
 	};
 
-	void randomized_sequental (std::size_t radix, double sigma, const std::string& file_name,
+	void randomized_sequental (std::size_t pulses, std::size_t radix, double sigma, 
+								const std::string& file_name,
 								min_max rho, min_max phi, min_max z);
 	json json_from (dataset series, min_max rho, min_max phi, min_max z);
 	void serialize (const std::string& filename, const json& dataset, bool binary = false);
