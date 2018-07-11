@@ -27,12 +27,15 @@ GMP_FLAGS = -I $(PROJECT_DIR)/gnump/include
 MYSQL_LIBS = `mysql_config --libs`
 MYSQL_FLAGS = `mysql_config --cflags`
 
+MEEP_LIBS = `pkg-config --libs meep/lib/pkgconfig/meep.pc`
+MEEP_FLAGS = `pkg-config --cflags meep/lib/pkgconfig/meep.pc`
+
 .PHONY: gnuplot gnump clean list help
 
 maxwell: $(OBJECTS)
 	@rm -f build/unit_test.o
 	@rm -f build/plot_test.o
-	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) $(MEEP_LIBS) -o build/$@
 
 unit_test: $(OBJECTS)
 	@rm -f build/main.o
@@ -64,7 +67,7 @@ help:
 
 build/%.o: source/%.cpp $(INCLUDE) $(PROJECT_DIR)/gnump/include/*
 	@mkdir -p build
-	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(MYSQL_FLAGS) $(GMP_FLAGS) -Iinclude -c $< -o $@
+	$(CXX) $(CXX_STD) $(CXX_FLAGS) $(MYSQL_FLAGS) $(GMP_FLAGS) $(MEEP_FLAGS) -Iinclude -c $< -o $@
 
 gnuplot:
 	tar xf archive/gnuplot-5.0.6.tar
@@ -79,6 +82,13 @@ gnump:
 	./configure --enable-cxx --prefix=$(PROJECT_DIR)/gnump; \
 	make && make check && make install; \
 	rm -fr $(PROJECT_DIR)/gmp-6.1.2
+
+meep:
+	tar -xvzf archive/meep-1.5.tar.gz
+	mkdir -p meep && cd meep-1.5; \
+	./configure --prefix=$(PROJECT_DIR)/meep --without-python --without-hdf5 --without-libctl; \
+	make && make install; \
+	rm -fr $(PROJECT_DIR)/meep-1.5
 
 clean:
 	rm -f build/*.o *.gnp *.log *.json build/maxwell build/unit_test build/plot_test

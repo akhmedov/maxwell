@@ -26,7 +26,7 @@
 #include <iostream>
 
 typedef std::function<double(AbstractField*,double,double,double,double)> Component;
-typedef std::function<double(AbstractField*,double,double,double)> Energy;
+typedef std::function<double(AbstractField*,double,double,double,double,double)> Energy;
 
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
@@ -235,7 +235,7 @@ template <std::size_t N> void Manager<N>::call ( std::vector<std::pair<Component
 			this->result_write.lock();
 			this->data_left--;
 			this->result.insert( arg );
-			result_write.unlock();
+			this->result_write.unlock();
 			this->active_thread.lock();
 			this->is_active[i] = false;
 			this->active_thread.unlock();
@@ -280,8 +280,8 @@ template <std::size_t N> void Manager<N>::call ( std::vector<std::pair<Energy,Ab
 			argument[i].pop();
 
 			for (auto f : field) {
-				double res = f.first(f.second, arg[0], arg[1], arg[2]);
-				if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
+				double res = f.first(f.second, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				if (std::isnan(res)) res = 0; // throw std::logic_error("Error: NAN model value.");
 				arg.push_back(res);
 			}
 
@@ -435,7 +435,7 @@ template <std::size_t N> void SafeManager<N>::call ( std::vector<std::pair<Energ
 					double res;
 
 					if ( std::isnan(db_res) ) {
-						res = f.first(f.second, arg[0], arg[1], arg[2]);
+						res = f.first(f.second, arg[0], arg[1], arg[2], arg[3], arg[4]);
 						if (std::isnan(res)) throw std::logic_error("Error: NAN model value.");
 						this->client[i]->set_value(j,type,res);
 					} else {

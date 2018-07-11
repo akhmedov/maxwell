@@ -6,6 +6,7 @@
 /*.gnp
 
 # Project build dirictorice with contents
+/meep/
 /gnump/
 /gnuplot/
 /build/*.o

@@ -90,15 +90,15 @@ int main()
 
 	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "plot_energy_slyse(z=5,10,20) " << std::endl;
-	PlotTest::plot_energy_slyse(1,0.50);
-	PlotTest::plot_energy_slyse(1,1.00);
-	PlotTest::plot_energy_slyse(1,2.50);
-	PlotTest::plot_energy_slyse(1,5.00);
-	PlotTest::plot_energy_slyse(1,10.0);
-	PlotTest::plot_energy_slyse(1,15.0);
-	PlotTest::plot_energy_slyse(1,20.0); 
-	PlotTest::plot_energy_slyse(1,30.0); 
-	PlotTest::plot_energy_slyse(1,40.0);
+	PlotTest::plot_energy_slyse(0,0.50);
+	PlotTest::plot_energy_slyse(0,1.00);
+	PlotTest::plot_energy_slyse(0,2.50);
+	PlotTest::plot_energy_slyse(0,5.00);
+	PlotTest::plot_energy_slyse(0,10.0);
+	PlotTest::plot_energy_slyse(0,15.0);
+	PlotTest::plot_energy_slyse(0,20.0); 
+	PlotTest::plot_energy_slyse(0,30.0); 
+	PlotTest::plot_energy_slyse(0,40.0);
 
 	// PlotTest::plot_energy_slyse(5.0,20.0);
 
@@ -160,8 +160,12 @@ void PlotTest::energy_iterfer_sinc()
 
 	Manager<2>* thead_core = new Manager<2>(4, NULL);
 	thead_core->progress_bar(true);
-	for (double z = 8; z < 16; z += 0.1)
-		thead_core->add_argument( {0,0,z} );
+	for (double z = 8; z < 16; z += 0.1) {
+		double rho = 0;
+		double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+		double to = tau + std::sqrt((rho+R)*(rho+R) + z*z);
+		thead_core->add_argument( {0,0,z,from,to} );
+	}
 
 	thead_core->call({compute});
 	std::vector<std::vector<double>> data = thead_core->get_value();
@@ -183,8 +187,8 @@ void PlotTest::energy_iterfer_sinc()
 
 void PlotTest::energy_compare (double tau1, double tau2)
 {
-	auto field = [] (double tau) {
-		double R = 1, A0 = 1;
+	double R = 1, A0 = 1;
+	auto field = [R,A0] (double tau) {
 		double eps_r = 1, mu_r = 1;
 		Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 		UniformPlainDisk* source = new UniformPlainDisk(R, A0);
@@ -197,9 +201,13 @@ void PlotTest::energy_compare (double tau1, double tau2)
 	};
 
 	for (double x = 0; x < 3; x += 0.1) {
+		double z = 0;
+		double tau = std::max(tau1,tau2);
+		double from = (x > R) ? std::sqrt((x-R)*(x-R) + z*z) : z;
+		double to = tau + std::sqrt((x+R)*(x+R) + z*z);
 		Manager<2>* thead_core = new Manager<2>(1, NULL);
 		thead_core->progress_bar(false);
-		thead_core->add_argument( {x,0,0} );
+		thead_core->add_argument( {x,0,z,from,to} );
 		thead_core->call({field(tau1), field(tau2)});
 		std::vector<std::vector<double>> data = thead_core->get_value();
 		
@@ -314,8 +322,9 @@ void PlotTest::plot_energy_max ()
 	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
 	// PlotTest::global_conf->duration(0);
 	
-	auto field = [] (double tau) {
-		double R = 1, A0 = 1;
+	double R = 1, A0 = 1;
+
+	auto field = [R,A0] (double tau) {
 		double eps_r = 1, mu_r = 1;
 		Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 		UniformPlainDisk* source = new UniformPlainDisk(R, A0);
@@ -330,8 +339,12 @@ void PlotTest::plot_energy_max ()
 	Manager<2>* thead_core = new Manager<2>(4, NULL);
 	thead_core->progress_bar(true);
 
-	for (double z = 0.5; z <= 15; z += 0.1)
-			thead_core->add_argument( {0,0,z} );
+	for (double z = 0.5; z <= 15; z += 0.1) {
+		double rho = 0;
+		double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+		double to = 1 + std::sqrt((rho+R)*(rho+R) + z*z);
+		thead_core->add_argument( {0,0,z,from,to} );
+	}
 
 	thead_core->call({field(0.5), field(1)});
 	std::vector<std::vector<double>> data = thead_core->get_value();
@@ -378,15 +391,20 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
 
-	SafeManager<0>* thead_core = new SafeManager<0>(4, PlotTest::global_conf, NULL);
+	Manager<0>* thead_core = new Manager<0>(4);
 	thead_core->progress_bar(true);
 
-	for (double x = -range; x <= range; x += 0.05)
-		for (double y = -range; y <= range; y += 0.05)
-			thead_core->add_argument( {x,y,z} );
+	for (double x = -range; x <= range; x += 0.05) {
+		for (double y = -range; y <= range; y += 0.05) {
+			double rho = std::sqrt(x*x + y*y);
+			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+			double to = tau + std::sqrt((rho+R)*(rho+R) + z*z);
+			thead_core->add_argument( {x,y,z,from,to} );
+		}
+	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, duhamel);
+	auto function = std::make_pair(property, linear);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
@@ -398,7 +416,7 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 
 	for (auto&& i : data) {
 		i[3] *= z*z / max0[3]; // norm W
-		i.erase(i.begin() + 2); // erase z
+		i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
 	}
 
 	std::cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << std::endl;

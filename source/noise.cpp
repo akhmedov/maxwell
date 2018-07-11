@@ -8,11 +8,6 @@
 
 #include "noise.hpp"
 
-/* std::uniform_real_distribution<double> distribution;
-std::mt19937_64 generator;
-double magnitude;
-double value; */
-
 AdditiveWhite::AdditiveWhite (double avarage_magnutude, double diviation_magnutude)
 { 
 	this->magnitude = avarage_magnutude;
