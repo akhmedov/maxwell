@@ -1,84 +1,4 @@
-### ABSTRUCT ###
-
-Maxwell project was developed in scope of a PhD research to porovide 
-heigh efficient numerical evaluation tool. Research topic is trancient 
-field radiation in nonlinear trancient nonstationary medium from arditrary
-sourse. The tool allows to compute and plot electromagnetic field with 
-arbitrary radiator and compare result with pre-defined solution.
-
-Source code is wrote within ISO c++17 standard and POSIX comatibility. 
-Build system is only one Makefile with several available options. 
-There are 'test', 'maxwell' and 'debug' options. Code containce paralel 
-calculations on std::threads with data access control on std::mutex.
-
-Source code is OS free and build systems supports GNU/Linux, MacOS and 
-BSD operation systems. Development dependency is limited by STL, GMP and 
-X11 development package. Folowing OS list is recomended for development 
-process, the system is tested on the list:
-
-- GNU/Linux Ubuntu 16.04 LTE x86_64 (GNU GCC version 5.4.0 20160607)
-- MacOS Sierra 10.12.5 x86_64 (Apple LLVM version 8.1.0)
-
-### NOTES ###
-
-пример управления точками выхода
-void MySQL::throw_error_code (int code) const
-
-lux et veritas
-
-Наука сама по себе деградирует. Чем выше уровень научного прогресса тем
-сильнее само-деградация. По этому для роста древа знаний человечество 
-нуждается в новых инструментах. Только появление новых инструментов может 
-сдержать эту деградцию.  
-
-Generalized Gaussian Quadrature Rules For Systems of Arbitrary Functions
-
-### GNU/LUNUX UBUNTU 16.04 AMD64 INSTALL ###
-
-m4                 - dependences for gmp
-libx11-dev         - dependences for gnuplot
-libmysqlclient-dev - mysql client connector 
-
-~ $ sudo apt-get install mysql-server
-~ $ mysql_secure_installation
-~ $ sudo apt-get install m4 libx11-dev libmysqlclient-dev
-~ $ sudo apt-get install build-essential cmake git
-~ $ mysql -t -u root -p < setup.sql
-~ $ git clone https://server/path/maxwell.git
-~ $ make gnuplot gnump 
-~ $ make -j4 unit_test
-~ $ ./build/test
-~ $ make maxwell
-~ $ make clean && make -j4 PDISK_LINEAR_INT=1 DEBUG=1
-~ $ ./build/maxwell --help
-~ $ ./build/maxwell --plot 3 --cylindric 1.9:0.01:3,0:0.01:3,0,2
-~ $ ./build/maxwell --plot 2 --cylindric 1.9:0.01:10,0,0,2
-~ $ ./build/maxwell --kerr 1e-9 --plot 1 --cylindric 1.9:0.01:3,0,0,2
-~ $ ./build/maxwell --noise 50 --data 1 --cylindric 1.9:0.01:3,2,0:1:90,2
-
-### USEFULL DEBUG COMANDS ###
-
-~ $ make clean
-~ $ make list
-
-~ $ du -h ./build/maxwell
-~ $ ls -lh ./build/maxwell
-~ $ file ./build/maxwell
-~ $ stat -x ./build/maxwell
-~ $ nm -D libgmp.so | grep __gmpf_init
-
-~ $ cat <> maxwell.conf | sed '/\(^FLOAT_BITRATE =\).*/ s//\1$(TERMS)/'
-~ $ date && nice -n 10 ./build/gnuplot --conf PATH --model NUM && date
-
-### LICENCE ###
-
-!!! find licence: GPL, MIT, etc. (no BSD)
-1. source is open;
-2. authering save;
-3a. main auther is co-author of child proj;
-3b. aggried comercial use;
-
-### TEST LIST ###
+### UNIT TEST TODO LIST ###
 
 - Math::lommel test
 + numerical derivative test of derivative of I1 and I2
@@ -86,11 +6,6 @@ libmysqlclient-dev - mysql client connector
 - caclucaliton manager vs single stream test
 + I1 I3 I4 I5 test on Integral::simpson() method
 + test of getters and setters
-
-### UPDATE LIST FOR c++17 STANDART
-
-- use std::variant in Config:: class for receiver evants
-- use std::filsistems::exists() for file check in CLI:: and Manager::
 
 ### BUG LIST ###
 
@@ -152,67 +67,10 @@ libmysqlclient-dev - mysql client connector
 - build configuration for Windows 10 (version 1.0)
 - implement QT plot device (version 1.0)
 
-### Install gnump ###
+### UPDATE LIST FOR c++17 STANDART
 
-https://gmplib.org
-./configure --help
-
-### GNU Plot Install ###
-
-http://plplot.sourceforge.net/
-http://www.gnuplot.info
-http://www.gnuplot.info/demo/surface1.html
-http://gnuplot.sourceforge.net/demo/pm3d.html
-
-# FONT SIZE FOR X11
-# set term x11 font "times-roman,15,normal"
-
-# GENERAL FONT SIZE
-# set ylabel "" font font "Times-New-Roman,15"
-# set tics font "Times-New-Roman,15"
-# set key font "Times-New-Roman,15"
-
-# MOVE LONG DOWN YLABEL
-# set ylabel "f(x) = J_1(ax) J_0(bx) J_0(cx)" offset 0,-5
-
-### QT SUPPORT ###
-
-./configure --with-qt --prefix=$(PROJECT_DIR)/gnuplot
-sudo apt-get install qtbase5-dev libqt5svg5-dev
-
-### MySQL help ###
-
-http://www.mysqltutorial.org/understand-mysql-table-types-innodb-myisam.aspx
-https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-installation-source-unix.html
-
-~ $ sudo apt-get install mysql-server
-~ $ mysql_secure_installation
-~ $ mysql -t -u root -p < setup.sql
-~ $ mysql -vvv -u root -p < clean.sql
-~ $ mysql -u root -p 
-~ $ mysqldump -u root -p maxwell > maxwell.sql
-
-mysql> CREATE DATABASE maxwell;
-mysql> GRANT ALL PRIVILEGES ON *.* TO 'maxwell'@'localhost' IDENTIFIED BY 'maxwell';
-mysql> SELECT User, Host, Password FROM mysql.user;
-mysql> DROP USER 'maxwell'@'localhost';
-mysql> DROP TABLE IF EXISTS maxwell;
-mysql> SELECT user FROM mysql.user GROUP BY user;
-mysql> DELETE FROM mysql.user WHERE user = 'maxwell';
-mysql> SHOW COLUMNS FROM maxwell.maxwell_header;
-mysql> SHOW COLUMNS FROM maxwell.maxwell_data;
-
-CREATE TABLE maxwell_grand ( 
-	id smallint unsigned not null auto_increment, 
-	name varchar(20) not null, 
-	constraint pk_example primary key (id) 
-);
-
-INSERT INTO maxwell ( id, name ) VALUES ( null, 'Sample data' );
-
-
-
-
+- use std::variant in Config:: class for receiver evants
+- use std::filsistems::exists() for file check in CLI:: and Manager::
 
 ### MYSQL TODO ###
 
@@ -269,4 +127,3 @@ INSERT INTO maxwell ( id, name ) VALUES ( null, 'Sample data' );
 [26.03.2018, 21:10:43] Ruslan: Или не шутка. Неблагодарных людей никто не любит
 [26.03.2018, 21:10:48] rolan a: И жалость это плохо)))
 [26.03.2018, 21:11:31] Ruslan: Должно произойти нечто ужасное что бы я тебя пожалел(devil)
-
