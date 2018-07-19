@@ -1,6 +1,12 @@
 ABSTRACT
 ======
 
+```diff
+- WARNING: The project is in the private beta state!
+- The first ready to use release is planning for 
+- September 1, 2018
+```
+
 Maxwell is high performance software unit for numerical simulation of 
 ultra-wideband radar and telecommunication systems. It supports FDTD 
 and numerical evolutionary approach for simulation of electromagnetic 
@@ -13,7 +19,7 @@ The product is based on Meep and GNUplot open source projects.
 Visualization of the simulation is done with GNU Plot.
 There are several options to save computed data. It can be saved as 
 GNU Plot script, MySQL database script or JSON time series dataset. 
-Moreover, the project is using MySQl C++ driver to store computing data
+Moreover, the project is using MySQL C++ driver to store computing data
 for future call, so the second call of the Maxwell for the same problem 
 will use pre-computed data and will be much more faster.
 
@@ -108,7 +114,7 @@ USEFULL DEBUG COMMANDS
 ```
 
 FAQ FOR MAXWELL'S DEPENDENCIES
-======
+======h
 
 gnump library
 ------

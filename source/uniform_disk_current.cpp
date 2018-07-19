@@ -183,15 +183,30 @@ double MissileField::electric_z (double ct, double rho, double phi, double z) co
 
 double MissileField::magnetic_rho (double vt, double rho, double phi, double z) const
 {
-	double value = this->A0 / 2;
+	double vt_z = vt*vt - z*z;
+	if (vt_z < 1e-9) return 0;
+	double sqrt_vt_z = std::sqrt(vt_z);
 	double R = this->R;
-	mpf_class vt_z = mpf_class(vt * vt);
-	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (vt_z.get_d() <= 0) return 0;
+	double value = this->A0 / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
-		throw std::logic_error("MissileField::magnetic_rho is not implemented for -DNUMERIC_PDISK_LINEAR_INT");
+		SimpsonRunge I = SimpsonRunge(10,1);
+
+		auto ui_112 = [vt, rho, z, R, sqrt_vt_z] (double nu) {
+			if (nu == 0) return 0.0;
+			double W = - nu * (vt - z);
+			double Z = nu * sqrt_vt_z;
+			double U0 = Math::lommel (30, 2, W, Z); 
+			if (rho == 0) return R * U0 * j1(nu*R) / 2;
+			return j1(nu*rho) * j1(nu*R) * U0 / rho / nu;
+		};
+
+		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+		double i3 = i1 + 2 * R * I.value(0, 1e4, ui_112);
+
+		value *= i3 * std::cos(phi);
+		return value;
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 		
@@ -204,15 +219,41 @@ double MissileField::magnetic_rho (double vt, double rho, double phi, double z) 
 
 double MissileField::magnetic_phi (double vt, double rho, double phi, double z) const
 {
-	double value = this->A0 / 2;
+	double vt_z = vt*vt - z*z;
+	if (vt_z < 1e-9) return 0;
+	double sqrt_vt_z = std::sqrt(vt_z);
+	if (sqrt_vt_z < 1e-9) return 0;
 	double R = this->R;
-	mpf_class vt_z = mpf_class(vt * vt);
-	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (vt_z.get_d() <= 0) return 0;
+	double value = this->A0 / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
-		throw std::logic_error("MissileField::magnetic_phi is not implemented for -DNUMERIC_PDISK_LINEAR_INT");
+		SimpsonRunge I = SimpsonRunge(10,1);
+
+		auto ui_012 = [vt, rho, z, R, sqrt_vt_z] (double nu) {
+			if (nu == 0) return 0.0;
+			double W = - nu * (vt - z);
+			double Z = nu * sqrt_vt_z;
+			double U0 = Math::lommel (30, 2, W, Z); 
+			return j0(nu*rho) * j1(nu*R) * U0; 
+		};
+		
+		auto ui_112 = [vt, rho, z, R, sqrt_vt_z] (double nu) {
+			if (nu == 0) return 0.0;
+			double W = - nu * (vt - z);
+			double Z = nu * sqrt_vt_z;
+			double U0 = Math::lommel (30, 2, W, Z); 
+			if (rho == 0) return R * U0 * j1(nu*R) / 2;
+			return j1(nu*rho) * j1(nu*R) * U0 / rho / nu;
+		};
+
+		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+		double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+		double i3 = i1 + 2 * R * I.value(0, 1e4, ui_112);
+		double i4 = i2 + R * I.value(0, 1e4, ui_012);
+
+		value *= - (i4 - i3) * std::sin(phi);
+		return value;
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
@@ -242,7 +283,7 @@ double MissileField::magnetic_z (double vt, double rho, double phi, double z) co
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::energy_cart (double x, double y, double z) const
+/* double MissileField::energy_cart (double x, double y, double z) const
 {
 	double R = this->R;
 	double tau = this->source->get_duration();
@@ -268,7 +309,7 @@ double MissileField::energy_cart (double x, double y, double z) const
 		global_log->warning(mesg);
 		return not_trusted; 
 	}
-}
+} */
 
 // =============================================================================
 

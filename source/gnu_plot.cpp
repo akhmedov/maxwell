@@ -49,7 +49,8 @@ const std::string GnuPlot::SURFACE =
 ;
 
 const std::string GnuPlot::CMAP =
-"set term x11 font '$FONT'\n"
+"set terminal png size 1200,1200\n"
+"set output 'colormap.png'\n"
 "set border linewidth 0\n"
 "set palette grey\n"
 "$grid << EOD\n"

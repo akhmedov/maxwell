@@ -82,7 +82,6 @@ double SimpsonRunge::value (double from, double to, const std::function<double(d
 
 	for (std::size_t nodes = 2 * this->init_nodes; nodes <= this->max_nodes; nodes *= 2) {
 
-
 		this->running_units *= 2;
 
 		h /= 2;

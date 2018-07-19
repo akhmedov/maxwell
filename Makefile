@@ -40,12 +40,12 @@ maxwell: $(OBJECTS)
 unit_test: $(OBJECTS)
 	@rm -f build/main.o
 	@rm -f build/plot_test.o
-	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) $(MEEP_LIBS) -o build/$@
 
 plot_test: $(OBJECTS)
 	@rm -f build/main.o
 	@rm -f build/unit_test.o
-	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) -o build/$@
+	$(CXX) $(CXX_STD) build/*.o $(CXX_LIB) $(GMP_LIBS) $(MYSQL_LIBS) $(MEEP_LIBS) -o build/$@
 
 list:
 	@find . -name '*.cpp' -o -name '*.hpp' -o -name '*.sql' \

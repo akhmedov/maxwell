@@ -88,19 +88,15 @@ int main()
 
 	/* ENERGY PLOT */
 
-	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "plot_energy_slyse(z=5,10,20) " << std::endl;
-	PlotTest::plot_energy_slyse(0,0.50);
-	PlotTest::plot_energy_slyse(0,1.00);
-	PlotTest::plot_energy_slyse(0,2.50);
-	PlotTest::plot_energy_slyse(0,5.00);
-	PlotTest::plot_energy_slyse(0,10.0);
-	PlotTest::plot_energy_slyse(0,15.0);
-	PlotTest::plot_energy_slyse(0,20.0); 
-	PlotTest::plot_energy_slyse(0,30.0); 
-	PlotTest::plot_energy_slyse(0,40.0);
-
-	// PlotTest::plot_energy_slyse(5.0,20.0);
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "plot_energy_slyse() " << std::endl;
+	PlotTest::plot_energy_slyse(0, 0.50);
+	PlotTest::plot_energy_slyse(0, 1.00);
+	PlotTest::plot_energy_slyse(0, 2.50);
+	PlotTest::plot_energy_slyse(0, 5.00);
+	PlotTest::plot_energy_slyse(0,10.00);
+	PlotTest::plot_energy_slyse(0,15.00);
+	PlotTest::plot_energy_slyse(0,20.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -387,9 +383,9 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 	MissileField* linear = new MissileField(source, medium);
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	/* FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL); */
 
 	Manager<0>* thead_core = new Manager<0>(4);
 	thead_core->progress_bar(true);
@@ -398,8 +394,9 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 		for (double y = -range; y <= range; y += 0.05) {
 			double rho = std::sqrt(x*x + y*y);
 			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+			if (from - 0.01 > 0) from -= 0.01;
 			double to = tau + std::sqrt((rho+R)*(rho+R) + z*z);
-			thead_core->add_argument( {x,y,z,from,to} );
+			thead_core->add_argument( {x,y,z,from,to+0.01} );
 		}
 	}
 

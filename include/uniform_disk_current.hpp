@@ -74,7 +74,7 @@ struct MissileField : public LinearField {
 	double magnetic_phi (double ct, double rho, double phi, double z) const;
 	double magnetic_z (double ct, double rho, double phi, double z) const;
 
-	double energy_cart (double x, double y, double z) const;
+	// double energy_cart (double x, double y, double z) const;
 
 	static double int_bessel_001 (double vt_z, double rho, double R); // I2 in thesis.pdf
 	static double int_bessel_011 (double vt_z, double rho, double R); // I1 in thesis.pdf
