@@ -45,6 +45,7 @@ BUILD INSTRUCTIONS FOR UBUNTU 16.04 x64
 m4                 - dependences for gmp <br/>
 libx11-dev         - dependences for gnuplot <br/>
 libmysqlclient-dev - mysql client connector <br/>
+gfortran		   - fortran77 compiler for св <br/>
 
 At the first, it is required to install dependences
 
@@ -67,14 +68,15 @@ The next step is getting the source from VCS
 ~ $ git clone https://server/path/maxwell.git
 ```
 
-Before compiling the protects you need to compile some dependences. Do not use 
-`-j` option for this - it will not speed up compilation
+Before compiling the protects you need to compile some dependences. 
+Do not use `-j` option for this - it will not speed up compilation
 
 ```bash
 ~ $ make gnuplot gnump meep
 ```
 
-Finally, go to the source directory and compile the project and unit tests for it
+Finally, go to the source directory and compile the project and unit 
+tests for it
 
 ```bash
 ~ $ cd maxwell
