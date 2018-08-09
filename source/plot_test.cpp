@@ -97,6 +97,8 @@ int main()
 	PlotTest::plot_energy_slyse(0,10.00);
 	PlotTest::plot_energy_slyse(0,15.00);
 	PlotTest::plot_energy_slyse(0,20.00);
+	PlotTest::plot_energy_slyse(0,30.00);
+	PlotTest::plot_energy_slyse(0,40.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -374,20 +376,20 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 
 	double R = 1, A0 = 1;
 	double eps_r = 1, mu_r = 1;
-	double range = z; // = z/4 + 2*R;
+	double range = z/4 + 2*R;
 
 	PlotTest::global_conf->field_component(FieldComponent::W);
-	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
+	PlotTest::global_conf->impulse_shape(ImpulseShape::sinc);
 	PlotTest::global_conf->duration(tau);
 
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 	MissileField* linear = new MissileField(source, medium);
-	/* FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL); */
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
 
-	Manager<0>* thead_core = new Manager<0>(4);
+	SafeManager<0>* thead_core = new SafeManager<0>(4, PlotTest::global_conf, NULL);
 	thead_core->progress_bar(true);
 
 	for (double x = -range; x <= range; x += 0.05) {
@@ -401,7 +403,7 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, linear);
+	auto function = std::make_pair(property, duhamel);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
