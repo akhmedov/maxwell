@@ -90,15 +90,15 @@ int main()
 
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "plot_energy_slyse() " << std::endl;
-	PlotTest::plot_energy_slyse(0, 0.50);
-	PlotTest::plot_energy_slyse(0, 1.00);
-	PlotTest::plot_energy_slyse(0, 2.50);
-	PlotTest::plot_energy_slyse(0, 5.00);
-	PlotTest::plot_energy_slyse(0,10.00);
-	PlotTest::plot_energy_slyse(0,15.00);
-	PlotTest::plot_energy_slyse(0,20.00);
-	PlotTest::plot_energy_slyse(0,30.00);
-	PlotTest::plot_energy_slyse(0,40.00);
+	PlotTest::plot_energy_slyse(1, 0.50);
+	PlotTest::plot_energy_slyse(1, 1.00);
+	PlotTest::plot_energy_slyse(1, 2.50);
+	PlotTest::plot_energy_slyse(1, 5.00);
+	PlotTest::plot_energy_slyse(1,10.00);
+	PlotTest::plot_energy_slyse(1,15.00);
+	PlotTest::plot_energy_slyse(1,20.00);
+	PlotTest::plot_energy_slyse(1,30.00);
+	PlotTest::plot_energy_slyse(1,40.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
