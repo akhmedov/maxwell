@@ -19,6 +19,7 @@
 
 struct Noise {
 	virtual double value (double ct, double rho, double phi, double z, double filed = 0) = 0;
+	virtual double power (double rho, double phi, double z, std::size_t samples = 1e3);
 };
 
 struct AdditiveWhite : public Noise {

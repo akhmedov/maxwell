@@ -88,17 +88,17 @@ int main()
 
 	/* ENERGY PLOT */
 
-	std::cout << std::endl << "PlotTest::";
-	std::cout << "plot_energy_slyse() " << std::endl;
-	PlotTest::plot_energy_slyse(1, 0.50);
-	PlotTest::plot_energy_slyse(1, 1.00);
-	PlotTest::plot_energy_slyse(1, 2.50);
-	PlotTest::plot_energy_slyse(1, 5.00);
-	PlotTest::plot_energy_slyse(1,10.00);
-	PlotTest::plot_energy_slyse(1,15.00);
-	PlotTest::plot_energy_slyse(1,20.00);
-	PlotTest::plot_energy_slyse(1,30.00);
-	PlotTest::plot_energy_slyse(1,40.00);
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "plot_energy_slyse() " << std::endl;
+	// PlotTest::plot_energy_slyse(1, 0.50);
+	// PlotTest::plot_energy_slyse(1, 1.00);
+	// PlotTest::plot_energy_slyse(1, 2.50);
+	// PlotTest::plot_energy_slyse(1, 5.00);
+	// PlotTest::plot_energy_slyse(1,10.00);
+	// PlotTest::plot_energy_slyse(1,15.00);
+	// PlotTest::plot_energy_slyse(1,20.00);
+	// PlotTest::plot_energy_slyse(1,30.00);
+	// PlotTest::plot_energy_slyse(1,40.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -112,6 +112,10 @@ int main()
 
 	// PlotTest::energy_compare(1,2);
 	// PlotTest::energy_iterfer_sinc();
+
+	/* NOISE POWER */
+
+	PlotTest::awgn_power({100,1000});
 }
 
 void PlotTest::set_options ()
@@ -119,6 +123,34 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+void PlotTest::awgn_power (const std::vector<std::size_t>& samples)
+{
+	std::vector<std::vector<double>> data;
+	std::vector<double> line;
+
+	for  (double sigma = 0.1; sigma < 10; sigma += 0.1) {
+		line = {sigma};
+		AdditiveWhiteGaussian* noise = new AdditiveWhiteGaussian(0,sigma);
+		for (auto i : samples) {
+			double Pn = noise->power(0,0,0,i);
+			line.push_back(Pn);
+		}
+		data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( "power.gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("sigma");
+	plot->set_oy_label("Pn, V*V");
+	plot->grid_on(false);
+	plot->cage_on();
+	std::vector<std::string> title;
+	for (auto i : samples) title.push_back("N = " + std::to_string(i));
+	plot->plot_multi(data, title);
 }
 
 void PlotTest::emp_duration (double rho, double tau0)

@@ -27,6 +27,7 @@
 
 struct PlotTest : private Math, private Integral, private KerrAmendment, private serial::dataset {
 
+	static void awgn_power (const std::vector<std::size_t>& samples);
 	static void emp_duration (double rho, double tau0 = 1);
 	static void energy_iterfer_sinc ();
 	static void energy_compare (double tau1, double tau2);

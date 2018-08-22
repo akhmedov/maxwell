@@ -81,6 +81,9 @@ namespace serial {
 	void randomized_sequental (std::size_t pulses, std::size_t radix, double sigma, 
 								const std::string& file_name,
 								min_max rho, min_max phi, min_max z);
+	void same_snr (std::size_t pulses, std::size_t radix, double snr, 
+								const std::string& file_name,
+								double rho, double phi, double z);
 	json json_from (dataset series, min_max rho, min_max phi, min_max z);
 	void serialize (const std::string& filename, const json& dataset, bool binary = false);
 };

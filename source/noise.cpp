@@ -8,6 +8,20 @@
 
 #include "noise.hpp"
 
+
+double Noise::power (double rho, double phi, double z, std::size_t samples)
+{
+	double sum = 0;
+	for (double vt = 0; vt <= samples * 0.01; vt += 0.01) {
+		double noise = this->value(vt,rho,phi,z);
+		sum += noise * noise;
+	}
+	return sum / samples;
+}
+
+//=============================================================================
+
+
 AdditiveWhite::AdditiveWhite (double avarage_magnutude, double diviation_magnutude)
 { 
 	this->magnitude = avarage_magnutude;

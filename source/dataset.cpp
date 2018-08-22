@@ -62,10 +62,14 @@ void serial::dataset::set_char (double rho, double phi, double z, std::size_t id
 	if (id >= this->characters.size())
 		throw std::logic_error("Signal id is out of characters in signal::set_char()");
 
+	std::uniform_real_distribution<double> uniform(2, 4);
+	std::mt19937_64 gen(std::random_device{}());
+	double delay = uniform(gen);
+
 	double vt  = this->time_step + this->series.back()[0];
 	double vt0 = (rho > RADIUS) ? std::sqrt((rho-RADIUS)*(rho-RADIUS) + z*z) : z;
 	double pulse_wides = vt + dataset::updisk_emp_duraton(this->effective_duration, rho, z);
-	double total_period = vt + dataset::updisk_emp_duraton(this->effective_duration, rho, z) / this->duty_cycle;
+	double total_period = delay + vt + dataset::updisk_emp_duraton(this->effective_duration, rho, z) / this->duty_cycle;
 
 	while (vt < pulse_wides) {
 		double noise = (this->background) ? this->background->value(vt, 0, 0, 0) : 0;
@@ -197,7 +201,11 @@ void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double
 	double tau = 0.5;
 	double duty_cycle = 0.6; 
 	double step = 0.01;
-	
+
+	std::vector<std::function<double(double)>> domain;
+	domain.push_back([tau] (double vt) { return Function::gauss(vt,tau); });
+	// domain.push_back([tau] (double vt) { return Function::sinc(vt,tau); });
+
 	std::mt19937_64 gen1(std::random_device{}());
 	std::mt19937_64 gen2(std::random_device{}());
 	std::mt19937_64 gen3(std::random_device{}());
@@ -205,12 +213,7 @@ void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double
 	std::uniform_real_distribution<double> dist_rho(rho.first, rho.second);
 	std::uniform_real_distribution<double> dist_phi(phi.first, phi.second);
 	std::uniform_real_distribution<double> dist_z(z.first, z.second);
-	std::uniform_int_distribution<>  dist_id(1, radix-1);
-
-	std::vector<std::function<double(double)>> domain = {
-		[tau] (double vt) { return   Function::sinc  (vt,tau); },
-		[tau] (double vt) { return   Function::gauss (vt,tau); }
-	};
+	std::uniform_int_distribution<>  dist_id(1, domain.size());
 
 	AdditiveWhiteGaussian* noise = new AdditiveWhiteGaussian(mu,sigma);
 
@@ -225,6 +228,43 @@ void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double
 	}
 
 	json dataset = serial::json_from(series,rho,phi,z);
+	serial::serialize(file_name,dataset);
+}
+
+void serial::same_snr (std::size_t pulses, std::size_t radix, double snr, 
+	const std::string& file_name, double rho, double phi, double z)
+{
+	double sigma = 0, Ar = 1, As = 1, Ag = 2;
+	double tau = 0.5;
+	double duty_cycle = 0.6; 
+	double step = 0.01;
+
+	std::vector<std::function<double(double)>> domain;
+	domain.push_back([tau,Ag] (double vt) { return Ag * Function::gauss(vt,tau); });
+	domain.push_back([tau,As] (double vt) { return As * Function::sinc(vt,tau); });
+
+	std::mt19937_64 gen1(std::random_device{}());
+	std::mt19937_64 gen2(std::random_device{}());
+	std::mt19937_64 gen3(std::random_device{}());
+	std::mt19937_64 gen4(std::random_device{}());
+	std::uniform_real_distribution<double> dist_rho(rho, rho);
+	std::uniform_real_distribution<double> dist_phi(phi, phi);
+	std::uniform_real_distribution<double> dist_z(z, z);
+	std::uniform_int_distribution<> dist_id(1, domain.size());
+
+	AdditiveWhiteGaussian* noise = new AdditiveWhiteGaussian(0,sigma);
+
+	serial::dataset series(domain, tau, noise, duty_cycle, step);
+	
+	for (std::size_t i = 0; i < pulses; i++) {
+		std::size_t rnd_id = dist_id(gen1);
+		double rnd_rho = dist_rho(gen2);
+		double rnd_phi = dist_phi(gen3);
+		double rnd_z   = dist_z(gen4);
+		series.set_char(rnd_rho, rnd_phi, rnd_z, rnd_id);
+	}
+
+	json dataset = serial::json_from(series,std::make_pair(rho,rho),std::make_pair(phi,phi),std::make_pair(z,z));
 	serial::serialize(file_name,dataset);
 }
 

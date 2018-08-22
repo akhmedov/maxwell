@@ -597,13 +597,26 @@ bool UnitTest::hardcode_dataset ()
 bool UnitTest::random_dataset ()
 {
 	double radix = 3;
-	double sigma = 2;
+	double sigma = 5.0;
+	double pulses = 1e3;
+	std::string file_name = "dataset.json";
+	std::pair<double,double> rho = std::make_pair(0,2);
+	std::pair<double,double> phi = std::make_pair(0,10);
+	std::pair<double,double> z = std::make_pair(5,7);
+	serial::randomized_sequental (pulses, radix, sigma, file_name, rho, phi, z);
+	return true;
+}
+
+bool UnitTest::snr_dataset ()
+{
+	double radix = 3;
+	double snr = 40;
 	double pulses = 1e2;
 	std::string file_name = "dataset.json";
-	std::pair<double,double> rho = std::make_pair(0,5);
-	std::pair<double,double> phi = std::make_pair(0,90);
-	std::pair<double,double> z = std::make_pair(0,20);
-	serial::randomized_sequental (pulses, radix, sigma, file_name, rho, phi, z);
+	double rho = 0;
+	double phi = 0;
+	double z = 10;
+	serial::same_snr(pulses, radix, snr, file_name, rho, phi, z);
 	return true;
 }
 
@@ -614,6 +627,10 @@ int main()
 	/* cout << "GnuPlot::UnitTest::hardcode_dataset \t\t"; 
 	cout.flush();
 	cout << UnitTest::hardcode_dataset() << endl; */
+
+	/* cout << "GnuPlot::UnitTest::snr_dataset \t\t"; 
+	cout.flush();
+	cout << UnitTest::snr_dataset() << endl; */
 
 	cout << "GnuPlot::UnitTest::random_dataset \t\t"; 
 	cout.flush();

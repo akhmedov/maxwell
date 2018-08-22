@@ -36,6 +36,7 @@ struct UnitTest : private GnuPlot, private Math, private Integral, private KerrA
 	
 	static bool hardcode_dataset ();
 	static bool random_dataset ();
+	static bool snr_dataset ();
 	static bool next_prime ();
 	static bool binom_prod ();
 	static bool bessel_perp ();
