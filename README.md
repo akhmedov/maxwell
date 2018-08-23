@@ -46,14 +46,15 @@ m4                 - dependences for gmp <br/>
 libx11-dev         - dependences for gnuplot <br/>
 libmysqlclient-dev - mysql client connector <br/>
 gfortran		   - fortran77 compiler for св <br/>
+libgd2-dev		   - PNG JPEG anf TIFF support for gnuplot <br/>
 
 At the first, it is required to install dependences
 
 ```bash
 ~ $ sudo apt-get install mysql-server
 ~ $ mysql_secure_installation
-~ $ sudo apt-get install m4 libx11-dev libmysqlclient-dev
-~ $ sudo apt-get install build-essential cmake git
+~ $ sudo apt-get install libgd2-dev libx11-dev libmysqlclient-dev
+~ $ sudo apt-get install m4 build-essential cmake git
 ```
 
 Now it is possible to initialize database in MySQL server
@@ -116,7 +117,7 @@ USEFULL DEBUG COMMANDS
 ```
 
 FAQ FOR MAXWELL'S DEPENDENCIES
-======h
+======
 
 gnump library
 ------

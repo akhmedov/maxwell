@@ -98,7 +98,7 @@ int main()
 	// PlotTest::plot_energy_slyse(1,15.00);
 	// PlotTest::plot_energy_slyse(1,20.00);
 	// PlotTest::plot_energy_slyse(1,30.00);
-	// PlotTest::plot_energy_slyse(1,40.00);
+	PlotTest::plot_energy_slyse(1,40.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -115,7 +115,7 @@ int main()
 
 	/* NOISE POWER */
 
-	PlotTest::awgn_power({100,1000});
+	// PlotTest::awgn_power({100,1000});
 }
 
 void PlotTest::set_options ()
