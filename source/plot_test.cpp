@@ -78,9 +78,10 @@ int main()
 
 	/* DUHAMEL LINEAR FIELD */
 
-	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "plot_source() " << std::endl;
-	// PlotTest::plot_source();
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "plot_source() " << std::endl;
+	// PlotTest::plot_source(1);
+	PlotTest::gauss_signal(1);
 
 	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "Ex_derivative() " << std::endl;
@@ -98,7 +99,7 @@ int main()
 	// PlotTest::plot_energy_slyse(1,15.00);
 	// PlotTest::plot_energy_slyse(1,20.00);
 	// PlotTest::plot_energy_slyse(1,30.00);
-	PlotTest::plot_energy_slyse(1,40.00);
+	// PlotTest::plot_energy_slyse(1,40.00);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -123,6 +124,37 @@ void PlotTest::set_options ()
 	PlotTest::global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
 	/* TODO: BUG - not used config param
 	PlotTest::global_conf->plot_color_map(Colormap::parula); */
+}
+
+void PlotTest::gauss_signal (std::size_t order)
+{
+	double ct1 = 1.7, ct2 = 4, rho = 0, phi = 0, z = 2;
+	double R = 1, A0 = 1, tau = 1, eps_r = 1, mu_r = 1;
+
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, medium);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	free_shape->set_time_depth([tau,order] (double vt) {return Function::gauss_perp(vt,tau,order);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+
+	std::vector<std::vector<double>> plot_data;
+	std::vector<double> line;
+
+	for (double vt = ct1; vt < ct2; vt += 0.001) {
+		line = {vt, duhamel->electric_x(vt, rho, phi, z)};
+		plot_data.push_back(line);
+		line.clear();
+	}
+
+	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_ox_label("ct, m");
+	plot->set_oy_label("f(ct)");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot2d(plot_data);
+	plot->call_gnuplot();
 }
 
 void PlotTest::awgn_power (const std::vector<std::size_t>& samples)
@@ -502,7 +534,7 @@ void PlotTest::Ex_derivative (double tau)
 
 }
 
-void PlotTest::plot_source ()
+void PlotTest::plot_source (std::size_t order)
 {
 	std::vector<std::vector<double>> plot_data;
 	std::vector<double> line;
@@ -511,8 +543,9 @@ void PlotTest::plot_source ()
 	// auto f = [] (double x) { return Function::sin(x, 1); };
 	// auto f = [] (double x) { return Function::sinc(x, 1); };
 	// auto f = [] (double x) { return Function::gauss(x, 1); };
-	auto f = [] (double x) { return Function::smoozed_rect(x, 1, 0.2); };
+	// auto f = [] (double x) { return Function::smoozed_rect(x, 1, 0.2); };
 	// auto f = [] (double x) { return Function::gauss(x, 1); };
+	auto f = [order] (double x) { return Function::gauss_perp_normed(x, 1, order); };
 	// auto f = [] (double x) { return Function::gauss(x, 2) * Function::sinc(x, 2, 10); };
 
 	for (double vt = -1; vt < 3; vt += 0.01) {
@@ -525,7 +558,7 @@ void PlotTest::plot_source ()
 	GnuPlot* plot = new GnuPlot( PlotTest::global_conf->gnp_script_path() );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
 	plot->set_ox_label("ct, m");
-	plot->set_oy_label("f(t)");
+	plot->set_oy_label("f(t)"+std::to_string(order));
 	plot->grid_on();
 	plot->cage_on();
 	plot->plot2d(plot_data);

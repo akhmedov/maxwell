@@ -598,11 +598,11 @@ bool UnitTest::random_dataset ()
 {
 	double radix = 3;
 	double sigma = 5.0;
-	double pulses = 1e3;
+	double pulses = 60;
 	std::string file_name = "dataset.json";
-	std::pair<double,double> rho = std::make_pair(0,2);
-	std::pair<double,double> phi = std::make_pair(0,10);
-	std::pair<double,double> z = std::make_pair(5,7);
+	std::pair<double,double> rho = std::make_pair(0,4);
+	std::pair<double,double> phi = std::make_pair(0,20);
+	std::pair<double,double> z = std::make_pair(4,6);
 	serial::randomized_sequental (pulses, radix, sigma, file_name, rho, phi, z);
 	return true;
 }

@@ -27,6 +27,7 @@
 
 struct PlotTest : private Math, private Integral, private KerrAmendment, private serial::dataset {
 
+	static void gauss_signal (std::size_t order);
 	static void awgn_power (const std::vector<std::size_t>& samples);
 	static void emp_duration (double rho, double tau0 = 1);
 	static void energy_iterfer_sinc ();
@@ -37,7 +38,7 @@ struct PlotTest : private Math, private Integral, private KerrAmendment, private
 	static void plot_energy_slyse (double tau, double z);
 	static void plot_energy_max ();
 	static void Ex_derivative (double tau);
-	static void plot_source ();
+	static void plot_source (std::size_t order);
 	static void kerr_under_integral_from_nu (const std::vector<double> &r, const std::vector<double> &r_perp, double R = 1);
 	static void nonlinear_current (double phi = 0, double z = 0);
 	static void I1_numeric_integral (std::size_t points = 1e4, double limits = 1e5);

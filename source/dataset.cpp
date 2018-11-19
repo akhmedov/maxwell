@@ -204,7 +204,7 @@ void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double
 
 	std::vector<std::function<double(double)>> domain;
 	domain.push_back([tau] (double vt) { return Function::gauss(vt,tau); });
-	// domain.push_back([tau] (double vt) { return Function::sinc(vt,tau); });
+	domain.push_back([tau] (double vt) { return Function::sinc(vt,tau); });
 
 	std::mt19937_64 gen1(std::random_device{}());
 	std::mt19937_64 gen2(std::random_device{}());
