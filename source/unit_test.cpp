@@ -611,8 +611,8 @@ bool UnitTest::snr_dataset ()
 {
 	double radix = 3;
 	double snr = 40;
-	double pulses = 1e2;
-	std::string file_name = "dataset.json";
+	double pulses = 1e3;
+	std::string file_name = "train.json";
 	double rho = 0;
 	double phi = 0;
 	double z = 10;
@@ -628,13 +628,13 @@ int main()
 	cout.flush();
 	cout << UnitTest::hardcode_dataset() << endl; */
 
-	/* cout << "GnuPlot::UnitTest::snr_dataset \t\t"; 
+	cout << "GnuPlot::UnitTest::snr_dataset \t\t"; 
 	cout.flush();
-	cout << UnitTest::snr_dataset() << endl; */
+	cout << UnitTest::snr_dataset() << endl;
 
-	cout << "GnuPlot::UnitTest::random_dataset \t\t"; 
+	/* cout << "GnuPlot::UnitTest::random_dataset \t\t"; 
 	cout.flush();
-	cout << UnitTest::random_dataset() << endl;
+	cout << UnitTest::random_dataset() << endl; */
 
 	cout << "GnuPlot::UnitTest::vector_to_matrix \t\t"; 
 	cout.flush();

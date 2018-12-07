@@ -234,14 +234,14 @@ void serial::randomized_sequental (std::size_t pulses, std::size_t radix, double
 void serial::same_snr (std::size_t pulses, std::size_t radix, double snr, 
 	const std::string& file_name, double rho, double phi, double z)
 {
-	double sigma = 0, Ar = 1, As = 1, Ag = 2;
+	double sigma = 5, Ar = 1, As = 3, Ag = 2;
 	double tau = 0.5;
 	double duty_cycle = 0.6; 
 	double step = 0.01;
 
 	std::vector<std::function<double(double)>> domain;
-	domain.push_back([tau,Ag] (double vt) { return Ag * Function::gauss(vt,tau); });
-	domain.push_back([tau,As] (double vt) { return As * Function::sinc(vt,tau); });
+	domain.push_back([tau,Ag] (double vt) { return Ag * Function::gauss_perp_normed(vt,tau,1); });
+	domain.push_back([tau,As] (double vt) { return As * Function::gauss_perp_normed(vt,tau,3); });
 
 	std::mt19937_64 gen1(std::random_device{}());
 	std::mt19937_64 gen2(std::random_device{}());
