@@ -1,6 +1,7 @@
-# All dot files exept .gitignore
+# All dot files exept .gitignore and VC code project files
 /**/.*
 !/.gitignore
+!/.vscode
 
 # Plot output for gnuplot
 /*.gnp

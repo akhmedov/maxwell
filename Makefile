@@ -6,7 +6,7 @@
 #  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 #
 
-CXX = gcc
+CXX = gcc -g
 CXX_LIB = -lstdc++ -lm -pthread 
 CXX_STD = -std=c++14 -O2
 
@@ -31,6 +31,8 @@ MEEP_LIBS = `pkg-config --libs meep/lib/pkgconfig/meep.pc`
 MEEP_FLAGS = `pkg-config --cflags meep/lib/pkgconfig/meep.pc`
 
 .PHONY: gnuplot gnump clean list help
+
+# all: maxwell
 
 maxwell: $(OBJECTS)
 	@rm -f build/unit_test.o

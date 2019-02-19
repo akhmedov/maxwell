@@ -434,6 +434,11 @@ void PlotTest::plot_energy_max ()
 	plot->plot_multi(data, title);
 }
 
+void PlotTest::plot_energy_distribution (double tau, double max_z)
+{
+	// TODO: longitudial energy distribution 
+}
+
 void PlotTest::plot_energy_slyse (double tau, double z)
 {
 	auto str_of = [] (double a) {return std::to_string(a).substr(0,5);};

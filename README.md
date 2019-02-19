@@ -4,7 +4,7 @@ ABSTRACT
 ```diff
 - WARNING: The project is in the private beta state!
 - The first ready to use release is planning for 
-- September 1, 2018
+- June 7, 2019
 ```
 
 Maxwell is high performance software unit for numerical simulation of 
@@ -47,26 +47,27 @@ libx11-dev         - dependences for gnuplot <br/>
 libmysqlclient-dev - mysql client connector <br/>
 gfortran		   - fortran77 compiler for св <br/>
 libgd2-dev		   - PNG JPEG anf TIFF support for gnuplot <br/>
+gfortran		   - is needed for meep
 
 At the first, it is required to install dependences
 
 ```bash
 ~ $ sudo apt-get install mysql-server
 ~ $ mysql_secure_installation
-~ $ sudo apt-get install libgd2-dev libx11-dev libmysqlclient-dev
+~ $ sudo apt-get install libgd2-dev libx11-dev libmysqlclient-dev gfortran
 ~ $ sudo apt-get install m4 build-essential cmake git
-```
-
-Now it is possible to initialize database in MySQL server
-
-```bash
-~ $ mysql -t -u root -p < setup.sql
 ```
 
 The next step is getting the source from VCS
 
 ```bash
 ~ $ git clone https://server/path/maxwell.git
+```
+
+Now it is possible to initialize database in MySQL server
+
+```bash
+~ $ mysql -t -u root -p < setup.sql
 ```
 
 Before compiling the protects you need to compile some dependences. 
@@ -133,7 +134,6 @@ http://www.gnuplot.info <br/>
 http://www.gnuplot.info/demo/surface1.html <br/>
 http://gnuplot.sourceforge.net/demo/pm3d.html <br/>
 
-
 ```
 set term x11 font "times-roman,15,normal"
 set ylabel "" font font "Times-New-Roman,15"
@@ -153,17 +153,32 @@ sudo apt-get install qtbase5-dev libqt5svg5-dev
 Working around the MySQL
 ------
 
+Official tatorial: Innodb MyIASM <br/>
 http://www.mysqltutorial.org/understand-mysql-table-types-innodb-myisam.aspx <br/>
+
+Using mysql.h in C++ <br/>
 https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-installation-source-unix.html <br/>
+
+Solving autorizaton problems in MySQL <br/>
+https://askubuntu.com/questions/766334/cant-login-as-mysql-user-root-from-normal-user-account-in-ubuntu-16-04 <br/>
+
+Install instructions
 
 ```bash
 ~ $ sudo apt-get install mysql-server
-~ $ mysql_secure_installation
+~ $ sudo mysql_secure_installation
 ~ $ mysql -t -u root -p < setup.sql
 ~ $ mysql -vvv -u root -p < clean.sql
 ~ $ mysql -u root -p 
 ~ $ mysqldump -u root -p maxwell > maxwell.sql
 ```
+Save dataset
+
+```bash
+~ $ mysqldump -u root -p maxwell > maxwell.sql
+```
+
+Example listing for newbees in MySQL
 
 ```sql
 mysql> CREATE DATABASE maxwell;

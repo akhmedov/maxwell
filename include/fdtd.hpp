@@ -9,7 +9,7 @@
 #ifndef fdtd_hpp
 #define fdtd_hpp
 
-#include <meep.hpp>
+// #include <meep.hpp>
 
 #include "abstract_field.hpp"
 

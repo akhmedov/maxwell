@@ -10,7 +10,7 @@
 
 FDTD::FDTD(Logger* global_log, double accuracy)
 {
-	auto eps = [] (const meep::vec &p) {
+	/* auto eps = [] (const meep::vec &p) {
 		if (p.x() < 2 && p.y() < 3)
 			return 12.0;
 		return 1.0;
@@ -33,7 +33,7 @@ FDTD::FDTD(Logger* global_log, double accuracy)
 		f.step();
 	}
 
-	f.output_hdf5(meep::Hz, v.surroundings());
+	f.output_hdf5(meep::Hz, v.surroundings()); */
 }
 
 double FDTD::magnetic_rho (double vt, double rho, double phi, double z) const
