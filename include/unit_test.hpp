@@ -61,6 +61,7 @@ struct UnitTest : private GnuPlot, private Math, private Integral, private KerrA
 	static bool I2_time_partder ();
 	static bool simpson2d_line ();
 	static bool simpson2d_line2 ();
+	static bool list2grid ();
 };
 
 #endif /* unit_test_hpp */

@@ -78,10 +78,10 @@ int main()
 
 	/* DUHAMEL LINEAR FIELD */
 
-	std::cout << std::endl << "PlotTest::";
-	std::cout << "plot_source() " << std::endl;
+	// std::cout << std::endl << "PlotTest::";
+	// std::cout << "plot_source() " << std::endl;
 	// PlotTest::plot_source(1);
-	PlotTest::gauss_signal(1);
+	// PlotTest::gauss_signal(1);
 
 	// std::cout << std::endl << "PlotTest::";
 	// std::cout << "Ex_derivative() " << std::endl;
@@ -89,10 +89,10 @@ int main()
 
 	/* ENERGY PLOT */
 
-	// std::cout << std::endl << "PlotTest::";
-	// std::cout << "plot_energy_slyse() " << std::endl;
+	std::cout << std::endl << "PlotTest::";
+	std::cout << "plot_energy_slyse() " << std::endl;
 	// PlotTest::plot_energy_slyse(1, 0.50);
-	// PlotTest::plot_energy_slyse(1, 1.00);
+	PlotTest::plot_energy_slyse(1, 1.00);
 	// PlotTest::plot_energy_slyse(1, 2.50);
 	// PlotTest::plot_energy_slyse(1, 5.00);
 	// PlotTest::plot_energy_slyse(1,10.00);
@@ -434,9 +434,56 @@ void PlotTest::plot_energy_max ()
 	plot->plot_multi(data, title);
 }
 
-void PlotTest::plot_energy_distribution (double tau, double max_z)
+void PlotTest::plot_energy_distribution (double tau)
 {
-	// TODO: longitudial energy distribution 
+	double R = 1, A0 = 1;
+	double eps_r = 1, mu_r = 1;
+	
+	double range = R, z = R/2, max0[] = {1,1,1};
+
+	PlotTest::global_conf->field_component(FieldComponent::W);
+	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
+	PlotTest::global_conf->duration(tau);
+
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
+	MissileField* linear = new MissileField(source, medium);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+
+	Manager<0>* thead_core = new Manager<0>(4, NULL);
+	thead_core->progress_bar(true);
+
+	for (double x = -range; x <= range; x += 0.05) {
+		for (double y = -range; y <= range; y += 0.05) {
+			double rho = std::sqrt(x*x + y*y);
+			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+			if (from - 0.01 > 0) from -= 0.01;
+			double to = tau + std::sqrt((rho+R)*(rho+R) + z*z);
+			thead_core->add_argument( {x,y,z,from,to+0.01} );
+		}
+	}
+
+	auto property = &AbstractField::energy_cart;
+	auto function = std::make_pair(property, duhamel);
+	thead_core->call({function});
+
+	std::vector<std::vector<double>> data = thead_core->get_value();
+
+	for (auto&& i : data) {
+		i[3] *= z*z / max0[3]; // norm W
+		i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
+	}
+
+	// GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(z) + ".gnp" );
+	// plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	// plot->set_colormap(Colormap::gray);
+	// plot->set_ox_label("x, m");
+	// plot->set_oy_label("y, m");
+	// plot->grid_on();
+	// plot->cage_on();
+	// plot->plot_colormap(data);
 }
 
 void PlotTest::plot_energy_slyse (double tau, double z)
@@ -445,7 +492,7 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 
 	double R = 1, A0 = 1;
 	double eps_r = 1, mu_r = 1;
-	double range = z/4 + 2*R;
+	double range = z/2;
 
 	PlotTest::global_conf->field_component(FieldComponent::W);
 	PlotTest::global_conf->impulse_shape(ImpulseShape::sinc);
@@ -458,11 +505,11 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
 
-	SafeManager<0>* thead_core = new SafeManager<0>(4, PlotTest::global_conf, NULL);
+	Manager<0>* thead_core = new Manager<0>(6, NULL);
 	thead_core->progress_bar(true);
 
-	for (double x = -range; x <= range; x += 0.05) {
-		for (double y = -range; y <= range; y += 0.05) {
+	for (double x = -range; x <= range; x += 0.5) {
+		for (double y = -range; y <= range; y += 0.5) {
 			double rho = std::sqrt(x*x + y*y);
 			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
@@ -496,7 +543,7 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 		if (y > 1e-8) agumented.push_back( {x,-y,W} );
 		if (x > 1e-8 && y > 1e-8) agumented.push_back( {-x,-y,W} );
 	}
-	data.insert(std::end(data), std::begin(agumented=), std::end(agumentat)); */
+	data.insert(std::end(data), std::begin(agumented), std::end(agumentat)); */
 
 	GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(z) + ".gnp" );
 	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );

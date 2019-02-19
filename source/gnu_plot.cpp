@@ -160,10 +160,39 @@ void GnuPlot::write_script (const std::string &text) const
 	std::cout << "Done." << std::endl;
 }
 
+std::vector<std::vector<double>> GnuPlot::datagrid_from (std::vector<std::vector<double>> datalist, int axis1, int axis2)
+{
+	std::map<double, std::map<double,double>> maped; // y -> {x -> F}
+
+	for (auto i : datalist) {
+		double x = i[axis1];
+		double y = i[axis2];
+		double F = i.back();
+		maped[y][x] = F;
+	}
+
+	std::vector<std::vector<double>> grid;
+
+	while (!maped.empty()) {
+		
+		auto sallestY = maped.begin();
+		std::map<double,double> map_sameY = sallestY->second; // get submap with same Y
+		maped.erase(sallestY->first); // erase submap from master map
+
+		std::vector<double> vec_sameY; // transform map to vector
+		for (auto it = map_sameY.begin(); it != map_sameY.end(); ++it)
+        	vec_sameY.push_back( it->second );
+
+		grid.push_back(vec_sameY); // add line to result matrix
+	}
+	
+	return grid;
+}
+
 std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<std::vector<double>> cart)
 {
 	const double eps = 1e-8;
-	std::vector<std::vector<std::vector<double>>> matrix_ext;
+	std::vector<std::vector<std::vector<double>>> matrix_ext; // x, y, {data}
 	
 	while (!cart.empty()) {
 		
@@ -179,16 +208,19 @@ std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<
 				samey_idx.push_back(i);
 			}
 		}
+
 		// erase the points from cart
 		std::sort(samey_idx.rbegin(), samey_idx.rend());
 		for (auto i : samey_idx) {
 			cart.erase(cart.begin() + i);
 		}
+
 		// sort selection by x
 		std::sort(samey.begin(), samey.end(), 
 			[] (const std::vector<double>& a, const std::vector<double>& b) 
 			{ return a[0] < b[0]; }
 		);
+
 		// insert selection to matrix_ext
 		matrix_ext.push_back(samey);
 	}
@@ -204,8 +236,8 @@ std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<
 
 std::vector<std::vector<double>> GnuPlot::grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix_ext)
 {
-	auto y_size = matrix_ext.size();
-	auto x_size = matrix_ext[0].size();
+	std::size_t y_size = matrix_ext.size();
+	std::size_t x_size = matrix_ext[0].size();
 
 	std::vector<std::vector<double>> matrix(
 		y_size, std::vector<double>(x_size, 0.0)
@@ -220,7 +252,7 @@ std::vector<std::vector<double>> GnuPlot::grep_magnitude (const std::vector<std:
 
 void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array)
 {
-	auto matrix_ext = GnuPlot::matrix_from(array);
+	auto matrix_ext = GnuPlot::matrix_from(array); // 2D grid from data list
 	auto matrix = GnuPlot::grep_magnitude(matrix_ext);
 
 	std::string data;

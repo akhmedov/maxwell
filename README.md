@@ -45,7 +45,7 @@ BUILD INSTRUCTIONS FOR UBUNTU 16.04 x64
 m4                 - dependences for gmp <br/>
 libx11-dev         - dependences for gnuplot <br/>
 libmysqlclient-dev - mysql client connector <br/>
-gfortran		   - fortran77 compiler for св <br/>
+gfortran		   - fortran77 compiler for ... <br/>
 libgd2-dev		   - PNG JPEG anf TIFF support for gnuplot <br/>
 gfortran		   - is needed for meep
 

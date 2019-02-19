@@ -63,8 +63,10 @@ struct GnuPlot {
 	void call_gnuplot ();
 
 protected:
-	static std::vector<std::vector<std::vector<double>>> matrix_from (std::vector<std::vector<double>> array);
-	static std::vector<std::vector<double>> grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix);
+
+	static std::vector<std::vector<double>> datagrid_from (std::vector<std::vector<double>> array, int axis1, int axis2);
+	static std::vector<std::vector<std::vector<double>>> matrix_from (std::vector<std::vector<double>> array); // DEPRICATED: use datagrid_from()
+	static std::vector<std::vector<double>> grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix); // DEPRICATED: use datagrid_from()
 
 private:
 	void direct_gnuplot_call (const Text &plot_data) const;

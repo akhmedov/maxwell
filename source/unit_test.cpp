@@ -620,6 +620,39 @@ bool UnitTest::snr_dataset ()
 	return true;
 }
 
+bool UnitTest::list2grid ()
+{
+	std::vector<std::vector<double>> datalist;
+	datalist.push_back({-1,  1,  9});
+	datalist.push_back({ 0,  1,  8});
+	datalist.push_back({ 1,  1,  7});
+	datalist.push_back({-1,  0,  6});
+	datalist.push_back({ 0,  0,  5});
+	datalist.push_back({ 1,  0,  4});
+	datalist.push_back({-1, -1,  3});
+	datalist.push_back({ 0, -1,  2});
+	datalist.push_back({ 1, -1,  1});
+
+	std::vector<std::vector<double>> grid = GnuPlot::datagrid_from (datalist, 0, 1);
+
+	auto matrix_ext = GnuPlot::matrix_from(datalist); // 2D grid from data list
+	auto matrix = GnuPlot::grep_magnitude(matrix_ext);
+
+	cout << endl;
+	for (auto& x : matrix) {
+		for (auto& y : x)
+			cout << y << ' ';
+		cout << endl;
+	}	
+
+	cout << endl;
+	for (auto& x : grid) {
+		for (auto& y : x)
+			cout << y << ' ';
+		cout << endl;
+	}
+}
+
 int main()
 {
 	cout << boolalpha;
@@ -627,6 +660,10 @@ int main()
 	/* cout << "GnuPlot::UnitTest::hardcode_dataset \t\t"; 
 	cout.flush();
 	cout << UnitTest::hardcode_dataset() << endl; */
+
+	cout << "GnuPlot::UnitTest::list2grid \t\t"; 
+	cout.flush();
+	cout << UnitTest::list2grid() << endl;
 
 	cout << "GnuPlot::UnitTest::snr_dataset \t\t"; 
 	cout.flush();
