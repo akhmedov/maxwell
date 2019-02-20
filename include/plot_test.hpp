@@ -36,7 +36,7 @@ struct PlotTest : private Math, private Integral, private KerrAmendment, private
 	static void plot_log_from_n ();
 	static void plot_Ex_from_tau ();
 	static void plot_energy_slyse (double tau, double z);
-	static void plot_energy_distribution (double tau);
+	static void plot_energy_distribution (double tau, double max_z);
 	static void plot_energy_max ();
 	static void Ex_derivative (double tau);
 	static void plot_source (std::size_t order);

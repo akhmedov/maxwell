@@ -92,7 +92,7 @@ int main()
 	std::cout << std::endl << "PlotTest::";
 	std::cout << "plot_energy_slyse() " << std::endl;
 	// PlotTest::plot_energy_slyse(1, 0.50);
-	PlotTest::plot_energy_slyse(1, 1.00);
+	// PlotTest::plot_energy_slyse(1, 1.00);
 	// PlotTest::plot_energy_slyse(1, 2.50);
 	// PlotTest::plot_energy_slyse(1, 5.00);
 	// PlotTest::plot_energy_slyse(1,10.00);
@@ -100,6 +100,8 @@ int main()
 	// PlotTest::plot_energy_slyse(1,20.00);
 	// PlotTest::plot_energy_slyse(1,30.00);
 	// PlotTest::plot_energy_slyse(1,40.00);
+
+	PlotTest::plot_energy_distribution(1, 5);
 
 	/* std::cout << std::endl << "PlotTest::plot_energy_max(tau) ... " << std::endl;
 	PlotTest::plot_energy_max();
@@ -434,12 +436,14 @@ void PlotTest::plot_energy_max ()
 	plot->plot_multi(data, title);
 }
 
-void PlotTest::plot_energy_distribution (double tau)
+void PlotTest::plot_energy_distribution (double tau, double max_z)
 {
+	auto str_of = [] (double a) {return std::to_string(a).substr(0,5);};
+
 	double R = 1, A0 = 1;
 	double eps_r = 1, mu_r = 1;
-	
-	double range = R, z = R/2, max0[] = {1,1,1};
+
+	double x = 0;
 
 	PlotTest::global_conf->field_component(FieldComponent::W);
 	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
@@ -452,11 +456,11 @@ void PlotTest::plot_energy_distribution (double tau)
 	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
 
-	Manager<0>* thead_core = new Manager<0>(4, NULL);
+	Manager<0>* thead_core = new Manager<0>(6, NULL);
 	thead_core->progress_bar(true);
 
-	for (double x = -range; x <= range; x += 0.05) {
-		for (double y = -range; y <= range; y += 0.05) {
+	for (double y = -2*R; y <= 2*R; y += 0.05) {
+		for (double z = 0; z <= max_z; z += 0.05) {
 			double rho = std::sqrt(x*x + y*y);
 			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
@@ -466,24 +470,19 @@ void PlotTest::plot_energy_distribution (double tau)
 	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, duhamel);
+	auto function = std::make_pair(property, linear);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
-	for (auto&& i : data) {
-		i[3] *= z*z / max0[3]; // norm W
-		i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
-	}
-
-	// GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(z) + ".gnp" );
-	// plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
-	// plot->set_colormap(Colormap::gray);
-	// plot->set_ox_label("x, m");
-	// plot->set_oy_label("y, m");
-	// plot->grid_on();
-	// plot->cage_on();
-	// plot->plot_colormap(data);
+	GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(max_z) + ".gnp" );
+	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_colormap(Colormap::gray);
+	plot->set_ox_label("y, m");
+	plot->set_oy_label("z, m");
+	plot->grid_on();
+	plot->cage_on();
+	plot->plot_colormap(data, 1, 2);
 }
 
 void PlotTest::plot_energy_slyse (double tau, double z)
@@ -508,8 +507,8 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	Manager<0>* thead_core = new Manager<0>(6, NULL);
 	thead_core->progress_bar(true);
 
-	for (double x = -range; x <= range; x += 0.5) {
-		for (double y = -range; y <= range; y += 0.5) {
+	for (double x = -range; x <= range; x += 0.05) {
+		for (double y = -range; y <= range; y += 0.05) {
 			double rho = std::sqrt(x*x + y*y);
 			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
@@ -519,7 +518,8 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, duhamel);
+	auto function = std::make_pair(property, linear);
+	// auto function = std::make_pair(property, duhamel);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
@@ -529,10 +529,10 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 		if (point[3] > max0[3])
 			max0 = point;
 
-	for (auto&& i : data) {
-		i[3] *= z*z / max0[3]; // norm W
-		i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
-	}
+	// for (auto&& i : data) {
+	// 	i[3] *= z*z / max0[3]; // norm W
+	// 	i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
+	// }
 
 	std::cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << std::endl;
 
@@ -552,7 +552,7 @@ void PlotTest::plot_energy_slyse (double tau, double z)
 	plot->set_oy_label("y, m");
 	plot->grid_on();
 	plot->cage_on();
-	plot->plot_colormap(data);
+	plot->plot_colormap(data, 0, 1);
 }
 
 void PlotTest::Ex_derivative (double tau)

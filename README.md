@@ -3,7 +3,7 @@ ABSTRACT
 
 ```diff
 - WARNING: The project is in the private beta state!
-- The first ready to use release is planning for 
+- The first ready to use release is planning for
 - June 7, 2019
 ```
 
@@ -37,9 +37,10 @@ Subsystem for Linux. Following OS list is recommended for development
 process, the system is tested on the list:
 
 - GNU/Linux Ubuntu 16.04 LTE x86_64 (GNU GCC version 5.4.0 20160607)
+- GNU/Linux Ubuntu 18.04 LTE x86_64 (GNU GCC version 7.3.0 20180607)
 - MacOS Sierra 10.12.5 x86_64 (Apple LLVM version 8.1.0)
 
-BUILD INSTRUCTIONS FOR UBUNTU 16.04 x64
+BUILD INSTRUCTIONS FOR UBUNTU 18.04 x64
 ======
 
 m4                 - dependences for gmp <br/>

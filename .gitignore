@@ -3,8 +3,9 @@
 !/.gitignore
 !/.vscode
 
-# Plot output for gnuplot
+# Plot output for gnuplot and pictures
 /*.gnp
+/*.png
 
 # Project build dirictorice with contents
 /meep/
