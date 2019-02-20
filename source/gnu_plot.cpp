@@ -1,3 +1,12 @@
+//
+//  gnu_plot.cpp
+//  Maxwell
+//
+//  Created by Rolan Akhmedov on 18.05.18.
+//  Copyright © 2018 Rolan Akhmedov. All rights reserved.
+//
+
+
 #include "gnu_plot.hpp"
 
 const std::string GnuPlot::LINE =
@@ -160,7 +169,7 @@ void GnuPlot::write_script (const std::string &text) const
 	std::cout << "Done." << std::endl;
 }
 
-std::vector<std::vector<double>> GnuPlot::datagrid_from (std::vector<std::vector<double>> datalist, int axis1, int axis2)
+std::vector<std::vector<double>> GnuPlot::datagrid_from (const std::vector<std::vector<double>>& datalist, int axis1, int axis2)
 {
 	std::map<double, std::map<double,double>> maped; // y -> {x -> F}
 
@@ -185,75 +194,13 @@ std::vector<std::vector<double>> GnuPlot::datagrid_from (std::vector<std::vector
 
 		grid.push_back(vec_sameY); // add line to result matrix
 	}
-	
+
 	return grid;
 }
 
-std::vector<std::vector<std::vector<double>>> GnuPlot::matrix_from (std::vector<std::vector<double>> cart)
+void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array, int axis1, int axis2)
 {
-	const double eps = 1e-8;
-	std::vector<std::vector<std::vector<double>>> matrix_ext; // x, y, {data}
-	
-	while (!cart.empty()) {
-		
-		std::vector<std::vector<double>> samey;
-		std::vector<std::size_t> samey_idx;
-		
-		// select points with same y
-		for (std::size_t i = 0; i < cart.size(); i++) {
-			if (cart[i].size() != 3)
-				throw std::invalid_argument("Illegal format point (size)");
-			if (std::abs(cart[i][1] - cart[0][1]) <= eps) {
-				samey.push_back(cart[i]);
-				samey_idx.push_back(i);
-			}
-		}
-
-		// erase the points from cart
-		std::sort(samey_idx.rbegin(), samey_idx.rend());
-		for (auto i : samey_idx) {
-			cart.erase(cart.begin() + i);
-		}
-
-		// sort selection by x
-		std::sort(samey.begin(), samey.end(), 
-			[] (const std::vector<double>& a, const std::vector<double>& b) 
-			{ return a[0] < b[0]; }
-		);
-
-		// insert selection to matrix_ext
-		matrix_ext.push_back(samey);
-	}
-
-	// sort matrix_ext by y
-	std::sort(matrix_ext.begin(), matrix_ext.end(), 
-			[] (const std::vector<std::vector<double>>& a, const std::vector<std::vector<double>>& b) 
-			{ return a[0][1] < b[0][1]; }
-	);
-
-	return matrix_ext;
-}
-
-std::vector<std::vector<double>> GnuPlot::grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix_ext)
-{
-	std::size_t y_size = matrix_ext.size();
-	std::size_t x_size = matrix_ext[0].size();
-
-	std::vector<std::vector<double>> matrix(
-		y_size, std::vector<double>(x_size, 0.0)
-	);
-
-	for (std::size_t y = 0; y < matrix_ext.size(); y++)
-		for (std::size_t x = 0; x < matrix_ext[0].size(); x++)
-			matrix[y][x] = matrix_ext[y][x][2];
-
-	return matrix;
-}
-
-void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array)
-{
-	auto matrix_ext = GnuPlot::matrix_from(array); // 2D grid from data list
-	auto matrix = GnuPlot::grep_magnitude(matrix_ext);
+	auto matrix = GnuPlot::datagrid_from(array,axis1,axis2);
 
 	std::string data;
 	for (auto&& line : matrix) {

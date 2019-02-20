@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 
 #include "config.hpp"
 
@@ -36,9 +37,10 @@ using Plot3D = std::vector<std::tuple<T, T, T>>;
 
 /*
 -- Data structure for GnuPlot:: module 
--- plot2d     item: x f
--- plot3d     item: x y f
--- plot_multi item: x y f1 f2 f3 ...
+-- plot2d     		data: x f
+-- plot3d     		data: x y f
+-- plot_multi 		data: x y f1 f2 f3 ...
+-- plot_colormap	data: {{f(x1,y1), f(x1,y2)}, {f(x2,y1), f(x2,y2)}}
 */
 
 struct GnuPlot {
@@ -59,14 +61,12 @@ struct GnuPlot {
 	void plot_multi (const std::vector<std::vector<double>> &array, 
 					 const std::vector<std::string> &title);
 	void plot3d (const std::vector<std::vector<double>> &matrix);
-	void plot_colormap (const std::vector<std::vector<double>> &array);
+	void plot_colormap (const std::vector<std::vector<double>> &array, int axis1, int axis2);
 	void call_gnuplot ();
 
 protected:
 
-	static std::vector<std::vector<double>> datagrid_from (std::vector<std::vector<double>> array, int axis1, int axis2);
-	static std::vector<std::vector<std::vector<double>>> matrix_from (std::vector<std::vector<double>> array); // DEPRICATED: use datagrid_from()
-	static std::vector<std::vector<double>> grep_magnitude (const std::vector<std::vector<std::vector<double>>> &matrix); // DEPRICATED: use datagrid_from()
+	static std::vector<std::vector<double>> datagrid_from (const std::vector<std::vector<double>>& array, int axis1, int axis2);
 
 private:
 	void direct_gnuplot_call (const Text &plot_data) const;
