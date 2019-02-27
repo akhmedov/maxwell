@@ -27,16 +27,16 @@ include_directories(
     ${CORE_DIR}/include
     ${GNUMP_DIR}/include
 )
-find_library(GMP_LIB gmp HINTS ${GNUMP_DIR}/lib)
+
 link_libraries(
     core
     ${GMP_LIB}
-    mysqlclient
+    ${MYSQL_LIB}
 )
 
 file(GLOB sources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp")
 foreach(source ${sources})
-    string(REPLACE ".cpp" "" test ${source})
+    string(REPLACE ".cpp" ".out" test ${source})
 
     add_executable(${test} ${CMAKE_CURRENT_SOURCE_DIR}/${source})
 endforeach()

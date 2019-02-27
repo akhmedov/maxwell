@@ -9,7 +9,7 @@
 #ifndef mysql_connect_hpp
 #define mysql_connect_hpp
 
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 #include <thread>
 #include <chrono>

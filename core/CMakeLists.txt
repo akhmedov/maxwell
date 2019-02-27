@@ -42,9 +42,21 @@ add_library(${PROJECT_NAME} SHARED
 
 add_dependencies(${PROJECT_NAME} generate_build_version)
 
+execute_process(COMMAND bash -c "mysql_config --variable=pkgincludedir" OUTPUT_VARIABLE MYSQL_INC_DIR)
 target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${GNUMP_DIR}/include>
+    $<BUILD_INTERFACE:${MYSQL_INC_DIR}>
+)
+
+find_library(GMP_LIB gmp HINTS ${GNUMP_DIR}/lib)
+execute_process(COMMAND bash -c "mysql_config --variable=pkglibdir" OUTPUT_VARIABLE MYSQL_LIB_DIR)
+string(STRIP ${MYSQL_LIB_DIR} MYSQL_LIB_DIR) # remove widespace in the end of MYSQL_LIB_DIR variable
+find_library(MYSQL_LIB mysqlclient HINTS ${MYSQL_LIB_DIR})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    ${GMP_LIB}
+    ${MYSQL_LIB}
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
