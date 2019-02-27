@@ -118,6 +118,19 @@ USEFULL DEBUG COMMANDS
 ~ $ date && nice -n 10 ./build/gnuplot --conf PATH --model NUM && date
 ```
 
+Script that archive model after last run
+
+```bash
+#!/bin/bash
+mkdir -p archive/$1
+mysqldump --databases maxwell -umaxwell -pmaxwell > archive/$1/maxwell.sql
+mysql -umaxwell -pmaxwell < clean.sql
+mv maxwell-*.log archive/$1/
+mv maxwell.gnp archive/$1/
+cp maxwell.conf archive/$1/
+touch archive/$1/read_me.txt
+```
+
 FAQ FOR MAXWELL'S DEPENDENCIES
 ======
 

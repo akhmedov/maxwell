@@ -18,7 +18,6 @@
 #define STEP 	   1e-4
 
 #include "logger.hpp"
-#include "config.hpp"
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "linear_field.hpp"

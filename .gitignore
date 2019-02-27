@@ -7,14 +7,12 @@
 /*.gnp
 /*.png
 
-# Project build dirictorice with contents
-/meep/
+# Project dependencies 
 /gnump/
 /gnuplot/
-/build/*.o
-/build/maxwell
-/build/plot_test
-/build/unit_test
+
+# All build files
+/build/
 
 # All log files
 /**/*.log

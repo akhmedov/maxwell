@@ -57,7 +57,8 @@
 			"utility": "cpp",
 			"valarray": "cpp",
 			"condition_variable": "cpp",
-			"optional": "cpp"
+			"optional": "cpp",
+			"*.old": "cpp"
 		}
 	}
 }

@@ -19,7 +19,6 @@
 #include <exception>
 #include <iostream>
 
-#include "config.hpp"
 #include "integral.hpp"
 #include "phys_math.hpp"
 #include "linear_field.hpp"
