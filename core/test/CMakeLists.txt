@@ -42,5 +42,4 @@ foreach(SOURCE ${SOURCES})
 
     add_executable(${TEST} ${SOURCE})
     add_test(${TEST} ${TEST})
-
 endforeach()

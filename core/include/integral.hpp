@@ -6,70 +6,87 @@
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
-#ifndef UNUSED
-#define UNUSED(expr) do { (void)(expr); } while ( false )
-#endif
+#pragma once
 
-#ifndef integral_hpp
-#define integral_hpp
-
-#include <cmath>
-#include <random>
-#include <vector>
-#include <regex> 		// std::replace()
-#include <numeric>		// std::accumulate
-#include <utility>		// std::pair std::tiple
-#include <valarray>
 #include <functional>
-#include <iostream>
+#include <random>
+#include <valarray>
+#include <vector>
 
-typedef std::vector<std::pair<double,double>> vector_pair_dd;
-typedef std::vector<std::tuple<double,std::size_t,double>> vector_tuple_did;
+using vector_pair_dd = std::vector<std::pair<double,double>>;
+using vector_tuple_did = std::vector<std::tuple<double,std::size_t,double>> ;
 
-struct Integral { };
+struct Integral {}; // TODO: Why it's needed?
 
 struct Simpson : public Integral {
-	Simpson (std::size_t terms);
-	double value (double from, double to, const std::function<double(double)> &f) const;
+	Simpson(std::size_t terms) : quadr_terms(terms) {}
+	double value (double from, double to, const std::function<double(double)> &f) const; // TODO: Use aliases for all std::funciton types?
+
 private:
-	const std::size_t quadr_terms;
+	std::size_t quadr_terms{};
 };
 
 struct SimpsonRunge : public Integral {
-	SimpsonRunge (std::size_t node_number, double precision /* % */, std::size_t max_nodes = 1e4);
+	SimpsonRunge (std::size_t node_number, double precision /* % */, std::size_t nodes = 1e4)
+		: init_nodes(node_number), max_nodes(nodes), epsilon(precision)
+	{
+		if (node_number == 0) throw std::invalid_argument("Zero node number is not allowed.");
+	}
+	
 	double value (double from, double to, const std::function<double(double)> &f);
-	std::size_t current_units () const;
+	std::size_t current_units () const { return running_units; }
+
 private:
-	const std::size_t init_nodes;
-	const std::size_t max_nodes;
-	const double epsilon;
-	std::size_t running_units;
+	std::size_t init_nodes{};
+	std::size_t max_nodes{};
+	double epsilon{};
+	std::size_t running_units{ 1 };
 };
 
 struct Simpson2D : public Integral {
-	Simpson2D ( const vector_tuple_did &limits );
+	Simpson2D ( const vector_tuple_did &limits )
+		: x_min(std::get<0>(limits[0])), x_terms(std::get<1>(limits[0])), x_max(std::get<2>(limits[0])),
+  		  y_min(std::get<0>(limits[1])), y_terms(std::get<1>(limits[1])), y_max(std::get<2>(limits[1])) 
+	{ 
+		if (limits.size() != 2) 
+			throw std::invalid_argument("Simpson2D: Only 3dim is implemented!");
+		if ( (x_min >= x_max) || (y_min >= y_max) )
+			throw std::invalid_argument("Low bound of integral is bigger then upper.");
+	}
+
 	double value (const std::function<double(double,double)> &func) const;
+
 private:
+	double x_min{};
+	std::size_t x_terms{};
+	double x_max{};
 
-	double x_min;
-	std::size_t x_terms;
-	double x_max;
-
-	double y_min;
-	std::size_t y_terms;
-	double y_max;
+	double y_min{};
+	std::size_t y_terms{};
+	double y_max{};
 };
 
 struct Simpson2D_line : public Integral {
-	Simpson2D_line ();
-	void first_limit (double x_min, std::size_t x_terms, double x_max);
-	void second_limit (const std::function<double(double)> &y_min, const std::function<std::size_t(double)> &y_terms, const std::function<double(double)> &y_max);
-	double value (const std::function<double(double,double)> &func) const;
-private:
+	void first_limit (double from, std::size_t terms, double to)
+	{
+		x_min = from;
+		x_terms = terms;
+		x_max = to;
+	}
 
-	double x_min;
-	std::size_t x_terms;
-	double x_max;
+	void second_limit (const std::function<double(double)> &from, const std::function<std::size_t(double)> &terms, const std::function<double(double)> &to)
+	{
+		y_min = from;
+		y_terms = terms;
+		y_max = to;
+	}
+
+	double value (const std::function<double(double,double)> &func) const;
+
+private:
+	double x_min{};
+	std::size_t x_terms{};
+	double x_max{};
 
 	std::function<double(double)> y_min;
 	std::function<std::size_t(double)> y_terms;
@@ -79,23 +96,22 @@ private:
 struct Simpson3D : public Integral {
 	Simpson3D ( const vector_tuple_did &limits );
 	double value (const std::function<double(double,double,double)> &func) const;
+
 private:
+	double x_min{};
+	std::size_t x_terms{};
+	double x_max{};
 
-	double x_min;
-	std::size_t x_terms;
-	double x_max;
+	double y_min{};
+	std::size_t y_terms{};
+	double y_max{};
 
-	double y_min;
-	std::size_t y_terms;
-	double y_max;
-
-	double z_min;
-	std::size_t z_terms;
-	double z_max;
+	double z_min{};
+	std::size_t z_terms{};
+	double z_max{};
 };
 
 struct MonteCarlo : public Integral {
-
 	MonteCarlo ( std::size_t rolls, const vector_pair_dd &limits );
 	std::valarray<double> random_array ();
 
@@ -105,19 +121,25 @@ struct MonteCarlo : public Integral {
 	double value ( const std::function<double(double, double, double, double)> &func );
 
 private:
-	double volume;
-	std::size_t rand_rolls;
+	double volume{};
+	std::size_t rand_rolls{};
 	// TODO: implement std::normal_distribution<>
 	std::vector<std::mt19937_64> generator;
 	std::vector<std::uniform_real_distribution<double>> distribution;
 };
 
 struct GaussLaguerre : public Integral {
-	GaussLaguerre ();
-	GaussLaguerre (std::size_t terms);
+	GaussLaguerre () = default;
+	GaussLaguerre (std::size_t terms)
+	{
+		if (terms > polynom_data.size()) 
+			throw std::logic_error("Max terms number extended!");
+	}
+
 	double value (std::function<double(double)> f) const;
+	
 private:
-	const std::vector<std::pair<double, double>> polynom_data {
+	std::vector<std::pair<double, double>> polynom_data {
 		/*				root				weight				*/
 		std::make_pair( 0.0933078120170,	0.218234885940		),
 		std::make_pair( 0.4926917403020,	0.342210177923		),
@@ -135,7 +157,5 @@ private:
 		std::make_pair( 38.530683306486,	0.148302705111e-15	),
 		std::make_pair( 48.026085572686,	0.160059490621e-19	)
 	};
-	const std::size_t quadr_terms;
+	std::size_t quadr_terms{ polynom_data.size() };
 };
-
-#endif /* integral_hpp */

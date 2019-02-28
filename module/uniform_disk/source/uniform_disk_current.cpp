@@ -302,7 +302,7 @@ double MissileField::magnetic_z (double vt, double rho, double phi, double z) co
 	try { 
 		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
 	} catch (double not_trusted) {
-		std::string mesg = AbstractField::int_exept_mgs;
+		std::string mesg = AbstractField::int_exept_mgs; // Removed from AbstractField
 		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
 		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
 		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));

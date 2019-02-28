@@ -23,7 +23,7 @@ bool Test::simpson2d_line ()
 
 	Simpson2D_line integral = Simpson2D_line();
 	integral.first_limit(0, 400, a);
-	auto min_y  = [] (double x) { UNUSED(x); return 0;     };
+	auto min_y  = [] (double/*x*/) { return 0;     };
 	auto term_y = [] (double x) { return (std::size_t) 200*x; };
 	auto max_y  = [] (double x) { return x;     };
 	integral.second_limit(min_y, term_y, max_y);

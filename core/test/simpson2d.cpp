@@ -20,8 +20,7 @@ bool Test::simpson2d ()
 {
 	double radius = 1;
 
-	auto func = [] (double rho, double phi) {
-		UNUSED(phi);
+	auto func = [] (double rho, double/*phi*/) {
 		return rho;
 	};
 

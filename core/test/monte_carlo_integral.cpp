@@ -20,8 +20,7 @@ bool Test::monte_carlo_integral ()
 {
 	double radius = 1;
 
-	auto func = [] (double rho, double phi, double theta) {
-		UNUSED(phi);
+	auto func = [] (double rho, double/*phi*/, double theta) {
 		return rho * rho * sin(theta);
 	};
 
