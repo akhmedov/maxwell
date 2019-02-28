@@ -16,8 +16,8 @@ project(${PROJECT_NAME}
 )
 
 set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -std=c++14 -pipe -Wall -Wextra -Wpedantic -Wshadow \
-    -Wundef -Wno-missing-field-initializers -fPIC"
+    "${CMAKE_CXX_FLAGS} -std=c++14 -pipe -fPIC \
+    -Wall -Wextra -Wpedantic -Wshadow -Wundef -Wno-missing-field-initializers"
 )
 
 set(CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)

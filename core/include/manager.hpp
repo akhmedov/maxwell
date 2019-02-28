@@ -11,7 +11,7 @@
 
 #include "logger.hpp"
 #include "mysql_connect.hpp"
-#include "abstract_field.hpp"å
+#include "abstract_field.hpp"
 
 #include <typeinfo>
 #include <typeindex>
