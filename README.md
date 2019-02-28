@@ -176,6 +176,8 @@ https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-installation-source-uni
 Solving autorizaton problems in MySQL <br/>
 https://askubuntu.com/questions/766334/cant-login-as-mysql-user-root-from-normal-user-account-in-ubuntu-16-04 <br/>
 
+https://askubuntu.com/questions/992771/mysql-u-root-doesnt-work-but-sudo-mysql-u-root-does-why/1038540 <br/>
+
 Install instructions
 
 ```bash

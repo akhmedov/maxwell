@@ -6,13 +6,18 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
+#include "phys_math.hpp"
 #include "integral.hpp"
+
+#include "updisk_meandr.hpp"
+#include "uniform_disk_current.hpp"
+#include "kerr_amendment.hpp"
 
 #include <iomanip>
 #include <iostream>
 using namespace std;
 
-struct Test {
+struct Test : KerrAmendment {
     static bool I1_time_partder ();
 };
 

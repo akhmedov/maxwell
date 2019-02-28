@@ -12,6 +12,7 @@
 
 #include "abstract_field.hpp"
 #include "linear_duhamel.hpp"
+#include "noise.hpp"
 
 #include "manager.hpp"
-#include "config.hpp"
+#include "logger.hpp"

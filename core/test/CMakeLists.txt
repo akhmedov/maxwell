@@ -9,34 +9,35 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(PROJECT_NAME "core-test")
-
-project(${PROJECT_NAME}
-    VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
-    LANGUAGES CXX
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(SOURCES
+    ${SOURCE_DIR}/bessel_perp.cpp
+    ${SOURCE_DIR}/binom_prod.cpp
+    ${SOURCE_DIR}/invers_sqrt.cpp
+    ${SOURCE_DIR}/monte_carlo_improper.cpp
+    ${SOURCE_DIR}/monte_carlo_integral.cpp
+    ${SOURCE_DIR}/monte_carlo_vector.cpp
+    ${SOURCE_DIR}/next_prime.cpp
+    ${SOURCE_DIR}/simpson2d.cpp
+    ${SOURCE_DIR}/simpson2d_line2.cpp
+    ${SOURCE_DIR}/simpson2d_line.cpp
+    ${SOURCE_DIR}/simpson3d.cpp
+    ${SOURCE_DIR}/simpson_runge_2d.cpp
+    ${SOURCE_DIR}/simpson_runge.cpp
+    ${SOURCE_DIR}/yacobi_pol_compare.cpp
+    ${SOURCE_DIR}/yacobi_pol_property.cpp
 )
 
-set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -std=c++14 -pipe -Wall -Wextra -Wpedantic -Wshadow \
-    -Wundef -Wno-missing-field-initializers -fPIC"
-)
-
-set(CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-set(GNUMP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../gnump)
-
-include_directories(
-    ${CORE_DIR}/include
-    ${GNUMP_DIR}/include
-)
+project(${PROJECT_NAME} LANGUAGES CXX)
 
 link_libraries(
-    core
-    ${GMP_LIB}
-    ${MYSQL_LIB}
+    maxwell
 )
 
-file(GLOB sources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp")
-foreach(source ${sources})
-    string(REPLACE ".cpp" ".out" test ${source})
+foreach(SOURCE ${SOURCES})
+    get_filename_component(SOURCE_NAME ${SOURCE} NAME)
+    string(REPLACE ".cpp" "" TEST ${SOURCE_NAME})
 
-    add_executable(${test} ${CMAKE_CURRENT_SOURCE_DIR}/${source})
+    add_executable(${TEST} ${SOURCE})
+    add_test(${TEST} ${TEST})
 endforeach()
