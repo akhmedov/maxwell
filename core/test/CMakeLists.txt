@@ -25,6 +25,7 @@ set(SOURCES
     ${SOURCE_DIR}/simpson3d.cpp
     ${SOURCE_DIR}/simpson_runge_2d.cpp
     ${SOURCE_DIR}/simpson_runge.cpp
+    ${SOURCE_DIR}/vector_to_matrix.cpp
     ${SOURCE_DIR}/yacobi_pol_compare.cpp
     ${SOURCE_DIR}/yacobi_pol_property.cpp
 )

@@ -12,7 +12,9 @@ set(PROJECT_NAME maxwell)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(SOURCES
     ${SOURCE_DIR}/abstract_field.cpp
+    ${SOURCE_DIR}/dataset.cpp
     ${SOURCE_DIR}/function.cpp
+    ${SOURCE_DIR}/gnu_plot.cpp
     ${SOURCE_DIR}/integral.cpp
     ${SOURCE_DIR}/linear_duhamel.cpp
     ${SOURCE_DIR}/linear_field.cpp
@@ -42,6 +44,9 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC ${GNUMP_LIB}
     PRIVATE ${MYSQL_LIB}
 )
+if (${UNIX})
+    target_link_libraries(${PROJECT_NAME} INTERFACE pthread)
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${VERSION_MAJOR}

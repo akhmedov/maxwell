@@ -8,11 +8,25 @@
 
 #include "maxwell.hpp"
 #include "dataset.hpp"
+#include "uniform_disk_current.hpp"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
+
+AbstractField* updisk_field (const std::function<double(double)>& f) 
+{
+	double eps_r = 1, mu_r = 1;
+	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
+	UniformPlainDisk* source = new UniformPlainDisk(RADIUS, AMPLITUDE);
+	MissileField* on = new MissileField(source, medium);
+	auto property = &AbstractField::electric_x;
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source); 
+	free_shape->set_time_depth(f);	
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, on, NULL);
+	return (AbstractField*)duhamel;
+}
 
 bool hardcode_dataset ()
 {
@@ -29,7 +43,10 @@ bool hardcode_dataset ()
 		[tau] (double vt) { return   Function::gauss (vt,tau); }
 	};
 
-	serial::dataset ds = serial::dataset(domain, tau, NULL, duty_cycle, vt_step);
+	std::vector<AbstractField*> filed;
+	for (auto i : domain) field.push_back(updisk_field(i));
+
+	serial::dataset ds = serial::dataset(filed, tau, NULL, duty_cycle, vt_step);
 	
 	ds.set_char(0, 0, 2, 1);
 	ds.set_char(0, 0, 2, 2);

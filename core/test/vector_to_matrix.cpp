@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace std;
 
-struct Test {
+struct Test : GnuPlot {
     static bool vector_to_matrix ();
 };
 

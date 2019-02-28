@@ -18,7 +18,6 @@
 #include "nlohmann_json.hpp"
 #include "abstract_field.hpp"
 #include "linear_duhamel.hpp"
-#include "uniform_disk_current.hpp"
 
 #include <algorithm>
 #include <random>
@@ -37,7 +36,7 @@ namespace serial {
 
 	struct dataset {
 
-		dataset (const std::vector<std::function<double(double)>>& emp_shape, 
+		dataset (const std::vector<AbstractField*>& emp_shape, 
 				 double effective_duration,
 				 AdditiveWhiteGaussian* noise = NULL, 
 				 double duty_cycle = 0.5, 

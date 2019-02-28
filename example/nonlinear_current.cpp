@@ -7,7 +7,9 @@
 //
 
 #include "maxwell.hpp"
+#include "gnu_plot.hpp"
 #include "uniform_disk_current.hpp"
+#include "kerr_amendment.hpp"
 
 #include <vector>
 #include <iomanip>

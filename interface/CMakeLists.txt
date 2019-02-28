@@ -11,8 +11,6 @@ cmake_minimum_required(VERSION 3.0)
 set(PROJECT_NAME interface)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(SOURCES
-    ${SOURCE_DIR}/dataset.cpp
-    ${SOURCE_DIR}/gnu_plot.cpp
     ${SOURCE_DIR}/main.cpp
 )
 
@@ -28,7 +26,6 @@ target_include_directories(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
     maxwell
-    uniform_disk
 )
 
 # include(GNUInstallDirs)
@@ -37,6 +34,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 #    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 #    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 # )
-
-#enable_testing()
-#add_subdirectory(test)
