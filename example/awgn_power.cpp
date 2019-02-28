@@ -7,6 +7,7 @@
 //
 
 #include "maxwell.hpp"
+#include "gnu_plot.hpp"
 
 #include <vector>
 #include <iomanip>

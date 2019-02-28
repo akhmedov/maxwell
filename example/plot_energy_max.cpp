@@ -7,6 +7,7 @@
 //
 
 #include "maxwell.hpp"
+#include "gnu_plot.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
@@ -15,7 +16,7 @@
 using namespace std;
 
 
-void PlotTest::plot_energy_max ()
+void plot_energy_max ()
 {	
 	double R = 1, A0 = 1;
 
@@ -69,6 +70,6 @@ void PlotTest::plot_energy_max ()
 
 int main ()
 {
-    plot_energy_max(0,2);
+    plot_energy_max();
     return 0;
 }

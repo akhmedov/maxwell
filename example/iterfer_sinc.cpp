@@ -7,6 +7,7 @@
 //
 
 #include "maxwell.hpp"
+#include "gnu_plot.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
