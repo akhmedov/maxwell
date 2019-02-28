@@ -21,7 +21,7 @@ const std::string MySQL::SELECT_POINT      = "SELECT id,lineary,square,kerr FROM
 const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
 const std::string MySQL::UPDATE_RESULT     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
 
-MySQL::MySQL (std::string host, std::string user, std::string pass, std::string db, std::vector<int> problem_id)
+MySQL::MySQL (std::string host, std::string user, std::string pass, std::string db)
 : hostname(host), username(user), password(pass), database(db) 
 {
 	this->connection = mysql_init(NULL);
@@ -40,30 +40,40 @@ MySQL::MySQL (std::string host, std::string user, std::string pass, std::string 
 
 	error_code = mysql_query(this->connection, MySQL::USE_MAXWELL.c_str());
 	MySQL::throw_error_code(error_code);
+}
 
-	for (auto id : problem_id) {
+std::pair<std::size_t, std::string> MySQL::get_saved_problem_list ()
+{
+	throw std::logic_error("Not implemented!");
+}
 
-		this->working.push_back({(std::size_t)id, 0, 0});
+std::pair<std::size_t, std::string> MySQL::get_selected_problems ()
+{
+	throw std::logic_error("Not implemented!");
+}
 
-		std::string problem_exists = MySQL::PRIBLEM_EXISTS;
-		problem_exists = std::regex_replace(problem_exists, std::regex("\\$PROBLEM"), std::to_string(problem_id[0]));
+void MySQL::select_problem (std::size_t id)
+{
+	this->working.push_back({(std::size_t)id, 0, 0});
 
-		error_code = mysql_query(this->connection, problem_exists.c_str());
+	std::string problem_exists = MySQL::PRIBLEM_EXISTS;
+	problem_exists = std::regex_replace(problem_exists, std::regex("\\$PROBLEM"), std::to_string(id));
+
+	auto error_code = mysql_query(this->connection, problem_exists.c_str());
+	MySQL::throw_error_code(error_code);
+
+	MYSQL_RES* result_exist = mysql_store_result(connection);
+	bool exists = mysql_fetch_row(result_exist)[0];
+	mysql_free_result(result_exist);
+
+	if (!exists) {
+
+		std::string insert_problem = MySQL::INSERT_PROBLEM;
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$COMMENT"), "no comment");
+		insert_problem = std::regex_replace(insert_problem, std::regex("\\$PROBLEM"), std::to_string(id));
+
+		error_code = mysql_query(this->connection, insert_problem.c_str());
 		MySQL::throw_error_code(error_code);
-
-		MYSQL_RES* result_exist = mysql_store_result(connection);
-		bool exists = mysql_fetch_row(result_exist)[0];
-		mysql_free_result(result_exist);
-
-		if (!exists) {
-
-			std::string insert_problem = MySQL::INSERT_PROBLEM;
-			insert_problem = std::regex_replace(insert_problem, std::regex("\\$COMMENT"), "no comment");
-			insert_problem = std::regex_replace(insert_problem, std::regex("\\$PROBLEM"), std::to_string(id));
-
-			error_code = mysql_query(this->connection, insert_problem.c_str());
-			MySQL::throw_error_code(error_code);
-		}
 	}
 }
 

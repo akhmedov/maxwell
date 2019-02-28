@@ -6,13 +6,7 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "manager.hpp"
-#include "function.hpp"
-
-#include "config.hpp"
-#include "gnu_plot.hpp"
-#include "linear_duhamel.hpp"
-
+#include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
@@ -20,14 +14,9 @@
 #include <iostream>
 using namespace std;
 
-Config* global_conf;
 
 void PlotTest::plot_energy_max ()
-{
-	PlotTest::global_conf->field_component(FieldComponent::W);
-	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
-	// PlotTest::global_conf->duration(0);
-	
+{	
 	double R = 1, A0 = 1;
 
 	auto field = [R,A0] (double tau) {
@@ -66,8 +55,8 @@ void PlotTest::plot_energy_max ()
 		i.erase(i.begin(), i.begin() + 2); // erase x and y
 	}
 
-	GnuPlot* plot = new GnuPlot( "onaxis_w_z2.gnp" );
-	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot("plot_energy_max.gnp");
+	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");
 	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("z, m");
 	plot->set_oy_label("W, V*V");
@@ -80,8 +69,6 @@ void PlotTest::plot_energy_max ()
 
 int main ()
 {
-    global_conf = new Config();
-	global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
     plot_energy_max(0,2);
     return 0;
 }

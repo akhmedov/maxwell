@@ -6,16 +6,12 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "noise.hpp"
-#include "config.hpp"
-#include "gnu_plot.hpp"
+#include "maxwell.hpp"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
-
-Config* global_conf;
 
 void awgn_power (const vector<int>& samples)
 {
@@ -33,8 +29,8 @@ void awgn_power (const vector<int>& samples)
 		line.clear();
 	}
 
-	GnuPlot* plot = new GnuPlot( "power.gnp" );
-	plot->set_gnuplot_bin( global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot( "awgn_power.gnp" );
+	plot->set_gnuplot_bin( "gnuplot/bin/gnuplot" );
 	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("sigma");
 	plot->set_oy_label("Pn, V*V");
@@ -47,8 +43,6 @@ void awgn_power (const vector<int>& samples)
 
 int main ()
 {
-    global_conf = new Config();
-	global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
     vector<int> samples = {10,100,500};
     awgn_power(samples);
     return 0;

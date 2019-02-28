@@ -6,21 +6,13 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "manager.hpp"
-#include "function.hpp"
-
-#include "config.hpp"
-#include "gnu_plot.hpp"
-#include "linear_duhamel.hpp"
-
+#include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
-
-Config* global_conf;
 
 void plot_energy_distribution (double tau, double max_z)
 {
@@ -30,11 +22,7 @@ void plot_energy_distribution (double tau, double max_z)
 	double eps_r = 1, mu_r = 1;
 
 	double x = 0;
-
-	PlotTest::global_conf->field_component(FieldComponent::W);
-	PlotTest::global_conf->impulse_shape(ImpulseShape::gauss);
-	PlotTest::global_conf->duration(tau);
-
+	
 	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
 	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
 	MissileField* linear = new MissileField(source, medium);
@@ -62,7 +50,7 @@ void plot_energy_distribution (double tau, double max_z)
 	std::vector<std::vector<double>> data = thead_core->get_value();
 
 	GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(max_z) + ".gnp" );
-	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");
 	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("y, m");
 	plot->set_oy_label("z, m");
@@ -73,8 +61,6 @@ void plot_energy_distribution (double tau, double max_z)
 
 int main ()
 {
-    global_conf = new Config();
-	global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
     plot_energy_distribution(0,2);
     return 0;
 }

@@ -6,21 +6,13 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "manager.hpp"
-#include "function.hpp"
-
-#include "config.hpp"
-#include "gnu_plot.hpp"
-#include "linear_duhamel.hpp"
-
+#include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
-
-Config* global_conf;
 
 void nonlinear_current (double phi, double z)
 {
@@ -49,8 +41,8 @@ void nonlinear_current (double phi, double z)
 		}
 	}
 
-	GnuPlot* plot = new GnuPlot(PlotTest::global_conf->gnp_script_path());
-	plot->set_gnuplot_bin( PlotTest::global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot("nonlinear_current.gnp");
+	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");
 	// plot->set_colormap(Colormap::parula);
 	plot->set_ox_label("ct, m");
 	plot->set_oy_label("rho, m");
@@ -63,8 +55,6 @@ void nonlinear_current (double phi, double z)
 
 int main ()
 {
-    global_conf = new Config();
-	global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
     nonlinear_current(0,2);
     return 0;
 }

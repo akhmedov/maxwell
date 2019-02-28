@@ -14,7 +14,7 @@
 #include <thread>
 #include <chrono>
 
-#include <typeinfo> // typeid()
+#include <utility>
 #include <cmath> // NAN
 #include <regex> // std::replace()
 #include <vector>
@@ -29,10 +29,14 @@ struct problem_data {
 
 struct MySQL {
 
-	MySQL (std::string host, std::string user, std::string pass, std::string db, std::vector<int> problem_id);
+	MySQL (std::string host, std::string user, std::string pass, std::string db);
 	~MySQL ();
 
 	std::string get_hostname() const;
+	std::pair<std::size_t, std::string> get_saved_problem_list ();
+	std::pair<std::size_t, std::string> get_selected_problems ();
+	void select_problem (std::size_t id);
+
 	void select_point (double ct, double rho, double phi, double z);
 	double get_result (std::size_t problem) const;
 	void set_result (std::size_t problem, double value);

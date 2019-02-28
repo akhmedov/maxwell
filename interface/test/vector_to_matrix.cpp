@@ -6,7 +6,8 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "integral.hpp"
+#include "maxwell.hpp"
+#include "gnu_plot.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -57,60 +58,6 @@ bool Test::vector_to_matrix ()
 	matrix = GnuPlot::datagrid_from (ARRAY, 0, 1);
 	if (!equals(MATRIX,matrix)) return false;
 
-	return true;
-}
-
-bool UnitTest::hardcode_dataset ()
-{
-	double tau = 0.5;
-	double duty_cycle = 0.5;
-	double vt_step = 0.01;
-
-	std::pair<double,double> rho = std::make_pair(0,7);
-	std::pair<double,double> phi = std::make_pair(0,90);
-	std::pair<double,double> z = std::make_pair(0,20);
-
-	std::vector<std::function<double(double)>> domain = {
-		[tau] (double vt) { return   Function::sinc  (vt,tau); },
-		[tau] (double vt) { return   Function::gauss (vt,tau); }
-	};
-
-	serial::dataset ds = serial::dataset(domain, tau, NULL, duty_cycle, vt_step);
-	
-	ds.set_char(0, 0, 2, 1);
-	ds.set_char(0, 0, 2, 2);
-	ds.set_char(0, 0, 2, 2);
-	ds.set_char(0, 0, 2, 1);
-
-	json js = serial::json_from(ds,rho,phi,z);
-	serial::serialize("dataset.json",js);
-	return true;
-}
-
-
-bool UnitTest::random_dataset ()
-{
-	double radix = 3;
-	double sigma = 5.0;
-	double pulses = 60;
-	std::string file_name = "dataset.json";
-	std::pair<double,double> rho = std::make_pair(0,4);
-	std::pair<double,double> phi = std::make_pair(0,20);
-	std::pair<double,double> z = std::make_pair(4,6);
-	serial::randomized_sequental (pulses, radix, sigma, file_name, rho, phi, z);
-	return true;
-}
-
-bool UnitTest::snr_dataset ()
-{
-	double radix = 3;
-	double snr = 40;
-	double pulses = 1e3;
-	std::string file_name = "train.json";
-	double rho = 0;
-	double phi = 0;
-	double z = 10;
-	serial::same_snr(pulses, radix, snr, file_name, rho, phi, z);
 	return true;
 }
 

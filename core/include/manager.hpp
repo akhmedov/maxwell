@@ -9,6 +9,11 @@
 #ifndef manager_hpp
 #define manager_hpp
 
+#define HOST "localhost"
+#define USER "maxwell"
+#define PASS "maxwell"
+#define DB   "maxwell"
+
 #include "logger.hpp"
 #include "mysql_connect.hpp"
 #include "abstract_field.hpp"
@@ -68,9 +73,8 @@ private:
 
 template <std::size_t N> struct SafeManager : public Manager<N> {
 
-	// SafeManger (Config* global, Logger* global_logger = NULL);
-	SafeManager (std::size_t threads, Config* global, Logger* global_logger = NULL);
-	SafeManager (std::size_t threads, std::vector<Config*> gl_config, Logger* logger_ptr = NULL);
+	SafeManager (std::size_t threads, MySQL* thread_client, Logger* global_logger = NULL);
+	SafeManager (std::size_t threads, std::vector<MySQL*> thread_client, Logger* logger_ptr = NULL);
 	std::vector<std::vector<double>> get_value ();
 	void call ( std::vector<std::pair<Component,AbstractField*>>);
 	void call ( std::vector<std::pair<Energy,AbstractField*>>);
@@ -324,22 +328,18 @@ template <std::size_t N> void Manager<N>::call ( std::vector<std::pair<Energy,Ab
 /* SafeManager::SafeManager (Config* gl_config, Logger* logger_ptr) 
 : Manager(), client(gl_config) { } */
 
-template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, std::vector<Config*> gl_config, Logger* logger_ptr) 
+template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, std::vector<MySQL*> thread_client, Logger* logger_ptr) 
 : Manager<N>(threads,logger_ptr), problems(1), client()
 {
 	for (std::size_t c = 0; c < this->thread_number; c++) {
-		MySQL* thread_client = new MySQL(gl_config);
 		this->client.push_back(thread_client);
 	}
 }
 
-template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, Config* gl_config, Logger* logger_ptr) 
+template <std::size_t N> SafeManager<N>::SafeManager (std::size_t threads, MySQL* thread_client, Logger* logger_ptr) 
 : Manager<N>(threads,logger_ptr), problems(1), client()
 {
-	for (std::size_t c = 0; c < this->thread_number; c++) {
-		MySQL* thread_client = new MySQL(gl_config);
-		this->client.push_back(thread_client);
-	}
+	this->client.push_back(thread_client);
 }
 
 //============================================================================================================

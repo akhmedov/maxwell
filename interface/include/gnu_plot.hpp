@@ -22,8 +22,6 @@
 #include <list>
 #include <map>
 
-#include "config.hpp"
-
 typedef std::vector<std::string> Text;
 
 template <typename T> 
@@ -42,6 +40,8 @@ using Plot3D = std::vector<std::tuple<T, T, T>>;
 -- plot_multi 		data: x y f1 f2 f3 ...
 -- plot_colormap	data: {{f(x1,y1), f(x1,y2)}, {f(x2,y1), f(x2,y2)}}
 */
+
+enum Colormap {gray, parula};
 
 struct GnuPlot {
 	GnuPlot (std::string filename);

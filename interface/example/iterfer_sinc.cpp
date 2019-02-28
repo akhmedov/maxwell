@@ -6,21 +6,13 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "manager.hpp"
-#include "function.hpp"
-
-#include "config.hpp"
-#include "gnu_plot.hpp"
-#include "linear_duhamel.hpp"
-
+#include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
-
-Config* global_conf;
 
 void iterfer_sinc ()
 {
@@ -52,8 +44,8 @@ void iterfer_sinc ()
 		// i[1] *= i[0] * i[0];
 	}
 
-	GnuPlot* plot = new GnuPlot( global_conf->gnp_script_path() );
-	plot->set_gnuplot_bin( global_conf->path_gnuplot_binary() );
+	GnuPlot* plot = new GnuPlot( "iterfer_sinc.gnp" );
+	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");
 	plot->set_ox_label("z, m");
 	plot->set_oy_label("W, V*V/m2");
 	plot->grid_on();
@@ -64,8 +56,6 @@ void iterfer_sinc ()
 
 int main ()
 {
-    global_conf = new Config();
-	global_conf->path_gnuplot_binary("gnuplot/bin/gnuplot");
     iterfer_sinc();
     return 0;
 }
