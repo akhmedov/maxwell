@@ -8,7 +8,7 @@
 
 #include "maxwell.hpp"
 #include "gnu_plot.hpp"
-#include "uniform_disk_current.hpp"
+#include "module_manager.hpp"
 
 #include <vector>
 #include <iomanip>
@@ -17,40 +17,43 @@ using namespace std;
 
 void plot_energy_slyse (double tau, double z)
 {
-	auto str_of = [] (double a) {return std::to_string(a).substr(0,5);};
+	auto str_of = [] (double a) {return to_string(a).substr(0,5);};
 
 	double R = 1, A0 = 1;
 	double eps_r = 1, mu_r = 1;
 	double range = z/2;
 
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
+	ModuleManager mng = ModuleManager();
+	mng.load_module("module/uniform_disk/libuniform_disk.dylib");
+
+	LinearCurrent* source = mng.get_module(mng.get_loaded()[0]).source;
+	LinearMedium* medium = mng.get_module(mng.get_loaded()[0]).medium;
+	AbstractField* linear = mng.get_module(mng.get_loaded()[0]).field;
+
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 
 	Manager<0>* thead_core = new Manager<0>(6, NULL);
 	thead_core->progress_bar(true);
 
 	for (double x = -range; x <= range; x += 0.05) {
 		for (double y = -range; y <= range; y += 0.05) {
-			double rho = std::sqrt(x*x + y*y);
-			double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+			double rho = sqrt(x*x + y*y);
+			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
-			double to = tau + std::sqrt((rho+R)*(rho+R) + z*z);
+			double to = tau + sqrt((rho+R)*(rho+R) + z*z);
 			thead_core->add_argument( {x,y,z,from,to+0.01} );
 		}
 	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, linear);
-	// auto function = std::make_pair(property, duhamel);
+	auto function = make_pair(property, duhamel);
 	thead_core->call({function});
 
-	std::vector<std::vector<double>> data = thead_core->get_value();
+	vector<vector<double>> data = thead_core->get_value();
 
-	std::vector<double> max0 = data[0];
+	vector<double> max0 = data[0];
 	for (auto point : data)
 		if (point[3] > max0[3])
 			max0 = point;
@@ -60,7 +63,7 @@ void plot_energy_slyse (double tau, double z)
 	// 	i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
 	// }
 
-	std::cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << std::endl;
+	cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << endl;
 
 	/* std::vector<std::vector<double>> agumented;
 	for (auto&& i : data) {

@@ -26,6 +26,7 @@ set(SOURCES
     ${SOURCE_DIR}/nonlinear_field.cpp
     ${SOURCE_DIR}/nonlinear_medium.cpp
     ${SOURCE_DIR}/phys_math.cpp
+    ${SOURCE_DIR}/module_manager.cpp
 )
 
 project(${PROJECT_NAME}

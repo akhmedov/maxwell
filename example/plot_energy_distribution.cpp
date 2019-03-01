@@ -8,7 +8,6 @@
 
 #include "maxwell.hpp"
 #include "gnu_plot.hpp"
-#include "uniform_disk_current.hpp"
 
 #include <vector>
 #include <iomanip>
@@ -24,12 +23,16 @@ void plot_energy_distribution (double tau, double max_z)
 
 	double x = 0;
 	
-	Homogeneous* medium = new Homogeneous(mu_r, eps_r);
-	UniformPlainDisk* source = new UniformPlainDisk(R, A0);
-	MissileField* linear = new MissileField(source, medium);
+	ModuleManager mng = ModuleManager();
+	mng.load_module("module/uniform_disk/libuniform_disk.dylib");
+
+	LinearCurrent* source = mng.get_module(mng.get_loaded()[0]).source;
+	LinearMedium* medium = mng.get_module(mng.get_loaded()[0]).medium;
+	AbstractField* linear = mng.get_module(mng.get_loaded()[0]).field;
+
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, linear, NULL);
+	free_shape->set_time_depth([tau] (double vt) {return Function::gauss(vt,tau);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 
 	Manager<0>* thead_core = new Manager<0>(6, NULL);
 	thead_core->progress_bar(true);
@@ -45,7 +48,7 @@ void plot_energy_distribution (double tau, double max_z)
 	}
 
 	auto property = &AbstractField::energy_cart;
-	auto function = std::make_pair(property, linear);
+	auto function = std::make_pair(property, duhamel);
 	thead_core->call({function});
 
 	std::vector<std::vector<double>> data = thead_core->get_value();
@@ -62,6 +65,6 @@ void plot_energy_distribution (double tau, double max_z)
 
 int main ()
 {
-    plot_energy_distribution(0,2);
+    plot_energy_distribution(2,5);
     return 0;
 }

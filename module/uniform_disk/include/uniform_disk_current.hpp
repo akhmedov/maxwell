@@ -24,6 +24,7 @@
 #include "linear_field.hpp"
 #include "linear_medium.hpp"
 #include "linear_source.hpp"
+#include "module_manager.hpp"
 
 struct Homogeneous : public LinearMedium {
 
@@ -58,6 +59,7 @@ protected:
 struct MissileField : public LinearField {
 
 	MissileField (UniformPlainDisk* source, Homogeneous* medium);
+	MissileField (double R, double A0);
 
 	static void set_yterms_num (std::size_t);
 	static std::size_t get_yterms_num ();

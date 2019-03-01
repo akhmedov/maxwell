@@ -85,6 +85,9 @@ double UniformPlainDisk::get_disk_radius() const
 
 std::size_t MissileField::STATIC_TERMS_NUMBER = 100;
 
+MissileField::MissileField (double radius, double magnitude)
+: LinearField(new UniformPlainDisk(1, 1), new Homogeneous(1, 1)), A0(magnitude), R(radius) {}
+
 MissileField::MissileField (UniformPlainDisk* source, Homogeneous* medium)
 : LinearField(source,medium)
 {
@@ -433,4 +436,29 @@ double MissileField::int_lommel_111 (double vt, double rho, double z, double R)
 {
 	UNUSED(vt); UNUSED(rho); UNUSED(z); UNUSED(R);
 	throw std::logic_error("MissileField::int_lommel_111 is not implemented");
+}
+
+extern "C"  {
+
+	const char* load_module_name ()
+	{
+		return "UniformDisk.MeandrMonocycle";
+	}
+
+	LinearMedium* load_module_medium ()
+	{
+		return new Homogeneous(1,1);
+	}
+
+	LinearCurrent* load_module_source ()
+	{
+		return new UniformPlainDisk(1,1);
+	}
+
+	AbstractField* load_module_filed ()
+	{
+		auto medium = new Homogeneous(1,1);
+		auto source = new UniformPlainDisk(1,1);
+		return new MissileField(source,medium);
+	}
 }

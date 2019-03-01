@@ -206,3 +206,28 @@ double SquaredPulse::int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double
 	double i1_to = MissileField::int_bessel_011(sqrt_tau_z,rho,R);
 	return i1_from - i1_to;
 }
+
+// extern "C"  {
+
+// 	const char* load_module_name ()
+// 	{
+// 		return "UniformDisk.MeandrMonocycle";
+// 	}
+
+// 	LinearMedium* load_module_medium ()
+// 	{
+// 		return new Homogeneous(1,1);
+// 	}
+
+// 	LinearCurrent* load_module_source ()
+// 	{
+// 		return new MeandrPeriod(1,1,0.5);
+// 	}
+
+// 	AbstractField* load_module_filed ()
+// 	{
+// 		auto medium = new Homogeneous(1,1);
+// 		auto source = new MeandrPeriod(1,1,0.5);
+// 		return new SquaredPulse(source,medium);
+// 	}
+// }

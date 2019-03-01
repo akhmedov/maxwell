@@ -16,3 +16,4 @@
 
 #include "manager.hpp"
 #include "logger.hpp"
+#include "module_manager.hpp"
