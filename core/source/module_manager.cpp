@@ -6,19 +6,16 @@ ModuleManager::ModuleManager ()
     // load_module("WhiteGaussianNoise", {new HomoMedium(), new NoSource(), new Noise()});
 }
 
-bool ModuleManager::load_module (const std::string& posix_path)
+bool ModuleManager::load_module (const std::string& posix_path, Logger* global, double R, double A0, double tau0, double eps, double mu)
 {
     void* module = dlopen(posix_path.data(), RTLD_LAZY);
     if (!module) return false; // TODO: log event
-    CStrFncPtr name = reinterpret_cast<CStrFncPtr> (dlsym(module, "load_module_name"));
-    if (!name) return false; // TODO: log event
-    SourceFncPtr source = reinterpret_cast<SourceFncPtr> (dlsym(module, "load_module_source"));
-    if (!source) return false; // TODO: log event
-    MediumFncPtr medium = reinterpret_cast<MediumFncPtr> (dlsym(module, "load_module_medium"));
-    if (!medium) return false; // TODO: log event
-    FieldFncPtr field = reinterpret_cast<FieldFncPtr> (dlsym(module, "load_module_filed"));
-    if (!field) return false; // TODO: log event
-    load_module(std::string(name()), {source(), medium(), field()});
+
+    LoaderFncPtr call = reinterpret_cast<LoaderFncPtr> (dlsym(module, "load_module"));
+    if (!call) return false; // TODO: log event
+
+    call(this, global, R, A0, tau0, eps, mu);
+
     return true;
 }
 

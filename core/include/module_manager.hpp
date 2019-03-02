@@ -9,6 +9,7 @@
 #ifndef module_manager_hpp
 #define module_manager_hpp
 
+#include "logger.hpp"
 #include "linear_medium.hpp"
 #include "linear_source.hpp"
 #include "abstract_field.hpp"
@@ -18,11 +19,6 @@
 #include <string>
 #include <iostream>
 #include <map>
-
-using CStrFncPtr   = const char* (*)();
-using SourceFncPtr = LinearCurrent* (*)(); // TODO: pass matrix (castom type)
-using MediumFncPtr = LinearMedium* (*)();
-using FieldFncPtr  = AbstractField* (*)();
 
 struct ModuleEntity {
     LinearCurrent* source; // TODO: use union {LinearCurrent, LinearCharge}
@@ -34,7 +30,7 @@ class ModuleManager {
 
 public:
     ModuleManager ();
-    bool load_module (const std::string& posix_path);
+    bool load_module (const std::string& posix_path, Logger* global, double R, double A0, double tau0, double eps, double mu);
     void load_module (const std::string& name, ModuleEntity implementation);
 
     std::vector<std::string> get_loaded () const;
@@ -43,5 +39,7 @@ public:
 private:
     std::map<std::string, ModuleEntity> module;
 };
+
+using LoaderFncPtr = void (*)(ModuleManager*,Logger*,double,double,double,double,double);
 
 #endif /* module_manager */

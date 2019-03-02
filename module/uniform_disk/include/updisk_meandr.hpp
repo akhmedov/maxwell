@@ -19,11 +19,7 @@
 #include <exception>
 #include <iostream>
 
-#include "integral.hpp"
-#include "phys_math.hpp"
-#include "linear_field.hpp"
-#include "linear_medium.hpp"
-#include "linear_source.hpp"
+#include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
 
 struct MeandrPeriod : public UniformPlainDisk {

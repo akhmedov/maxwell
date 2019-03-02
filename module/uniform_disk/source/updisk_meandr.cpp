@@ -207,27 +207,33 @@ double SquaredPulse::int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double
 	return i1_from - i1_to;
 }
 
-// extern "C"  {
+namespace { extern "C" {
 
-// 	const char* load_module_name ()
-// 	{
-// 		return "UniformDisk.MeandrMonocycle";
-// 	}
+	void tr_module (ModuleManager* core, Logger* global_logger, double R, double A0, double mu, double eps)
+	{
+		ModuleEntity tr;
+		tr.source = new UniformPlainDisk(R,A0);
+		tr.medium = new Homogeneous(mu,eps);
+		tr.field = new MissileField( (UniformPlainDisk*) tr.source, (Homogeneous*) tr.medium);
+		const char* name = "UniformDisk.TrancientResponse";
+		core->load_module(name,tr);
+	}
 
-// 	LinearMedium* load_module_medium ()
-// 	{
-// 		return new Homogeneous(1,1);
-// 	}
+	void meandr_module (ModuleManager* core, Logger* global, double R, double A0, double tau0, double mu, double eps)
+	{
+		ModuleEntity tr;
+		tr.source = new MeandrPeriod(R, A0, tau0);
+		tr.medium = new Homogeneous(mu,eps);
+		tr.field = new SquaredPulse( (MeandrPeriod*) tr.source, (Homogeneous*) tr.medium);
+		const char* name = "UniformDisk.MeandrMonocycle";
+		core->load_module(name,tr);
+	}
 
-// 	LinearCurrent* load_module_source ()
-// 	{
-// 		return new MeandrPeriod(1,1,0.5);
-// 	}
+	void load_module (ModuleManager* core, Logger* global, double R, double A0, double tau0, double mu, double eps)
+	{
+		tr_module (core, global, R, A0, mu, eps);
+		meandr_module (core, global, R, A0, tau0, mu, eps);
+		// kerr_medium ();
+	}
 
-// 	AbstractField* load_module_filed ()
-// 	{
-// 		auto medium = new Homogeneous(1,1);
-// 		auto source = new MeandrPeriod(1,1,0.5);
-// 		return new SquaredPulse(source,medium);
-// 	}
-// }
+} }

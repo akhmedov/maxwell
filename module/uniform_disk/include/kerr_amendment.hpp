@@ -18,11 +18,7 @@
 #define MIN_NODES	5
 #define MAX_ERROR	10 // %
 
-#include "logger.hpp"
-#include "integral.hpp"
-#include "phys_math.hpp"
-#include "linear_source.hpp"
-#include "nonlinear_medium.hpp"
+#include "maxwell.hpp"
 #include "nonlinear_field.hpp"
 #include "uniform_disk_current.hpp"
 

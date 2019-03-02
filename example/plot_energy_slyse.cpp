@@ -10,12 +10,14 @@
 #include "gnu_plot.hpp"
 #include "module_manager.hpp"
 
+#define MODULE "module/uniform_disk/libuniform_disk.dylib"
+
 #include <vector>
 #include <iomanip>
 #include <iostream>
 using namespace std;
 
-void plot_energy_slyse (double tau, double z)
+void plot_energy_slyse (double tau0, double z)
 {
 	auto str_of = [] (double a) {return to_string(a).substr(0,5);};
 
@@ -24,14 +26,14 @@ void plot_energy_slyse (double tau, double z)
 	double range = z/2;
 
 	ModuleManager mng = ModuleManager();
-	mng.load_module("module/uniform_disk/libuniform_disk.dylib");
+	mng.load_module(MODULE, NULL, R, A0, tau0, eps_r, mu_r);
 
 	LinearCurrent* source = mng.get_module(mng.get_loaded()[0]).source;
 	LinearMedium* medium = mng.get_module(mng.get_loaded()[0]).medium;
 	AbstractField* linear = mng.get_module(mng.get_loaded()[0]).field;
 
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau] (double vt) {return Function::sinc(vt,tau);});
+	free_shape->set_time_depth([tau0] (double vt) {return Function::sinc(vt,tau0);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 
 	Manager<0>* thead_core = new Manager<0>(6, NULL);
@@ -42,7 +44,7 @@ void plot_energy_slyse (double tau, double z)
 			double rho = sqrt(x*x + y*y);
 			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
-			double to = tau + sqrt((rho+R)*(rho+R) + z*z);
+			double to = tau0 + sqrt((rho+R)*(rho+R) + z*z);
 			thead_core->add_argument( {x,y,z,from,to+0.01} );
 		}
 	}
@@ -74,7 +76,7 @@ void plot_energy_slyse (double tau, double z)
 	}
 	data.insert(std::end(data), std::begin(agumented), std::end(agumentat)); */
 
-	GnuPlot* plot = new GnuPlot( str_of(tau) + "_" + str_of(z) + ".gnp" );
+	GnuPlot* plot = new GnuPlot( str_of(tau0) + "_" + str_of(z) + ".gnp" );
 	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");
 	plot->set_colormap(Colormap::gray);
 	plot->set_ox_label("x, m");

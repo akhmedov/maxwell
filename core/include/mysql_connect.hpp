@@ -23,8 +23,8 @@
 
 struct problem_data { 
 	std::size_t problem; // maxwell.maxwell_header.ID
-	std::size_t point; // maxwell.maxwell_data.ID
-	double result; // result
+	std::size_t point;   // maxwell.maxwell_data.ID
+	double result;       // maxwell.maxwell_data.result
 };
 
 struct MySQL {

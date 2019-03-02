@@ -483,3 +483,24 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	res /= std::sqrt(4*rho2*vt_z - (vt_z+rho2-R2) * (vt_z+rho2-R2) );
 	return res / M_PI;
 }
+
+// namespace { extern "C" {
+
+// 	void kerr_module (ModuleManager* core, Logger* global_logger, double R, double A0, double mu, double eps, double chi3)
+// 	{
+// 		ModuleEntity linear, kerr;
+		
+// 		linear.source = new UniformPlainDisk(R,A0);
+// 		kerr.source = new UniformPlainDisk(R,A0); // linear.source;
+
+// 		linear.medium = new Homogeneous(mu,eps);
+// 		kerr.medium = new KerrMedium(mu,eps,chi3,0);
+
+// 		linear.field = new MissileField( (UniformPlainDisk*) linear.source, (Homogeneous*) linear.medium );
+// 		kerr.field = new KerrAmendment( (MissileField*) linear.field, (KerrMedium*) kerr.medium, (UniformPlainDisk*) kerr.source, global_logger);
+
+// 		core->load_module("UniformDisk.TrancientResponse",linear);
+// 		core->load_module("UniformDisk.KerrAmendmend",kerr);
+// 	}
+
+// } }
