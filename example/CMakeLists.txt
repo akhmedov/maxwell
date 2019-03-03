@@ -1,6 +1,6 @@
 #
 #  CMakeLists.txt
-#  example.interface.maxwell
+#  example.maxwell
 #
 #  Created by Oleh Zahrychanskyi on 28.02.19
 #  Copyright © 2019 Oleh Zahrychanskyi. All rights reserved.

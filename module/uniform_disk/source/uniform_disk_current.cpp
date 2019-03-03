@@ -1,6 +1,6 @@
 //
 //  uniform_disk_current.cpp
-//  Evolution
+//  uniform_disk.module.maxwell
 //
 //  Created by Rolan Akhmedov on 27.05.17.
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.

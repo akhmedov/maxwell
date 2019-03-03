@@ -1,6 +1,6 @@
 //
 //  kerr_amendment.cpp
-//  Maxwell
+//  uniform_disk.module.maxwell
 //
 //  Created by Rolan Akhmedov on 21.10.17.
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.

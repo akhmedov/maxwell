@@ -1,6 +1,6 @@
 //
 //  updisk_meandr.cpp
-//  Maxwell
+//  uniform_disk.module.maxwell
 //
 //  Created by Rolan Akhmedov on 13.06.18.
 //  Copyright © 2018 Rolan Akhmedov. All rights reserved.
@@ -171,8 +171,8 @@ double SquaredPulse::electric_phi (double vt, double rho, double phi, double z) 
 
 double SquaredPulse::electric_z (double vt, double rho, double phi, double z) const
 {
-	UNUSED(vt); UNUSED(rho); UNUSED(phi); UNUSED(z);
-	throw std::logic_error("SquaredPulse::electric_z is not implemented");
+	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
+	return 0;
 }
 
 double SquaredPulse::magnetic_rho (double vt, double rho, double phi, double z) const

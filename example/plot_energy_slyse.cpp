@@ -1,6 +1,6 @@
 //
 //  plot_energy_slyse.cpp
-//  example.interface.maxwell
+//  example.maxwell
 //
 //  Created by Rolan Akhmedov on 28.02.19.
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
@@ -25,8 +25,8 @@ void plot_energy_slyse (double tau0, double z)
 	double eps_r = 1, mu_r = 1;
 	double range = z/2;
 
-	ModuleManager mng = ModuleManager();
-	mng.load_module(MODULE, NULL, R, A0, tau0, eps_r, mu_r);
+	ModuleManager mng = ModuleManager(NULL);
+	mng.load_module(MODULE, R, A0, tau0, eps_r, mu_r);
 
 	LinearCurrent* source = mng.get_module(mng.get_loaded()[0]).source;
 	LinearMedium* medium = mng.get_module(mng.get_loaded()[0]).medium;
@@ -60,21 +60,7 @@ void plot_energy_slyse (double tau0, double z)
 		if (point[3] > max0[3])
 			max0 = point;
 
-	// for (auto&& i : data) {
-	// 	i[3] *= z*z / max0[3]; // norm W
-	// 	i.erase(i.begin()+2,i.begin()+5); // erase z, from, to
-	// }
-
 	cout << "Wmax (" << str_of(max0[0]) << ',' << str_of(max0[1]) << ',' << str_of(max0[2]) << ") = " << str_of(max0[3]) << endl;
-
-	/* std::vector<std::vector<double>> agumented;
-	for (auto&& i : data) {
-		double x = i[0], y = i[1], W = i[2];
-		if (x > 1e-8) agumented.push_back( {-x,y,W} );
-		if (y > 1e-8) agumented.push_back( {x,-y,W} );
-		if (x > 1e-8 && y > 1e-8) agumented.push_back( {-x,-y,W} );
-	}
-	data.insert(std::end(data), std::begin(agumented), std::end(agumentat)); */
 
 	GnuPlot* plot = new GnuPlot( str_of(tau0) + "_" + str_of(z) + ".gnp" );
 	plot->set_gnuplot_bin("gnuplot/bin/gnuplot");

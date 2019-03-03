@@ -1,6 +1,6 @@
 //
 //  updisk_meandr.hpp
-//  Maxwell
+//  uniform_disk.module.maxwell
 //
 //  Created by Rolan Akhmedov on 13.06.18.
 //  Copyright © 2018 Rolan Akhmedov. All rights reserved.

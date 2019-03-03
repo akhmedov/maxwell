@@ -1,6 +1,6 @@
 //
 //  nonlinear_current.cpp
-//  example.interface.maxwell
+//  example.maxwell
 //
 //  Created by Rolan Akhmedov on 28.02.19.
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.

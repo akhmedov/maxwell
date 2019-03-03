@@ -1,6 +1,6 @@
 //
 //  plot_energy_max.cpp
-//  example.interface.maxwell
+//  example.maxwell
 //
 //  Created by Rolan Akhmedov on 28.02.19.
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <iostream>
 using namespace std;
-
 
 void plot_energy_max ()
 {	

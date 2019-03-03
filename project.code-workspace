@@ -82,7 +82,8 @@
 			"regex": "cpp",
 			"set": "cpp",
 			"stack": "cpp",
-			"string": "cpp"
+			"string": "cpp",
+			"filesystem": "cpp"
 		}
 	}
 }

@@ -76,7 +76,7 @@ struct ZeroField : public AbstractField {
         {
 		return 0;
 	}
-	double energy(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const
+	double energy(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const 
         {
 		return 0;
 	}

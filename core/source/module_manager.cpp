@@ -1,27 +1,53 @@
+//
+//  module_manager.cpp
+//  core.maxwell
+//
+//  Created by Rolan Akhmedov on 28.02.19
+//  Copyright © 2019 Rolan Akhmedov. All rights reserved.
+//
+
 #include "module_manager.hpp"
 
-ModuleManager::ModuleManager ()
-{
+ModuleManager::ModuleManager (Logger* global)
+: log(global) {
     // load_module("ZeroFiled", {new HomoMedium(), new NoSource(), new Zero()});
     // load_module("WhiteGaussianNoise", {new HomoMedium(), new NoSource(), new Noise()});
 }
 
-bool ModuleManager::load_module (const std::string& posix_path, Logger* global, double R, double A0, double tau0, double eps, double mu)
+bool ModuleManager::load_module (const std::string& posix_path, double R, double A0, double tau0, double eps, double mu)
 {
-    void* module = dlopen(posix_path.data(), RTLD_LAZY);
-    if (!module) return false; // TODO: log event
+    std::ifstream lib(posix_path, std::ios::binary);
+    if (!lib) {
+        if (log) log->error("File does not exist: " + posix_path);
+        return false;
+    }
 
-    LoaderFncPtr call = reinterpret_cast<LoaderFncPtr> (dlsym(module, "load_module"));
-    if (!call) return false; // TODO: log event
+    void* library = dlopen(posix_path.data(), RTLD_LAZY);
+    if (!library) {
+        if (log) log->error("File is not a library: " + posix_path);
+        return false;
+    }
 
-    call(this, global, R, A0, tau0, eps, mu);
+    LoaderFncPtr call = reinterpret_cast<LoaderFncPtr> (dlsym(library, "load_module"));
+    if (!call) {
+        std::string messeng = "load_module() function have not been found in module library: ";
+        if (log) log->error(messeng + posix_path);
+        return false;
+    }
 
+    if (log) log->info("Module library loaded: " + posix_path);
+    call(this, log, R, A0, tau0, eps, mu);
     return true;
 }
 
-void ModuleManager::load_module (const std::string& name, ModuleEntity impl)
+bool ModuleManager::load_module (const std::string& name, ModuleEntity impl)
 {
-    auto addition = module.insert(std::make_pair(name, impl)); // TODO: log event
+    auto status = module.insert(std::make_pair(name, impl));
+    if (log) {
+        log->info("Submodule loaded: " + name);
+        if (!status.second) log->warning("Loaded module already existed: " + name);
+    }
+    return status.second; // false if already existing
 }
 
 std::vector<std::string> ModuleManager::get_loaded () const

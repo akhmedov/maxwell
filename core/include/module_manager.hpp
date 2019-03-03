@@ -29,15 +29,16 @@ struct ModuleEntity {
 class ModuleManager {
 
 public:
-    ModuleManager ();
-    bool load_module (const std::string& posix_path, Logger* global, double R, double A0, double tau0, double eps, double mu);
-    void load_module (const std::string& name, ModuleEntity implementation);
+    ModuleManager (Logger* global = NULL);
+    bool load_module (const std::string& posix_path, double R, double A0, double tau0, double eps, double mu);
+    bool load_module (const std::string& name, ModuleEntity implementation);
 
     std::vector<std::string> get_loaded () const;
     ModuleEntity get_module (const std::string& name);
 
 private:
     std::map<std::string, ModuleEntity> module;
+    Logger* log;
 };
 
 using LoaderFncPtr = void (*)(ModuleManager*,Logger*,double,double,double,double,double);
