@@ -64,9 +64,7 @@ void plot_energy_distribution (double tau0, bool swap_axis = false)
 	plot->set_colormap(Colormap::parula);
 	plot->plot_colormap(data, !swap_axis, 2);
 
-	delete linear;
-	delete thead_core;
-	delete plot;
+	delete linear, thead_core, plot;
 }
 
 int main ()

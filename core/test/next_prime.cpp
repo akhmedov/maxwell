@@ -7,10 +7,7 @@
 //
 
 #include "phys_math.hpp"
-
 #include <vector>
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -54,8 +51,5 @@ bool Test::next_prime ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::next_prime()" << left;
-    cout << (Test::next_prime() ? "PASSED" : "FAILED") << endl;
-    return 0;
+	return !Test::next_prime();
 }

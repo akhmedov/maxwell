@@ -7,9 +7,6 @@
 //
 
 #include "phys_math.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -34,7 +31,5 @@ bool Test::yacobi_pol_compare ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::yacobi_pol_compare()" << left;
-    cout << (Test::yacobi_pol_compare() ? "PASSED" : "FAILED") << endl;
+	return !Test::yacobi_pol_compare();
 }

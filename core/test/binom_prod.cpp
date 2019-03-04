@@ -8,8 +8,6 @@
 
 #include "phys_math.hpp"
 
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -32,7 +30,5 @@ bool Test::binom_prod ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::binom_prod()" << left;
-    cout << (Test::binom_prod() ? "PASSED" : "FAILED") << endl;
+	return !Test::binom_prod();
 }

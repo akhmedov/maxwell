@@ -7,9 +7,6 @@
 //
 
 #include "integral.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Integral {
@@ -38,7 +35,5 @@ bool Test::simpson2d_line2 ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::simpson2d_line2()" << left;
-    cout << (Test::simpson2d_line2() ? "PASSED" : "FAILED") << endl;
+	return !Test::simpson2d_line2();
 }

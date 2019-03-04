@@ -8,9 +8,6 @@
 
 #include "maxwell.hpp"
 #include "gnu_plot.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : GnuPlot {
@@ -63,7 +60,5 @@ bool Test::vector_to_matrix ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::vector_to_matrix()" << left;
-    cout << (Test::vector_to_matrix() ? "PASSED" : "FAILED") << endl;
+	return !Test::vector_to_matrix();
 }

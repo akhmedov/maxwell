@@ -7,10 +7,7 @@
 //
 
 #include "phys_math.hpp"
-
 #include <vector>
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -52,8 +49,5 @@ bool Test::yacobi_pol_property ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::yacobi_pol_property()" << left;
-    cout << (Test::yacobi_pol_property() ? "PASSED" : "FAILED") << endl;
-    return 0;
+    return !Test::yacobi_pol_property();
 }

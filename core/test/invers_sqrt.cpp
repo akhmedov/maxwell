@@ -7,9 +7,6 @@
 //
 
 #include "phys_math.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -26,7 +23,5 @@ bool Test::invers_sqrt ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::invers_sqrt()" << left;
-    cout << (Test::invers_sqrt() ? "PASSED" : "FAILED") << endl;
+	return !Test::invers_sqrt();
 }

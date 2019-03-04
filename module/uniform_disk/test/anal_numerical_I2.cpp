@@ -6,8 +6,6 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 bool anal_numerical_I2 ()
@@ -17,7 +15,5 @@ bool anal_numerical_I2 ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::anal_numerical_I2()" << left;
-    cout << (anal_numerical_I2() ? "PASSED" : "FAILED") << endl;
+    return !anal_numerical_I2();
 }

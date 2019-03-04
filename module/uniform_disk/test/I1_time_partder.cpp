@@ -13,8 +13,6 @@
 #include "uniform_disk_current.hpp"
 #include "kerr_amendment.hpp"
 
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : KerrAmendment {
@@ -51,7 +49,5 @@ bool Test::I1_time_partder ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::I1_time_partder()" << left;
-    cout << (Test::I1_time_partder() ? "PASSED" : "FAILED") << endl;
+	return !Test::I1_time_partder();
 }

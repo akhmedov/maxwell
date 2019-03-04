@@ -7,9 +7,6 @@
 //
 
 #include "phys_math.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Math {
@@ -34,7 +31,8 @@ bool Test::bessel_perp ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
+	/* cout << left << setfill('.') << setw(70);
 	cout << "Test::Math::bessel_perp()" << left;
-    cout << (Test::bessel_perp() ? "PASSED" : "FAILED") << endl;
+    cout << (Test::bessel_perp() ? "PASSED" : "FAILED") << endl; */
+	return !Test::bessel_perp();
 }

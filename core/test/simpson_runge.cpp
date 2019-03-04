@@ -7,9 +7,6 @@
 //
 
 #include "integral.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Integral {
@@ -33,7 +30,5 @@ bool Test::simpson_runge ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::simpson_runge()" << left;
-    cout << (Test::simpson_runge() ? "PASSED" : "FAILED") << endl;
+	return !Test::simpson_runge();
 }

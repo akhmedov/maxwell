@@ -7,9 +7,6 @@
 //
 
 #include "integral.hpp"
-
-#include <iomanip>
-#include <iostream>
 using namespace std;
 
 struct Test : Integral {
@@ -43,8 +40,6 @@ bool Test::monte_carlo_integral ()
 
 int main ()
 {
-	cout << left << setfill('.') << setw(70);
-	cout << "Test::Math::monte_carlo_integral()" << left;
-    // cout << (Test::monte_carlo_integral() ? "PASSED" : "FAILED") << endl;
-	cout << "FAILED" << endl;
+	// return Test::monte_carlo_integral();
+	return 1;
 }
