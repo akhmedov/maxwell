@@ -1,6 +1,6 @@
 //
 //  dataset.cpp
-//  Maxwell
+//  core.maxwell
 //
 //  Created by Rolan Akhmedov on 26.06.18.
 //  Copyright © 2018 Rolan Akhmedov. All rights reserved.

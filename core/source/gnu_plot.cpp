@@ -59,7 +59,7 @@ const std::string GnuPlot::SURFACE =
 
 const std::string GnuPlot::CMAP =
 "set terminal png size 1200,1200\n"
-"set output 'colormap.png'\n"
+"set output '$SCRIPT.png'\n"
 "set border linewidth 0\n"
 "set palette grey\n"
 "$grid << EOD\n"
@@ -212,6 +212,7 @@ void GnuPlot::plot_colormap (const std::vector<std::vector<double>> &array, int 
 	std::string text = GnuPlot::CMAP;
 	text = std::regex_replace(text, std::regex("\\$FONT"), this->font);
 	text = std::regex_replace(text, std::regex("\\$DATA"), data);
+	text = std::regex_replace(text, std::regex("\\$SCRIPT"), this->script_name);
 
 	switch (this->color_schem) {
 		case Colormap::gray: {
