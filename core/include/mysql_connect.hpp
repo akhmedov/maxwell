@@ -21,30 +21,28 @@
 #include <string>
 #include <exception>
 
-struct problem_data { 
-	std::size_t problem; // maxwell.maxwell_header.ID
-	std::size_t point;   // maxwell.maxwell_data.ID
-	double result;       // maxwell.maxwell_data.result
-};
-
 struct MySQL {
 
-	MySQL (std::string host, std::string user, std::string pass, std::string db);
+	MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db);
 	~MySQL ();
 
 	std::string get_hostname() const;
-	std::pair<std::size_t, std::string> get_saved_problem_list ();
-	std::pair<std::size_t, std::string> get_selected_problems ();
-	void select_problem (std::size_t id);
+	std::vector<std::pair<std::size_t,std::string>> get_saved_problem_list () const;
+	std::size_t get_selected_problem () const;
 
-	void select_point (double ct, double rho, double phi, double z);
-	double get_result (std::size_t problem) const;
-	void set_result (std::size_t problem, double value);
+	bool select_problem (std::size_t id);
+	bool insert_problem (std::size_t id, const std::string& comment);
+
+	bool select_point (double ct, double rho, double phi, double z);
+	bool insert_point (double ct, double rho, double phi, double z);
+
+	double get_result () const;
+	bool update_result (double value);
 
 protected:
 
 	static void throw_error_code (int code);
-	void reconnect () const;
+	bool reconnect () const;
 
 private:
 
@@ -55,7 +53,12 @@ private:
 	std::string password;
 	std::string database;
 
-	std::vector<problem_data> working;
+	std::size_t problem_id {}; // maxwell.maxwell_header.ID
+	std::size_t point_id {};   // maxwell.maxwell_data.ID
+	double result {NAN};
+
+	bool problem_selected {};
+	bool point_selected {};
 
 	static const std::string USE_MAXWELL;
 	static const std::string SET_WAIT_TIMEOUT;
@@ -69,6 +72,7 @@ private:
 	static const std::string SELECT_POINT;
 	static const std::string INSERT_POINT;
 	static const std::string UPDATE_RESULT;
+	static const std::string SELECT_RESULT;
 };
 
 #endif /* mysql_connect_hpp */
