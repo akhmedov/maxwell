@@ -50,6 +50,7 @@
         "utility": "cpp",
         "valarray": "cpp",
         "cstdarg": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "condition_variable": "cpp"
     }
 }
