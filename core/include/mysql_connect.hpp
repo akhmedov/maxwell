@@ -21,8 +21,6 @@
 #include <string>
 #include <exception>
 
-#include <iostream>
-
 struct MySQL {
 
 	MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db);

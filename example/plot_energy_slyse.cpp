@@ -10,7 +10,8 @@
 #include "gnu_plot.hpp"
 #include "module_manager.hpp"
 
-#define MODULE "module/uniform_disk/libuniform_disk.dylib"
+#define MODULE_PATH "module/uniform_disk"
+#define MODULE_NAME "uniform_disk"
 
 #include <vector>
 #include <iomanip>
@@ -26,7 +27,7 @@ void plot_energy_slyse (double tau0, double z)
 	double range = z/2;
 
 	ModuleManager mng = ModuleManager(NULL);
-	mng.load_module(MODULE, R, A0, tau0, eps_r, mu_r);
+	mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, eps_r, mu_r);
 
 	LinearCurrent* source = mng.get_module(mng.get_loaded()[0]).source;
 	LinearMedium* medium = mng.get_module(mng.get_loaded()[0]).medium;

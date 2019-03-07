@@ -16,7 +16,6 @@ set(SOURCES
     ${SOURCE_DIR}/iterfer_sinc.cpp
     ${SOURCE_DIR}/nonlinear_current.cpp
     ${SOURCE_DIR}/plot_energy_distribution.cpp
-    ${SOURCE_DIR}/plot_energy_distribution_cluster.cpp
     ${SOURCE_DIR}/plot_energy_max.cpp
     ${SOURCE_DIR}/plot_energy_slyse.cpp
     # ${SOURCE_DIR}/random_dataset.cpp

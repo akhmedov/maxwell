@@ -17,7 +17,6 @@
 #include <dlfcn.h>
 #include <utility>
 #include <string>
-#include <iostream>
 #include <map>
 
 struct ModuleEntity {
@@ -30,13 +29,17 @@ class ModuleManager {
 
 public:
     ModuleManager (Logger* global = NULL);
-    bool load_module (const std::string& posix_path, double R, double A0, double tau0, double eps, double mu);
+    bool load_module (const std::string& posix_path, const std::string& library, double R, double A0, double tau0, double eps, double mu);
     bool load_module (const std::string& name, ModuleEntity implementation);
 
     std::vector<std::string> get_loaded () const;
     ModuleEntity get_module (const std::string& name);
 
 private:
+
+    std::string find_lib (const std::string& posix_path, const std::string& library);
+
+    const static std::vector<std::string> format;
     std::map<std::string, ModuleEntity> module;
     Logger* log;
 };

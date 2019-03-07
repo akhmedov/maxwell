@@ -57,4 +57,3 @@ add_custom_target(generate_build_version ALL
 add_subdirectory(core)
 add_subdirectory(module)
 add_subdirectory(example)
-add_subdirectory(interface)
