@@ -15,25 +15,23 @@ USE maxwell;
 
 -- master table headding
 
-CREATE TABLE IF NOT EXISTS maxwell_header (
-	id          BIGINT NOT NULL UNIQUE,
+CREATE TABLE IF NOT EXISTS problem (
+	id          BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
 	comment     CHAR(128) NOT NULL,
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
 -- slave table headding
 
-CREATE TABLE IF NOT EXISTS maxwell_data (
-	id       BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
-	head_id  BIGINT NOT NULL,
-	ct       DOUBLE(20,7) NOT NULL,
-	rho      DOUBLE(20,7) NOT NULL,
-	phi      DOUBLE(20,7) NOT NULL,
-	z        DOUBLE(20,7) NOT NULL,
-	lineary  DOUBLE(20,7) DEFAULT NULL,
-	square   DOUBLE(20,7) DEFAULT NULL,
-	kerr     DOUBLE(20,7) DEFAULT NULL,
+CREATE TABLE IF NOT EXISTS entity (
+	id       	BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
+	problem_id  BIGINT NOT NULL,
+	ct       	DOUBLE(20,7) NOT NULL,
+	rho      	DOUBLE(20,7) NOT NULL,
+	phi      	DOUBLE(20,7) NOT NULL,
+	z        	DOUBLE(20,7) NOT NULL,
+	result  	DOUBLE(20,7) DEFAULT NULL,
 	PRIMARY KEY (id),
-	FOREIGN KEY (head_id) REFERENCES maxwell_header (id) ON DELETE CASCADE,
-	CONSTRAINT UC_maxwell_data UNIQUE (head_id, ct, rho, phi, z)
+	FOREIGN KEY (problem_id) REFERENCES problem (id) ON DELETE CASCADE,
+	CONSTRAINT UC_maxwell_data UNIQUE (problem_id, ct, rho, phi, z)
 ) ENGINE=InnoDB;

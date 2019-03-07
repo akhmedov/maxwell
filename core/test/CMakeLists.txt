@@ -18,6 +18,7 @@ set(SOURCES
     ${SOURCE_DIR}/monte_carlo_improper.cpp
     ${SOURCE_DIR}/monte_carlo_integral.cpp
     ${SOURCE_DIR}/monte_carlo_vector.cpp
+    ${SOURCE_DIR}/mysql_driver.cpp
     ${SOURCE_DIR}/next_prime.cpp
     ${SOURCE_DIR}/simpson2d.cpp
     ${SOURCE_DIR}/simpson2d_line2.cpp

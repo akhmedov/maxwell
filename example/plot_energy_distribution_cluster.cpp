@@ -22,26 +22,30 @@ double A0 = 1; // max current magnitude
 double MU  = 1; // relative magnetic permatiity
 double EPS = 1; // relative dielectric pirmativity
 
-string MODULE = "module/uniform_disk/libuniform_disk.dylib"; // module path
-int SUBMODULE = 0; // submodule index (meandr monocycle)
-int THREAD_NUM = 5; // number of threads for calculation
-
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
-void plot_energy_distribution (double tau0, bool swap_axis = false)
-{	
+AbstractField* create_model (double tau0) 
+{
+	string MODULE = "module/uniform_disk/libuniform_disk.dylib"; // module path
+	int SUBMODULE = 0; // submodule index (meandr monocycle)
+
 	ModuleManager mng = ModuleManager(NULL);
 	mng.load_module(MODULE, R, A0, tau0, EPS, MU);
-	// LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
-	// LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
+	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
+	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
 	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
 
-	// FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	// free_shape->set_time_depth([tau0] (double vt) {return Function::gauss(vt,tau0);});
-	// LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
+	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss(vt,tau0);});
+	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
+	return linear;
+}
 
-	std::vector<SpaceInterval64> data;
+vector<SpaceInterval64> arguments (double tau0, bool swap_axis)
+{
+	vector<SpaceInterval64> data;
+
 	double x = 0;
 	for (double y = -2*R; y <= 2*R; y += 0.05) {
 		for (double z = 0; z <= 5; z += 0.05) {
@@ -49,55 +53,59 @@ void plot_energy_distribution (double tau0, bool swap_axis = false)
 			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
 			double to = tau0 + sqrt((rho+R)*(rho+R) + z*z) + 0.01;
-			// if (swap_axis) thead_core->add_argument( {y,x,z,from,to} );
-			// else thead_core->add_argument( {x,y,z,from,to} );
-			if (swap_axis)
-				data.emplace_back(y, x, z, from, to);
-			else
-				data.emplace_back(x, y, z, from, to);
+			if (swap_axis) data.emplace_back(y, x, z, from, to);
+			else data.emplace_back(x, y, z, from, to);
 		}
 	}
 
-	Cluster cluster(4);
-	std::vector<double> res(data.size());
-	cluster.start(data, res, [linear] (const SpaceInterval64 &entry) {
-		return linear->energy_cart(entry.q1, entry.q2, entry.q3, entry.from, entry.to);
-	});
+	return data;
+}
 
-
-	// while (cluster.progress() < 100) {
-	// 	std::cout << '\r' << "Evaluation progress: " << cluster.progress() << '%';
-	// 	std::cout.flush();
-	// 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	// }
-	// std::cout << '\r' << "Evaluation progress: 100%%";
-	// std::cout.flush();
-	// std::cout << std::endl;
-	std::cout << "Wainting...\n";
-	cluster.wait();
-
-	// thead_core->call({function});
-	// auto data = thead_core->get_value();
-
+void plot (const vector<vector<double>>& data, double tau0, bool swap_axis)
+{
 	string script = "W_" + str_of(tau0) + (swap_axis?"_xz" :"_yz") + ".gnp";
 	GnuPlot* plot = new GnuPlot(script);
 	plot->set_colormap(Colormap::parula);
-    
-    std::vector<std::vector<double>> ans;
+    plot->plot_colormap(data, !swap_axis, 2);
+	delete plot;
+}
+
+void plot_energy_distribution (double tau0, bool swap_axis)
+{
+	AbstractField* model = create_model (tau0);
+	vector<SpaceInterval64> data = arguments(tau0, swap_axis);
+
+	Cluster cluster(6);
+	std::vector<double> res(data.size());
+	cluster.start(data, res, [model] (const SpaceInterval64 &entry) {
+		return model->energy_cart(entry.q1, entry.q2, entry.q3, entry.from, entry.to);
+	});
+
+	while (cluster.progress() != data.size()) {
+		double persent = static_cast<double>(cluster.progress()) / data.size();
+		cout << '\r' << "Evaluation progress: " << str_of(100 * persent) << '%';
+		cout.flush();
+		this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	cout << endl;
+
+	// std::cout << "Wainting...\n";
+	// cluster.wait();
+
+    vector<vector<double>> ans;
     ans.reserve(data.size());
     for (auto i = 0u; i < data.size(); i++) {
-        std::vector<double> v{ data[i].q1, data[i].q2, data[i].q3, data[i].from, data[i].to, res[i] };
-        ans.emplace_back(std::move(v));
+        vector<double> v{ data[i].q1, data[i].q2, data[i].q3, data[i].from, data[i].to, res[i] };
+        ans.emplace_back(move(v));
     }
-	
-    plot->plot_colormap(ans, !swap_axis, 2);
 
-	delete linear, plot;
+	plot(ans, tau0, swap_axis);
+	delete model;
 }
 
 int main ()
 {
-    plot_energy_distribution(2.0, false);
-	// plot_energy_distribution(2.0, true );
+    plot_energy_distribution(2.0, false); // YZ
+	plot_energy_distribution(2.0, true ); // XZ
     return 0;
 }

@@ -1,7 +1,10 @@
 # All dot files exept .gitignore and VC code project files
 /**/.*
 !/.gitignore
-!/.vscode
+
+# Ignore Visual Studio Code files
+/.vscode/
+/project.code-workspace
 
 # Plot output for gnuplot and pictures
 /*.gnp

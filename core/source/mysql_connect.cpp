@@ -11,16 +11,18 @@
 const std::string MySQL::SET_WAIT_TIMEOUT  = "SET wait_timeout=9999999;";
 const std::string MySQL::USE_MAXWELL       = "USE maxwell;";
 
-const std::string MySQL::LIST_SAVED_MODELS = "SELECT * FROM maxwell.maxwell_header;";
-const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO maxwell.maxwell_header SET id = $PROBLEM_ID, comment = $COMMENT;";
-const std::string MySQL::UPDATE_COMMENT    = "UPDATE maxwell.maxwell_header SET comment = $COMMENT WHERE id = $PROBLEM;";
-const std::string MySQL::DELETE_PROBLEM    = "DELETE FROM maxwell_header WHERE id = $PROBLEM;";
-const std::string MySQL::PRIBLEM_EXISTS    = "SELECT EXISTS(SELECT id FROM maxwell.maxwell_header WHERE id = $PROBLEM);";
+const std::string MySQL::LIST_SAVED_MODELS = "SELECT * FROM problem ORDER BY id;";
+const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO problem SET comment = '$COMMENT';";
+const std::string MySQL::UPDATE_COMMENT    = "UPDATE problem SET comment = '$COMMENT' WHERE id = $PROBLEM;";
+const std::string MySQL::DELETE_PROBLEM    = "DELETE FROM problem WHERE id = $PROBLEM;";
+const std::string MySQL::PRIBLEM_EXISTS    = "SELECT EXISTS(SELECT id FROM problem WHERE id = $PROBLEM);";
+const std::string MySQL::SELECT_ENTITY     = "SELECT id FROM entity WHERE problem_id = $PROBLEM;";
 
-const std::string MySQL::SELECT_POINT      = "SELECT id,lineary,square,kerr FROM maxwell.maxwell_data WHERE head_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
-const std::string MySQL::INSERT_POINT      = "INSERT INTO maxwell.maxwell_data SET head_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
-const std::string MySQL::UPDATE_RESULT     = "UPDATE maxwell.maxwell_data SET lineary = $VALUE WHERE id = $POINT;";
-const std::string MySQL::SELECT_RESULT     = "SELECT result FROM maxwell.maxwell_data WHERE id = $POINT;";
+const std::string MySQL::DELETE_POINT      = "DELETE FROM entity WHERE id = $POINT;";
+const std::string MySQL::SELECT_POINT      = "SELECT id,result FROM entity WHERE problem_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
+const std::string MySQL::INSERT_POINT      = "INSERT INTO entity SET problem_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
+const std::string MySQL::UPDATE_RESULT     = "UPDATE entity SET result = $VALUE WHERE id = $POINT;";
+const std::string MySQL::SELECT_RESULT     = "SELECT result FROM entity WHERE id = $POINT;";
 
 MySQL::MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db)
 : hostname(host), username(user), password(pass), database(db)
@@ -34,7 +36,10 @@ MySQL::MySQL (const std::string& host, const std::string& user, const std::strin
 										this->database.c_str(),
 										0, NULL, 0);
 
-	if (!connected) throw std::logic_error("Connection failed! MySQL is not connected.");
+	if (!connected) {
+		// delete this->connection;
+		throw std::logic_error("Connection failed! MySQL is not connected.");
+	}
 
 	int error_code = mysql_query(this->connection, MySQL::SET_WAIT_TIMEOUT.c_str());
 	MySQL::throw_error_code(error_code);
@@ -47,10 +52,10 @@ MySQL::~MySQL ()
 {
 	mysql_close(this->connection);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	delete this->connection;
+	// delete this->connection;
 }
 
-std::vector<std::pair<std::size_t,std::string>> MySQL::get_saved_problem_list () const
+std::vector<std::pair<std::size_t,std::string>> MySQL::get_saved_problems () const
 {
 	int error_code = mysql_query(this->connection, MySQL::LIST_SAVED_MODELS.c_str());
 	MySQL::throw_error_code(error_code);
@@ -67,15 +72,8 @@ std::vector<std::pair<std::size_t,std::string>> MySQL::get_saved_problem_list ()
 	return res;
 }
 
-std::size_t MySQL::get_selected_problem () const
+void MySQL::select_problem (std::size_t id)
 {
-	if (!this->problem_selected) throw std::logic_error("Problem is not selected!");
-	return this->problem_id;
-}
-
-bool MySQL::select_problem (std::size_t id)
-{
-
 	std::string problem_exists = MySQL::PRIBLEM_EXISTS;
 	problem_exists = std::regex_replace(problem_exists, std::regex("\\$PROBLEM"), std::to_string(id));
 
@@ -86,30 +84,57 @@ bool MySQL::select_problem (std::size_t id)
 	bool exists = std::stoi(mysql_fetch_row(result_exist)[0]);
 	mysql_free_result(result_exist);
 
-	if (exists) {
-		this->problem_selected = true;
-		this->problem_id = id;
-		return true;
-	}
-
-	return false;
+	if (exists) this->problem_id = id;
+	else this->problem_id = this->insert_problem("autoinserted problem [TIMESTAMP]");
+	this->problem_selected = true;
 }
 
-bool MySQL::insert_problem (std::size_t id, const std::string& comment)
+void MySQL::delete_problem ()
+{
+	std::string request = MySQL::DELETE_PROBLEM;
+	request = std::regex_replace(request, std::regex("\\$PROBLEM"), std::to_string(problem_id));
+	int error_code = mysql_query(this->connection, request.c_str());
+	MySQL::throw_error_code(error_code);
+	this->point_selected = false;
+}
+
+std::size_t MySQL::insert_problem (const std::string& comment)
 {
 	std::string request = MySQL::INSERT_PROBLEM;
 	request = std::regex_replace(request, std::regex("\\$COMMENT"), comment);
-	request = std::regex_replace(request, std::regex("\\$PROBLEM"), std::to_string(id));
 
 	int error_code = mysql_query(this->connection, request.c_str());
 	MySQL::throw_error_code(error_code);
-	return true;
+	this->problem_id = mysql_insert_id(this->connection);
+	this->problem_selected = true;
+	return mysql_insert_id(this->connection);
 }
 
-bool MySQL::select_point (double ct, double rho, double phi, double z)
+void MySQL::update_problem (const std::string& comment)
+{
+	std::string request = MySQL::UPDATE_COMMENT;
+	request = std::regex_replace(request, std::regex("\\$COMMENT"), comment);
+	request = std::regex_replace(request, std::regex("\\$PROBLEM"), std::to_string(problem_id));
+	int error_code = mysql_query(this->connection, request.c_str());
+	MySQL::throw_error_code(error_code);
+}
+
+void MySQL::delete_point ()
+{
+	if (!point_selected) throw std::logic_error("No point selected");
+
+	std::string request = MySQL::DELETE_POINT;
+	request = std::regex_replace(request, std::regex("\\$POINT"), std::to_string(point_id));
+
+	int error_code = mysql_query(this->connection, request.c_str());
+	MySQL::throw_error_code(error_code);
+
+	this->point_selected = false;
+}
+
+void MySQL::select_point (double ct, double rho, double phi, double z)
 {
 	if (!problem_selected) throw std::logic_error("No problem_id selected");
-	this->point_selected = true;
 
 	std::string request = MySQL::SELECT_POINT;
 	request = std::regex_replace(request, std::regex("\\$HEAD"), std::to_string(problem_id));
@@ -125,19 +150,20 @@ bool MySQL::select_point (double ct, double rho, double phi, double z)
 	MYSQL_ROW row = mysql_fetch_row(responce);
 
 	if (row != NULL) {
-		this->point_selected = true;
 		this->point_id = std::stod(row[0]);
 		this->result = row[1] ? std::stod(row[1]) : NAN;
 		mysql_free_result(responce);
-		return true;
+	} else {
+		this->point_id = this->insert_point(ct,rho,phi,z);
+		this->result = NAN;
 	}
 
-	return false;
+	this->point_selected = true;
 }
 
-bool MySQL::insert_point (double ct, double rho, double phi, double z)
+std::size_t MySQL::insert_point (double ct, double rho, double phi, double z)
 {
-	if (!problem_selected) return false;
+	if (!problem_selected) throw std::logic_error("Problem is not selected");
 
 	std::string request = MySQL::INSERT_POINT;
 	request = std::regex_replace(request, std::regex("\\$HEAD"), std::to_string(problem_id));
@@ -148,11 +174,30 @@ bool MySQL::insert_point (double ct, double rho, double phi, double z)
 
 	int error_code = mysql_query(this->connection, request.c_str());
 	MySQL::throw_error_code(error_code);
+	return mysql_insert_id(this->connection);
+}
 
-	this->point_id = mysql_insert_id(this->connection);
-	this->result = NAN;
-	this->point_selected = true;
-	return true;
+std::vector<std::size_t> MySQL::select_entity ()
+{
+	if (!problem_selected) throw std::logic_error("Problem is not selected");
+
+	std::string request = MySQL::SELECT_ENTITY;
+	request = std::regex_replace(request, std::regex("\\$PROBLEM"), std::to_string(problem_id));
+
+	int error_code = mysql_query(this->connection, request.c_str());
+	MySQL::throw_error_code(error_code);
+
+	MYSQL_RES* responce = mysql_store_result(connection);
+	std::size_t point_nums = mysql_num_rows(responce);
+
+	std::vector<std::size_t> id;
+	for (std::size_t item = 0; item < point_nums; item++) {
+		MYSQL_ROW serch_row = mysql_fetch_row(responce);
+		id.push_back(std::stoi(serch_row[0]));
+	}
+
+	mysql_free_result(responce);
+	return id;
 }
 
 std::string MySQL::get_hostname() const
@@ -160,7 +205,7 @@ std::string MySQL::get_hostname() const
 	return this->username + "@" + this->hostname;
 }
 
-bool MySQL::reconnect () const
+void MySQL::reconnect () const
 {
 	throw std::logic_error("MySQL::reconnect not implemented");
 }
@@ -182,19 +227,19 @@ void MySQL::throw_error_code (int code)
 
 double MySQL::get_result () const
 {
-	if (!point_selected || !problem_selected)
-		throw std::logic_error("problem_id or point_id is not selected");
+	if (!point_selected) throw std::logic_error("No point selected");
 	return this->result;
 }
 
-bool MySQL::update_result (double value)
+void MySQL::update_result (double value)
 {
-	std::string update_result = MySQL::UPDATE_RESULT;
-	update_result = std::regex_replace(update_result, std::regex("\\$POINT"), std::to_string(point_id));
-	update_result = std::regex_replace(update_result, std::regex("\\$VALUE"), std::to_string(value));
+	if (!point_selected) throw std::logic_error("No point selected");
 
-	int error_code = mysql_query(this->connection, update_result.c_str());
+	std::string request = MySQL::UPDATE_RESULT;
+	request = std::regex_replace(request, std::regex("\\$POINT"), std::to_string(point_id));
+	request = std::regex_replace(request, std::regex("\\$VALUE"), std::to_string(value));
+
+	int error_code = mysql_query(this->connection, request.c_str());
 	MySQL::throw_error_code(error_code);
 	this->result = value;
-	return true;
 }

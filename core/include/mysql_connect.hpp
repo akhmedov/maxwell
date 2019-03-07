@@ -21,28 +21,33 @@
 #include <string>
 #include <exception>
 
+#include <iostream>
+
 struct MySQL {
 
 	MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db);
 	~MySQL ();
 
 	std::string get_hostname() const;
-	std::vector<std::pair<std::size_t,std::string>> get_saved_problem_list () const;
-	std::size_t get_selected_problem () const;
+	std::vector<std::pair<std::size_t,std::string>> get_saved_problems () const;
 
-	bool select_problem (std::size_t id);
-	bool insert_problem (std::size_t id, const std::string& comment);
+	void delete_problem ();
+	void select_problem (std::size_t id);
+	void update_problem (const std::string& comment);
+	std::size_t insert_problem (const std::string& comment);
 
-	bool select_point (double ct, double rho, double phi, double z);
-	bool insert_point (double ct, double rho, double phi, double z);
+	void delete_point ();
+	void select_point (double ct, double rho, double phi, double z);
+	std::size_t insert_point (double ct, double rho, double phi, double z);
+	std::vector<std::size_t> select_entity ();
 
 	double get_result () const;
-	bool update_result (double value);
+	void update_result (double value);
 
 protected:
 
 	static void throw_error_code (int code);
-	bool reconnect () const;
+	void reconnect () const;
 
 private:
 
@@ -68,7 +73,9 @@ private:
 	static const std::string INSERT_PROBLEM;
 	static const std::string UPDATE_COMMENT;
 	static const std::string PRIBLEM_EXISTS;
+	static const std::string SELECT_ENTITY;
 
+	static const std::string DELETE_POINT;
 	static const std::string SELECT_POINT;
 	static const std::string INSERT_POINT;
 	static const std::string UPDATE_RESULT;
