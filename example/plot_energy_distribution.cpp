@@ -28,7 +28,7 @@ AbstractField* create_model (double tau0)
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
-	int SUBMODULE = 0; // submodule index (meandr monocycle)
+	int SUBMODULE = 1; // submodule index (trancient responce)
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
@@ -50,7 +50,7 @@ vector<SpaceInterval64> arguments (double tau0, bool swap_axis)
 
 	double x = 0;
 	for (double y = -2*R; y <= 2*R; y += 0.05) {
-		for (double z = 0; z <= 5; z += 0.05) {
+		for (double z = 0; z <= 5*R; z += 0.05) {
 			double rho = sqrt(x*x + y*y);
 			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;

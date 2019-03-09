@@ -13,6 +13,7 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCES
     ${SOURCE_DIR}/awgn_power.cpp
     # ${SOURCE_DIR}/hardcode_dataset.cpp
+    ${SOURCE_DIR}/emp_shape_plot.cpp
     ${SOURCE_DIR}/iterfer_sinc.cpp
     ${SOURCE_DIR}/nonlinear_current.cpp
     ${SOURCE_DIR}/plot_energy_distribution.cpp
