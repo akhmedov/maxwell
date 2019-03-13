@@ -42,6 +42,10 @@ struct AbstractField {
 	virtual double energy_cart (double x, double y, double z, double from, double to) const;
 	virtual double energy (double rho, double phi, double z, double from, double to) const;
 
+	// TODO:
+	// virtual double observed_from (double x, double y, double z) const = 0;
+	// virtual double observed_to (double x, double y, double z) const = 0;
+
 protected:
 	Logger *global_log{};
 	double accuracy{};

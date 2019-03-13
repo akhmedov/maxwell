@@ -6,7 +6,7 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-#include "maxwell.hpp"
+#include "mysql_connect.hpp"
 using namespace std;
 
 #define HOSTNAME "localhost"

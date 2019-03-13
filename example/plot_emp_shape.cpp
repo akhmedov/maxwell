@@ -26,20 +26,19 @@ AbstractField* create_model ()
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, TAU0, EPS, MU);
-	if (!loaded) throw std::logic_error("Library loading error");
+	if (!loaded) throw logic_error("Library loading error");
 	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
 	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
 	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
     cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
 	    
-
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
 	free_shape->set_time_depth([] (double vt) {return Function::gauss_perp(vt,TAU0,1);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 	return duhamel;
 }
 
-vector<vector<double>> plot_data (AbstractField* model, double x, double y, double z)
+vector<vector<double>> plot_arguments (AbstractField* model, double x, double y, double z)
 {
     double rho = sqrt(x*x + y*y);
     double phi = atan2(y,x);
@@ -68,7 +67,7 @@ void plot_script (vector<vector<double>> data, string name)
 int main ()
 {
     AbstractField* model = create_model();
-    auto data = plot_data(model, 1, 1, 1.6);
+    auto data = plot_arguments(model, 1, 1, 1.6);
     plot_script(data, "emp_shape.gnp");
 
     return 0;

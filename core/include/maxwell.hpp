@@ -14,6 +14,6 @@
 #include "linear_duhamel.hpp"
 #include "noise.hpp"
 
-#include "manager.hpp"
 #include "logger.hpp"
 #include "module_manager.hpp"
+#include "calculation_manager.hpp"

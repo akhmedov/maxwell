@@ -8,9 +8,8 @@
 
 #include "maxwell.hpp"
 #include "gnu_plot.hpp"
-#include "data.hpp"
-#include "cluster.hpp"
 
+#include <vector>
 #include <string> // string() to_string()
 #include <utility> // swap()
 #include <iostream> // cout
@@ -24,7 +23,20 @@ double EPS = 1; // relative dielectric pirmativity
 
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
-AbstractField* create_model (double tau0) 
+AbstractField* rectangular_shape (double tau0) 
+{
+	string MODULE_PATH = "module/uniform_disk"; // module dir path
+	string MODULE_NAME = "uniform_disk"; // library name
+	int SUBMODULE = 0; // submodule index (meandr monocycle)
+
+	ModuleManager mng = ModuleManager(NULL);
+	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
+	if (!loaded) throw std::logic_error("Library loading error");
+	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+}
+
+AbstractField* arbitrary_signal (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -44,9 +56,9 @@ AbstractField* create_model (double tau0)
 	return duhamel;
 }
 
-vector<SpaceInterval64> arguments (double tau0, bool swap_axis)
+vector<vector<double>> arguments (double tau0, bool swap_axis)
 {
-	vector<SpaceInterval64> data;
+	vector<vector<double>> data;
 
 	double x = 0;
 	for (double y = -2*R; y <= 2*R; y += 0.05) {
@@ -55,37 +67,44 @@ vector<SpaceInterval64> arguments (double tau0, bool swap_axis)
 			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
 			if (from - 0.01 > 0) from -= 0.01;
 			double to = tau0 + sqrt((rho+R)*(rho+R) + z*z) + 0.01;
-			if (swap_axis) data.emplace_back(y, x, z, from, to);
-			else data.emplace_back(x, y, z, from, to);
+			vector<double> tmp {x, y, z, from, to};
+			if (swap_axis) swap(tmp[0],tmp[1]);
+			data.emplace_back(move(tmp));
 		}
 	}
 
 	return data;
 }
 
-void plot (const vector<vector<double>>& data, double tau0, bool swap_axis)
+void plot (const vector<vector<double>>& arg, const vector<double>& res, double tau0, bool swap_axis)
 {
+    vector<vector<double>> data;
+    data.reserve(arg.size());
+    for (auto i = 0u; i < arg.size(); i++) {
+        vector<double> tmp{ arg[i][0], arg[i][1], arg[i][2], arg[i][3], arg[i][4], res[i] };
+        data.emplace_back(move(tmp));
+    }
+
 	string script = "W_" + str_of(tau0) + (swap_axis?"_xz" :"_yz") + ".gnp";
-	GnuPlot* plot = new GnuPlot(script);
-	plot->set_colormap(Colormap::parula);
-    plot->plot_colormap(data, !swap_axis, 2);
-	delete plot;
+	GnuPlot plot = GnuPlot(script);
+	plot.set_colormap(Colormap::gray);
+    plot.plot_colormap(data, !swap_axis, 2);
 }
 
 void plot_energy_distribution (double tau0, bool swap_axis)
 {
-	AbstractField* model = create_model (tau0);
-	vector<SpaceInterval64> data = arguments(tau0, swap_axis);
+	AbstractField* model = rectangular_shape(tau0);
+	auto arg = arguments(tau0, swap_axis);
+	vector<double> res(arg.size());
 
-	Cluster cluster(6);
-	std::vector<double> res(data.size());
-	cluster.start(data, res, [model] (const SpaceInterval64 &entry) {
-		return model->energy_cart(entry.q1, entry.q2, entry.q3, entry.from, entry.to);
+	CalculationManager cluster(6);
+	cluster.start(arg, res, [model] (const auto& entry) {
+		return model->energy_cart(entry[0], entry[1], entry[2], entry[3], entry[4]);
 	});
 
 	// progress of calculation in persent
-	while (cluster.progress() != data.size()) {
-		double persent = static_cast<double>(cluster.progress()) / data.size();
+	while (cluster.progress() != arg.size()) {
+		double persent = static_cast<double>(cluster.progress()) / arg.size();
 		cout << '\r' << "Evaluation progress: " << str_of(100 * persent) << '%';
 		cout.flush();
 		this_thread::sleep_for(chrono::milliseconds(100));
@@ -95,14 +114,7 @@ void plot_energy_distribution (double tau0, bool swap_axis)
 	// std::cout << "Wainting...\n";
 	// cluster.wait();
 
-    vector<vector<double>> ans;
-    ans.reserve(data.size());
-    for (auto i = 0u; i < data.size(); i++) {
-        vector<double> v{ data[i].q1, data[i].q2, data[i].q3, data[i].from, data[i].to, res[i] };
-        ans.emplace_back(move(v));
-    }
-
-	plot(ans, tau0, swap_axis);
+	plot(arg, res, tau0, swap_axis);
 	delete model;
 }
 

@@ -84,7 +84,7 @@ void serial::dataset::evaluate ()
 {
 	static bool called = false;
 
-	if (!called) {
+	/* if (!called) {
 
 		std::vector<Manager<0>*> manager;
 		for (std::size_t c = 1; c < this->get_radix(); c++) {
@@ -116,7 +116,7 @@ void serial::dataset::evaluate ()
 		}
 
 		called = true;
-	}
+	} */
 }
 
 double serial::dataset::get_real_vt (std::size_t vt)

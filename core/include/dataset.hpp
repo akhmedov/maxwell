@@ -12,12 +12,8 @@
 #define RADIUS 1
 #define AMPLITUDE 1
 
-#include "noise.hpp"
-#include "manager.hpp"
-#include "function.hpp"
+#include "maxwell.hpp"
 #include "nlohmann_json.hpp"
-#include "abstract_field.hpp"
-#include "linear_duhamel.hpp"
 
 #include <algorithm>
 #include <random>
