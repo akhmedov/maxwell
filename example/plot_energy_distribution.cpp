@@ -51,7 +51,7 @@ AbstractField* arbitrary_signal (double tau0)
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
 
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss_perp(vt,tau0,1);});
+	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss(vt,tau0);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 	return duhamel;
 }
@@ -93,7 +93,7 @@ void plot (const vector<vector<double>>& arg, const vector<double>& res, double 
 
 void plot_energy_distribution (double tau0, bool swap_axis)
 {
-	AbstractField* model = rectangular_shape(tau0);
+	AbstractField* model = arbitrary_signal(tau0);
 	auto arg = arguments(tau0, swap_axis);
 	vector<double> res(arg.size());
 

@@ -82,11 +82,9 @@ vector<vector<double>> calculator (AbstractField* model, const vector<vector<dou
 
 	vector<vector<double>> data;
 	for (size_t i = 0; i < args.size(); i++) {
-		double ct = args[i][0];
 		double x  = args[i][1] * cos(args[i][2]);
-		double y  = args[i][1] * sin(args[i][2]);
-		double z  = args[i][3];
-        data.push_back({ res[i], ct, x });
+		// double y  = args[i][1] * sin(args[i][2]);
+        data.push_back({ res[i], args[i][0], x });
     }
 
 	return data;
