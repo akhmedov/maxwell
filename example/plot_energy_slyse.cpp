@@ -103,7 +103,7 @@ void print_max (const vector<vector<double>>& args, const vector<double>& res)
 
 void plot_energy_slyse (double tau0, double z)
 {
-	AbstractField* model = rectangular_shape(tau0);
+	AbstractField* model = arbitrary_signal(tau0);
 	auto args = arguments (tau0, z);
 	vector<double> res(args.size());
 

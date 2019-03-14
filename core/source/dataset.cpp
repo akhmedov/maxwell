@@ -148,36 +148,3 @@ void Dataset::serialize (const std::string& filename, const nlohmann::json& data
 	file << std::setw(4) << dataset << std::endl;
 	file.close();
 }
-
-/* json serial::json_from (dataset ds, min_max rho, min_max phi, min_max z)
-{
-	std::vector<double> time = ds.get_series();
-	std::vector<json> series;
-	for (std::size_t i = 0; i < time.size(); i++) {
-		series.push_back(json{
-			{"id",    i},
-			{"vt",    time[i]},
-			{"field", ds.get_amplitude(i)},
-			{"rho",   ds.get_rho(i)},
-			{"phi",   ds.get_phi(i)},
-			{"z",     ds.get_z(i)},
-			{"unit",  ds.get_signal_at(i)}
-		});
-	}
-
-	json js;
-	js["component"] = "unknown";
-	js["radix"]     = ds.get_radix();
-	js["sparks"]	= ds.get_sparks();
-	js["SNR"]       = NAN;
-	js["max_rho"]   = rho.second;
-	js["min_rho"]   = rho.first;
-	js["max_phi"]   = phi.second;
-	js["min_phi"]   = phi.first;
-	js["max_z"]     = z.second;
-	js["min_z"]     = z.first;
-	js["series"]    = series;
-
-	return js;
-} */
-

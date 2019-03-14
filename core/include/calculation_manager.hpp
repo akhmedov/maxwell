@@ -59,7 +59,7 @@ template<template<typename ...> class ArgT, typename T, typename FuncT>
 void CalculationManager::start (const std::vector<ArgT<T>> &input, std::vector<T> &output, FuncT func)
 {
     if (input.size() != output.size()) throw std::logic_error("Size of argument and result does not match");
-    if (threads < input.size()) threads = input.size();
+    if (input.size() < threads) threads = input.size();
 
     current = 0;
     int from{};
