@@ -6,7 +6,7 @@
 //  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 //
 
-using namespace std;
+// using namespace std;
 
 bool anal_numerical_I1 ()
 {

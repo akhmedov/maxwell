@@ -12,28 +12,36 @@
 #include "maxwell.hpp"
 #include "nlohmann_json.hpp"
 
-#include <random>
-#include <algorithm>
-#include <functional>
-
-#include <vector>
 #include <list>
-
+#include <vector>
 #include <fstream> // ofstream
-#include <string> // to_string
-#include <memory> // unique_ptr
 
-// using json = nlohmann::json;
-// using func = std::function<double(std::vector<double>)>;
-// using comp = std::function<double(AbstractField*,double,double,double,double)>;
+namespace DatasetHelper {
+
+	struct Metadata {
+		Metadata () : Metadata (0,0,{NAN,NAN,NAN}) {}
+		Metadata (double ratio, std::size_t id, std::vector<double> coord) : snr(ratio), signal(id), space(coord) {}
+		double snr {0};
+		std::size_t signal {0};
+		std::vector<double> space {0,0,0};
+	};
+
+	void to_json (nlohmann::json& js, const Metadata& meta);
+
+	struct SeriesItem {
+		double magnitude {};
+		std::vector<Metadata> info {}; // TODO: not a copy but pointer to inctance on heap
+	};
+
+	void to_json (nlohmann::json& js, const SeriesItem& item);
+};
 
 struct Dataset {
 
 	Dataset (std::size_t radix, double duty_cycle, double noise_power);
-	~Dataset ();
 
-	void append   (const std::vector<std::vector<double>>& arg, const std::vector<double>& field, std::size_t id);
-	void superpos (const std::vector<std::vector<double>>& arg, const std::vector<double>& field, std::size_t id, double crossection);
+	void append   (std::size_t id, const std::vector<double>& space, const std::vector<double>& time, const std::vector<double>& field);
+	void superpos (std::size_t id, const std::vector<double>& space, const std::vector<double>& time, const std::vector<double>& field, double crossection);
 
 	// dataset global metadata getters
 	std::size_t get_radix () const;
@@ -44,31 +52,21 @@ struct Dataset {
 	double get_amplitude_at (double time) const;
 
 	static void serialize (const std::string& filename, const nlohmann::json& dataset, bool binary);
+	static nlohmann::json read_file (const std::string& filename);
+	static Dataset* instance_from (nlohmann::json);
 
 private:
 
-	struct Metadata {
-		double snr {0};
-		std::size_t signal {0};
-		std::vector<double> space {0,0,0};
-	};
-
-	struct SeriesItem {
-		double magnitude {};
-		std::vector<Metadata> info {}; // TODO: not a copy but ref to script[i]
-	};
-
 	void append_duty_cycle (double dlt_time, std::size_t points);
-	static nlohmann::json to_json (const Metadata& meta);
-	static nlohmann::json to_json (const std::map<double, SeriesItem>& series);
+	static nlohmann::json to_json (const std::map<double, DatasetHelper::SeriesItem>& series);
 	static double count_snr_db (std::vector<double> filed, double noise_power);
 
 	std::size_t radix;
 	double duty_cycle;
 	double noise_power;
 	AdditiveWhiteGaussian noise;
-	std::vector<Metadata> script;
-	std::map<double, SeriesItem> series;
+	std::list<DatasetHelper::Metadata> script; // signals cannt come at the same time
+ 	std::map<double, DatasetHelper::SeriesItem> series;
 };
 
 #endif /* dataset_hpp */

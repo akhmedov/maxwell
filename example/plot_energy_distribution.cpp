@@ -23,6 +23,19 @@ double EPS = 1; // relative dielectric pirmativity
 
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
+AbstractField* trancient_recponce () 
+{
+	string MODULE_PATH = "module/uniform_disk"; // module dir path
+	string MODULE_NAME = "uniform_disk"; // library name
+	int SUBMODULE = 1; // submodule index (trancient responce)
+
+	ModuleManager mng = ModuleManager(NULL);
+	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, 0.0, EPS, MU);
+	if (!loaded) throw std::logic_error("Library loading error");
+	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+}
+
 AbstractField* rectangular_shape (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
@@ -51,7 +64,7 @@ AbstractField* arbitrary_signal (double tau0)
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
 
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss_perp(vt,tau0,1);});
+	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss(vt,tau0);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 	return duhamel;
 }
@@ -93,8 +106,7 @@ void plot (const vector<vector<double>>& arg, const vector<double>& res, double 
 
 void plot_energy_distribution (double tau0, bool swap_axis)
 {
-	AbstractField* model = arbitrary_signal(tau0);
-	cout << model->energy_cart(0,0,2, 0, 5) << endl;
+	AbstractField* model = trancient_recponce();
 	auto arg = arguments(tau0, swap_axis);
 	vector<double> res(arg.size());
 

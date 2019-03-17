@@ -1,209 +1,194 @@
-ABSTRACT
+MAXWELL PROJECT
 ======
 
+ABSTRACT
+------
+
 ```diff
-- WARNING: The project is in the private beta state!
+- WARNING: The project is in the public beta state!
+- Some of unit tests fail and there are a lot of uncovered features
+- Compilation warnings and "not implemented" exaptions are presented
 - The first ready to use release is planning for
-- June 7, 2019
+- June 4, 2019
 ```
 
-Maxwell is high performance software unit for numerical simulation of 
-ultra-wideband radar and telecommunication systems. It supports FDTD 
-and numerical evolutionary approach for simulation of electromagnetic 
-processes defined by an arbitrary source of energy. Alternatively, it 
-provides an interface to compute analytical obtained electromagnetic 
-field defined by field components like Ex, Ey and Ez. These are a set 
-of predefined analytical solutions for these kind of problems.
-The product is based on Meep and GNUplot open source projects.
+Maxwell is a library for high performance numerical simulation of
+ultra-wideband radar and telecommunication systems. It implements FDTD,
+evolutionary approach and other methods of time domain electrodynamics.
+Build-in functionality can by used to obtain properties of EM filed
+radiated by arbitrary user defined source. Alternatively, the library
+provides an interface AbstractFiled to use build-in functions to compute
+user defined field components (\vect{E} and \vect{H}).
 
-Visualization of the simulation is done with GNU Plot.
-There are several options to save computed data. It can be saved as 
-GNU Plot script, MySQL database script or JSON time series dataset. 
-Moreover, the project is using MySQL C++ driver to store computing data
-for future call, so the second call of the Maxwell for the same problem 
-will use pre-computed data and will be much more faster.
+Maxwell project provides universal and simple to use interface for high
+performance parallel calculations on user defined problems that can
+continue unexpectedly interrupted calls from previous state. Also, it
+allows to use previously calculated points on new call.
 
-Source code is wrote within ISO c++17 standard and POSIX compatibility. 
-Build system is only one Makefile with several available options for 
-testing and debugging. Maxwell project provides several interfaces for 
-high performance parallel calculations, they are: CPU multi-threading by
-std::threads, GPU calculation by CUDA and Message Passing Interface (MIP)
-as a legacy of Meep project.
+Visualization of the simulations and computations is provided throw
+saving plot data in GNUPlot or Python script that is totally independent
+from current project.
 
-Source code is OS free and build systems supports GNU/Linux, MacOS and 
-BSD operation systems. The code can be compiled for Windows-like systems 
-with the help of Linux environment for Windows like MinGW or Windows 
-Subsystem for Linux. Following OS list is recommended for development 
+On the other side the library allows to save computed data as
+machine learning dataset in JSON or CSV format. The output dataset
+is a time series with menadta to each element. It is desined to help
+to embed morden datascience methods into time domain electronics.
+
+SOURCE CODE INFORMAITION
+------
+
+Source code is wrote within ISO c++14 standard and POSIX compatibility.
+Build system consist of the hierarchy of cmake files that provides
+automatic building, testing and installing of the library. It is
+expected that your system supports c++14 toolchain and has MySQL
+client with c++ API.
+
+Core functionality of the library is located in `maxwell/core` dir and
+`libmaxwell.so` in build. Solution for a spesific problems like certan
+type of antenna presents in dirictry `maxwell/module` as chiled projects
+that are dependent on `libmaxwell.so`. Any module is built as a separat
+library that can be loaded in runtime by `ModuleManager` (`libmaxwell.so`)
+with using of [dlfcn](https://pubs.opengroup.org/onlinepubs/7908799/xsh/dlfcn.h.html).
+
+All modules and core library have `test` dirictory of unit-test cpp-files.
+The tests are writn in `ctest` format.
+
+Source code is OS free and build systems supports GNU/Linux, MacOS and
+BSD operation systems. The code can be compiled for Windows-like systems
+with the help of Linux environment for Windows like MinGW or Windows
+Subsystem for Linux. Following OS list is recommended for development
 process, the system is tested on the list:
 
 - GNU/Linux Ubuntu 16.04 LTE x86_64 (GNU GCC version 5.4.0 20160607)
 - GNU/Linux Ubuntu 18.04 LTE x86_64 (GNU GCC version 7.3.0 20180607)
 - MacOS Sierra 10.12.5 x86_64 (Apple LLVM version 8.1.0)
+- MacOS Sierra 10.14.3 x86_64 (Apple LLVM version 10.0.0)
 
-BUILD INSTRUCTIONS FOR UBUNTU 18.04 x64
-======
+BUILDING INSTRUCTIONS FOR UBUNTU 18.04 x64
+------
 
-m4                 - dependences for gmp <br/>
-libx11-dev         - dependences for gnuplot <br/>
-libmysqlclient-dev - mysql client connector <br/>
-gfortran		   - fortran77 compiler for ... <br/>
-libgd2-dev		   - PNG JPEG anf TIFF support for gnuplot <br/>
-gfortran		   - is needed for meep
+If you are building the library on in other environment follow the wiki,
+nevertheless it is strongly recommended to read this tutorial firstly.
 
-At the first, it is required to install dependences
+At first making sure that your c++ toolchain is ready. A list you need
+`gcc`, `g++`, `make`, `cmake`, `ctest` and `git` tools. Also, your system
+must suport POSIX standart for dynamic library linking in runtime
+[dlfcn](https://pubs.opengroup.org/onlinepubs/7908799/xsh/dlfcn.h.html).
+These and some more debuging tools can be installed by apt-get:
+
+```bash
+~ $ sudo apt-get install build-essential cmake git
+```
+
+On this step you are able to clone or download sources:
+
+```bash
+~ $ git clone --depth=1 https://server/path/maxwell.git
+```
+
+If you are not able to login into MySQL server with `mysql -u root -p`
+then install and configure MySQL server. Also, maxwell project
+is using c++ API of MySQL that is provided in `libmysqlclient-dev` package
 
 ```bash
 ~ $ sudo apt-get install mysql-server
 ~ $ mysql_secure_installation
-~ $ sudo apt-get install libgd2-dev libx11-dev libmysqlclient-dev gfortran
-~ $ sudo apt-get install m4 build-essential cmake git
+~ $ sudo apt-get install libmysqlclient-dev
 ```
 
-The next step is getting the source from VCS
+If your MySQL server is ready create user and database for maxwell project:
 
 ```bash
-~ $ git clone https://server/path/maxwell.git
+~ $ mysql -t -u root -p < maxwell/setup.sql
 ```
 
-Now it is possible to initialize database in MySQL server
+Also, you can clean the server from maxwell data, user and tables by
 
 ```bash
-~ $ mysql -t -u root -p < setup.sql
+~ $ mysql -t -u root -p < maxwell/purge.sql
 ```
 
-Before compiling the protects you need to compile some dependences. 
-Do not use `-j` option for this - it will not speed up compilation
+The library maxwell is depended on POSIX library [GMP](https://gmplib.org).
+It is recommended to build its by yourself, so you will need to install its
+dependency and run the make script (or learn more by ./configure --help):
 
 ```bash
-~ $ make gnuplot gnump meep
+~ $ sudo apt-get install m4
+~ $ make -C maxwell gnump
+~ $ ls maxwell/gnump/include/ maxwell/gnump/lib/
 ```
 
-Finally, go to the source directory and compile the project and unit 
-tests for it
+Maxwell projects does not have plot functions. It saves plot data in the `*.gnp`
+script, that is supported separately by [gnuplot project](http://www.gnuplot.info)
+so you need to install `gnuplot` package (learn more ./configure --help):
 
 ```bash
-~ $ cd maxwell
-maxwell $ make -j4 unit_test maxwell
-maxwell $ ./build/unit_test
+~ $ sudo apt-get install gnuplot
+~ $ gnuplot --version
 ```
 
-Now, run the example to examine the build
+Alternatively, you can build it by yourself:
 
 ```bash
-maxwell $ ./build/maxwell --help
-maxwell $ ./build/maxwell --version
-maxwell $ ./build/maxwell --noise 20 --plot 3 --cylindric 1.9:0.01:3,0:0.01:3,0,2
+~ $ sudo apt-get install libgd-dev libx11-dev
+~ $ make -C maxwell gnuplot
+~ $ maxwell/gnuplot/bin/gnuplot --version
 ```
 
-Also, you can use next commands to clean MySQL and source directory
+Finally, you are ready to build the library. For this run the
+following commands in Maxwell directory:
 
 ```bash
-maxwell $ make clean
-maxwell $ mysql -u root -p < purge.sql
+~ $ mkdir maxwell/build && cd maxwell/build
+build $ cmake ..
+build $ make -j5
 ```
 
-USEFULL DEBUG COMMANDS
-======
+If you build is successful it is recommended to run tests
+in `build` directory for core library and all of modules:
 
 ```bash
-~ $ make list
+~ $ cd build/core/test && ctest 
+~ $ cd build/module/uniform_disk/test/ && ctest
+```
 
-~ $ du -h ./build/maxwell
-~ $ ls -lh ./build/maxwell
-~ $ file ./build/maxwell
+MAXWELL PROJECT CONTRIBUTORS
+------
+
+Name                | Contribution
+------------------- | --------------------------------------------
+Rolan Akhmedov      | project director <br>
+Oleksandr Dumin     | consultation in applied physics methods <br>
+Oleh Zahrychanskyi  | build system and multithreading <br>
+Yurii Sanin         | build system support for Windows <br>
+
+LIST OF USEFULL COMMANDS
+------
+
+Running mysql script in verbose mode
+
+```bash
+~ $ mysql -vvv -u root -p < setup.sql
+```
+
+Saving database to script
+
+```bash
+~ $ mysqldump -u root -p maxwell > maxwell.sql
+```
+
+```bash
 ~ $ stat -x ./build/maxwell
+```
+
+```bash
+~ $ file ./build/maxwell
+```
+
+```bash
 ~ $ nm -D libgmp.so | grep __gmpf_init
-
-~ $ cat <> maxwell.conf | sed '/\(^FLOAT_BITRATE =\).*/ s//\1$(TERMS)/'
-~ $ date && nice -n 10 ./build/gnuplot --conf PATH --model NUM && date
 ```
-
-Script that archive model after last run
 
 ```bash
-#!/bin/bash
-mkdir -p archive/$1
-mysqldump --databases maxwell -umaxwell -pmaxwell > archive/$1/maxwell.sql
-mysql -umaxwell -pmaxwell < clean.sql
-mv maxwell-*.log archive/$1/
-mv maxwell.gnp archive/$1/
-cp maxwell.conf archive/$1/
-touch archive/$1/read_me.txt
-```
-
-FAQ FOR MAXWELL'S DEPENDENCIES
-======
-
-gnump library
-------
-
-https://gmplib.org <br/>
-./configure --help
-
-GNU Plot library
-------
-
-http://plplot.sourceforge.net/ <br/>
-http://www.gnuplot.info <br/>
-http://www.gnuplot.info/demo/surface1.html <br/>
-http://gnuplot.sourceforge.net/demo/pm3d.html <br/>
-
-```
-set term x11 font "times-roman,15,normal"
-set ylabel "" font font "Times-New-Roman,15"
-set tics font "Times-New-Roman,15"
-set key font "Times-New-Roman,15"
-set ylabel "f(x) = J_1(ax) J_0(bx) J_0(cx)" offset 0,-5
-```
-
-QT support for GNU Plot library
-------
-
-```bash
-./configure --with-qt --prefix=$(PROJECT_DIR)/gnuplot
-sudo apt-get install qtbase5-dev libqt5svg5-dev
-```
-
-Working around the MySQL
-------
-
-Official tatorial: Innodb MyIASM <br/>
-http://www.mysqltutorial.org/understand-mysql-table-types-innodb-myisam.aspx <br/>
-
-Using mysql.h in C++ <br/>
-https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-installation-source-unix.html <br/>
-
-Solving autorizaton problems in MySQL <br/>
-https://askubuntu.com/questions/766334/cant-login-as-mysql-user-root-from-normal-user-account-in-ubuntu-16-04 <br/>
-
-https://askubuntu.com/questions/992771/mysql-u-root-doesnt-work-but-sudo-mysql-u-root-does-why/1038540 <br/>
-
-Install instructions
-
-```bash
-~ $ sudo apt-get install mysql-server
-~ $ sudo mysql_secure_installation
-~ $ mysql -t -u root -p < setup.sql
-~ $ mysql -vvv -u root -p < clean.sql
-~ $ mysql -u root -p 
-~ $ mysqldump -u root -p maxwell > maxwell.sql
-```
-Save dataset
-
-```bash
-~ $ mysqldump -u root -p maxwell > maxwell.sql
-```
-
-Example listing for newbees in MySQL
-
-```sql
-mysql> CREATE DATABASE maxwell;
-mysql> GRANT ALL PRIVILEGES ON *.* TO 'maxwell'@'localhost' IDENTIFIED BY 'maxwell';
-mysql> SELECT User, Host, Password FROM mysql.user;
-mysql> DROP USER 'maxwell'@'localhost';
-mysql> DROP TABLE IF EXISTS maxwell;
-mysql> SELECT user FROM mysql.user GROUP BY user;
-mysql> DELETE FROM mysql.user WHERE user = 'maxwell';
-mysql> SHOW COLUMNS FROM maxwell.maxwell_header;
-mysql> SHOW COLUMNS FROM maxwell.maxwell_data;
+~ $ otools -L example/plot_energy_distribution
 ```

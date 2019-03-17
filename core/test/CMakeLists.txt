@@ -14,6 +14,8 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCES
     ${SOURCE_DIR}/bessel_perp.cpp
     ${SOURCE_DIR}/binom_prod.cpp
+    ${SOURCE_DIR}/dataset_metadata.cpp
+    ${SOURCE_DIR}/dataset_series.cpp
     ${SOURCE_DIR}/invers_sqrt.cpp
     ${SOURCE_DIR}/monte_carlo_improper.cpp
     ${SOURCE_DIR}/monte_carlo_integral.cpp

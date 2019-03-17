@@ -9,26 +9,16 @@
 #include "maxwell.hpp"
 #include "dataset.hpp"
 
+static const int 	RADIX  = 3;
+static const float 	DCYCLE = 0.5;
+static const float 	NPOWER = 10;
+
 #include <vector>
-#include <iomanip>
 #include <iostream>
 using namespace std;
 
-bool snr_dataset ()
-{
-	double radix = 3;
-	double snr = 40;
-	double pulses = 1e3;
-	std::string file_name = "train.json";
-	double rho = 0;
-	double phi = 0;
-	double z = 10;
-	serial::same_snr(pulses, radix, snr, file_name, rho, phi, z);
-	return true;
-}
-
 int main ()
 {
-    snr_dataset();
+	Dataset* ds = new Dataset(RADIX, DCYCLE, NPOWER);
     return 0;
 }
