@@ -144,12 +144,16 @@ build $ cmake ..
 build $ make -j5
 ```
 
-If you build is successful it is recommended to run tests
-in `build` directory for core library and all of modules:
+After secsessful build you will find shared object `build/core/libmaxwell.so`
+and dynamicly linking libraries `build/MODNAME/libMODNAME.so` for all modules.
+Note, library extantion depends from your system: `.so` for GNU/Linux,
+`.dylib` for Mac, and `.dll` for Windows.
+
+It is recommended to run tests for successful build. Brouse build dirictory
+for `test` subdirictoris and run `ctest` for all of them. Example:
 
 ```bash
-~ $ cd build/core/test && ctest 
-~ $ cd build/module/uniform_disk/test/ && ctest
+~ $ cd build/core/test && ctest
 ```
 
 MAXWELL PROJECT CONTRIBUTORS
