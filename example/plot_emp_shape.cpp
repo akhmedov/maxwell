@@ -13,7 +13,7 @@ using namespace std;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
-static const double TAU0 = R; // duration of exitation
+static const double TAU0 = R/4; // duration of exitation
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
@@ -43,14 +43,12 @@ vector<vector<double>> plot_arguments (AbstractField* model, double x, double y,
 {
     double rho = sqrt(x*x + y*y);
     double phi = atan2(y,x);
-    double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : abs(z);
-    double to = TAU0 + sqrt((rho+R)*(rho+R) + z*z);
 
-	cout << from << ' ' << model->observed_from(rho, phi, z) << endl;
-	cout << to << ' ' << model->observed_to(rho, phi, z) << endl;
+	double from = model->observed_from(rho, phi, z);
+	double to = model->observed_to(rho, phi, z);
 
     vector<vector<double>> data;
-	for (double ct = from; ct <= to; ct += 0.05) {
+	for (double ct = from; ct <= to; ct += 0.01) {
         double Ex = model->electric_x(ct, rho, phi, z);
 		data.push_back({ct, Ex});
     }
@@ -71,8 +69,7 @@ void plot_script (vector<vector<double>> data, string name)
 int main ()
 {
     AbstractField* model = create_model();
-    auto data = plot_arguments(model, 1, 1, 1.6);
+    auto data = plot_arguments(model, 0, 0, 1.6);
     plot_script(data, "emp_shape.gnp");
-
     return 0;
 }
