@@ -64,6 +64,9 @@ struct KerrAmendment : public NonlinearField {
 	double current_rho (double ct, double rho, double phi, double z) const;
 	double current_phi (double ct, double rho, double phi, double z) const;
 
+	double observed_from (double x, double y, double z) const;
+	double observed_to (double x, double y, double z) const;
+
 protected:
 
 	static double x_trans (int m, double nu, double rho, double phi);

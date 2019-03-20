@@ -15,10 +15,11 @@
 
 struct LinearSource { 
 	LinearSource (double tau = NAN);
-	double get_duration () const;
+	double get_duration ();
+	void set_duration (double tau0);
 	virtual double time_shape (double vt) const = 0;
 protected:
-	const double duration;
+	double duration;
 };
 
 struct LinearCurrent : public LinearSource {

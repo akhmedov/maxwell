@@ -72,6 +72,9 @@ struct MissileField : public LinearField {
 
 	// double energy_cart (double x, double y, double z) const;
 
+	double observed_from (double x, double y, double z) const;
+	double observed_to (double x, double y, double z) const;
+
 	static double int_bessel_001 (double vt_z, double rho, double R); // I2 in thesis.pdf
 	static double int_bessel_011 (double vt_z, double rho, double R); // I1 in thesis.pdf
 

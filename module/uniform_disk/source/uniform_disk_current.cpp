@@ -437,3 +437,13 @@ double MissileField::int_lommel_111 (double vt, double rho, double z, double R)
 	UNUSED(vt); UNUSED(rho); UNUSED(z); UNUSED(R);
 	throw std::logic_error("MissileField::int_lommel_111 is not implemented");
 }
+
+double MissileField::observed_from (double rho, double phi, double z) const
+{
+	return (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+}
+
+double MissileField::observed_to (double rho, double phi, double z) const
+{
+	return std::sqrt((rho+R)*(rho+R) + z*z);
+}

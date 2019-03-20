@@ -24,6 +24,9 @@ struct LinearField : AbstractField {
 	virtual double magnetic_rho (double ct, double rho, double phi, double z) const = 0;
 	virtual double magnetic_phi (double ct, double rho, double phi, double z) const = 0;
 	virtual double magnetic_z (double ct, double rho, double phi, double z) const = 0;
+
+	virtual double observed_from (double x, double y, double z) const = 0;
+	virtual double observed_to (double x, double y, double z) const = 0;
 	
 protected:
 	LinearCurrent* source;

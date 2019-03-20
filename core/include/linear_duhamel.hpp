@@ -13,6 +13,7 @@
 #ifndef linear_duhamel_hpp
 #define linear_duhamel_hpp
 
+#define OBSERVAION_EPS 0.01
 #define INIT_NODES 1e3
 #define MAX_NODES  1e6
 #define STEP 	   1e-4
@@ -26,6 +27,7 @@
 
 #include <regex>
 #include <string>
+#include <iostream>
 
 struct FreeTimeCurrent : public LinearCurrent {
 	FreeTimeCurrent (LinearCurrent* on_source);
@@ -50,6 +52,9 @@ struct LinearDuhamel : public LinearField {
 	double magnetic_rho (double vt, double rho, double phi, double z) const;
 	double magnetic_phi (double vt, double rho, double phi, double z) const;
 	double magnetic_z   (double vt, double rho, double phi, double z) const;
+
+	double observed_from (double x, double y, double z) const;
+	double observed_to (double x, double y, double z) const;
 
 private:
 	static const std::string WARNING_MSG;

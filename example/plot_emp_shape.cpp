@@ -13,7 +13,7 @@ using namespace std;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
-static const double TAU0 = 2; // duration of exitation
+static const double TAU0 = R; // duration of exitation
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
@@ -31,8 +31,9 @@ AbstractField* create_model ()
 	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
 	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
     cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	    
+
 	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
+	free_shape->set_duration(TAU0);
 	free_shape->set_time_depth([] (double vt) {return Function::gauss_perp(vt,TAU0,1);});
 	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
 	return duhamel;
@@ -44,6 +45,9 @@ vector<vector<double>> plot_arguments (AbstractField* model, double x, double y,
     double phi = atan2(y,x);
     double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : abs(z);
     double to = TAU0 + sqrt((rho+R)*(rho+R) + z*z);
+
+	cout << from << ' ' << model->observed_from(rho, phi, z) << endl;
+	cout << to << ' ' << model->observed_to(rho, phi, z) << endl;
 
     vector<vector<double>> data;
 	for (double ct = from; ct <= to; ct += 0.05) {

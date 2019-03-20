@@ -13,9 +13,14 @@
 LinearSource::LinearSource (double tau)
 : duration(tau) { }
 
-double LinearSource::get_duration () const
+double LinearSource::get_duration ()
 {
 	return this->duration;
+}
+
+void LinearSource::set_duration (double tau0)
+{
+	this->duration = tau0;
 }
 
 LinearCurrent::LinearCurrent (double tau)

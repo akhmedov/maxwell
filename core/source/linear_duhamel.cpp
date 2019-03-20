@@ -231,3 +231,14 @@ double LinearDuhamel::magnetic_z (double vt, double rho, double phi, double z) c
 		return this->magnetic_z (vt-STEP, rho, phi, z);
 	}
 }
+
+double LinearDuhamel::observed_from (double rho, double phi, double z) const
+{
+	double real = this->on_field->observed_from(rho,phi,z);
+	return (real - OBSERVAION_EPS > 0) ? real - OBSERVAION_EPS : 0;
+}
+
+double LinearDuhamel::observed_to (double rho, double phi, double z) const
+{
+	return this->source->get_duration() + this->on_field->observed_to(rho,phi,z) + OBSERVAION_EPS;
+}

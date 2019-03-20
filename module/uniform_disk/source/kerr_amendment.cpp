@@ -484,6 +484,17 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	return res / M_PI;
 }
 
+double KerrAmendment::observed_from (double x, double y, double z) const
+{
+	throw std::logic_error("MissileField::observed_from is not implemented!");
+}
+
+double KerrAmendment::observed_to (double x, double y, double z) const
+{
+	throw std::logic_error("MissileField::observed_from is not implemented!");
+}
+
+
 // namespace { extern "C" {
 
 // 	void kerr_module (ModuleManager* core, Logger* global_logger, double R, double A0, double mu, double eps, double chi3)

@@ -73,9 +73,11 @@ int main ()
         [] (double time) {return Function::sinc(time,TAU0);}
     };
 
-	Dataset* ds = new Dataset(RADIX, DCYCLE, NPOWER);
     for (auto& i : SHAPE) SIGNAL.push_back(arbitrary_signal(i));
+
+	Dataset* ds = new Dataset(RADIX, DCYCLE, NPOWER);
     for (int spark = 0; spark < 10; spark++) append(spark % 2 ? 1 : 0, ds);
+
     Dataset::serialize("one-by-one.json", ds->get_dataset("one-by-one"), false);
     return 0;
 }
