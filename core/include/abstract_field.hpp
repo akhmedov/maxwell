@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,11 @@ struct AbstractField {
 
 	virtual double observed_from (double x, double y, double z) const = 0;
 	virtual double observed_to (double x, double y, double z) const = 0;
+
+	constexpr static const double C = 299792458;
+	constexpr static const double C2 = C * C;
+	constexpr static const double EPS0 = 10e7 / (4 * M_PI * C2);
+	constexpr static const double MU0 = 4 * M_PI * 10e-7;
 
 protected:
 	Logger *global_log{};

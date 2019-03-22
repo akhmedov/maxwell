@@ -27,7 +27,7 @@ typedef std::pair<std::size_t,std::size_t> Binom;
 struct Math {
 	static double log (double base, double deg_angle);
 	static double deg2rad (double deg_angle);
-	static bool compare (double val1, double val2);
+	static bool compare (double val1, double val2, double eps = DBL_MIN);
 	static double kronecker_delta (double arg, double param);
 	static double heaviside_sfunc (double arg, double param, bool mirror = false);
 	static mpf_class yacobi_polinom (std::size_t term, mpf_class arg, std::size_t alpha = 1, std::size_t beta = 0);

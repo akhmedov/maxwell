@@ -18,10 +18,10 @@ double Math::deg2rad (double deg_angle)
 	return M_PI * deg_angle / 180.0;
 }
 
-bool Math::compare(double val1, double val2)
+bool Math::compare(double val1, double val2, double EPS)
 {
 	double diff = std::abs(val1 - val2);
-	if (diff > DBL_MIN) return false;
+	if (diff > EPS) return false;
 	else return true;
 }
 

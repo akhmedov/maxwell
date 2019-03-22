@@ -20,7 +20,7 @@ static const double EPS = 1; // relative dielectric pirmativity
 
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
-AbstractField* create_model () 
+AbstractField* load_model () 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -84,7 +84,7 @@ void plot (const vector<vector<double>>& data)
 
 int main ()
 {
-	AbstractField* model = create_model();
+	AbstractField* model = load_model();
 	auto data = plot_data(model, 0, 1.5, 0, 2);
 	plot(data);
     return 0;
