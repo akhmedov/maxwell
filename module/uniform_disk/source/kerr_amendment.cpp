@@ -8,67 +8,27 @@
 
 #include "kerr_amendment.hpp"
 
-const std::string KerrAmendment::exeption_msg = "Integral by $VAR has not trustable at $TIME, $RHO, $PHI, $Z";
+KerrAmendment::KerrAmendment (double R, double A0, double eps_r, double mu_r, double chi3, Logger* log)
+: TransientResponse(R,A0,eps_r,mu_r,log), kerr(chi3) {}
 
-/* Nonlinear medium */
+// ===============================================================================================
 
-KerrMedium::KerrMedium (double realative_mu, double realative_eps, double kerr, double conduct) 
-: Homogeneous(realative_mu, realative_eps) 
+double KerrAmendment::current_x (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	if (kerr >= 0) this->xi3 = kerr;
-	else std::invalid_argument("Kerr coefficient must be positive.");
-	
-	if (conduct > 0) this->sigma = conduct;
-	else std::invalid_argument("Kerr coefficient must be positive.");
+	const double current_rho = this->current_rho(event);
+	const double current_phi = this->current_phi(event);
+	return current_rho * std::cos(event.phi()) - current_phi * std::sin(event.phi());
 }
 
-double KerrMedium::conductivity (double ct, double z) const
+double KerrAmendment::current_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	UNUSED(ct); UNUSED(z);
-	return this->sigma;
-}
-
-double KerrMedium::relative_permittivity (double ct, double z, std::size_t term) const
-{
-	UNUSED(ct); UNUSED(z);
-	switch(term) {
-		// case 0: return 0;
-		case 1: return Homogeneous::relative_permittivity(ct,z);
-		case 3: return this->xi3;
-		default: return 0;
-	}
-}
-
-double KerrMedium::relative_permeability (double ct, double z, std::size_t term) const
-{
-	UNUSED(ct); UNUSED(z);
-	switch(term) {
-		// case 0: return 0;
-		case 1: return Homogeneous::relative_permeability(ct,z);
-		case 3: return 0;
-		default: return 0;
-	}
-}
-
-/* Nonlinear ammendmend */
-
-double KerrAmendment::current_x (double vt, double rho, double phi, double z) const
-{
-	const double current_rho = this->current_rho(vt,rho,phi,z);
-	const double current_phi = this->current_phi(vt,rho,phi,z);
-	return current_rho * std::cos(phi) - current_phi * std::sin(phi);
-}
-
-double KerrAmendment::current_rho (double vt, double rho, double phi, double z) const
-{
-	double eps_r = this->nl_medium->relative_permittivity(vt,z);
-	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double em_relation = std::sqrt(NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r);
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
+	double em_relation = std::sqrt(MU0 * MU / EPS0 * EPS);
 	double A3 = this->A0 * this->A0 * this->A0;
 
-	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
@@ -81,16 +41,15 @@ double KerrAmendment::current_rho (double vt, double rho, double phi, double z) 
 	return coeff * (cos3sin0 + cos1sin2);
 }
 
-double KerrAmendment::current_phi (double vt, double rho, double phi, double z) const
+double KerrAmendment::current_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double eps_r = this->nl_medium->relative_permittivity(vt,z);
-	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double em_relation = std::sqrt(NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r);
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
+	double em_relation = std::sqrt(MU0 * MU / EPS0 * EPS);
 	double A3 = this->A0 * this->A0 * this->A0;
 
-	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
@@ -103,41 +62,40 @@ double KerrAmendment::current_phi (double vt, double rho, double phi, double z) 
 	return - coeff * (cos0sin3 + cos2sin1);
 }
 
-KerrAmendment::KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source, Logger* logger_ptr)
-: NonlinearField(field, medium) 
+// ===============================================================================================
+
+double KerrAmendment::observed_from (const Point::Cylindrical&) const
 {
-	this->global_logger = logger_ptr;
-	this->linear_field = field;
-	this->A0 = source->get_magnitude();
-	this->R = source->get_disk_radius();
+	throw std::logic_error("KerrAmendment::observed_from is not implemented!");
 }
 
-double KerrAmendment::electric_x (double vt, double rho, double phi, double z) const
+double KerrAmendment::observed_to (const Point::Cylindrical&) const
 {
+	throw std::logic_error("KerrAmendment::observed_to is not implemented!");
+}
+
+double KerrAmendment::electric_x (const Point::SpaceTime<Point::Cylindrical>& event) const
+{
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
 	double vt_z = vt - z;
 	if (z == 0) return 0;
 	if (vt_z < 1e-9) return 0;
 
-	Logger* log_ptr = this->global_logger;
-
-	double kerr = this->nl_medium->relative_permittivity(vt,z,3);
-	double eps_r = this->nl_medium->relative_permittivity(vt,z);
-	double mu_r = this->nl_medium->relative_permeability(vt,z);
-	double em_relation = NonlinearMedium::MU0 * mu_r / NonlinearMedium::EPS0 * eps_r;
-	double R = this->R, A0 = this->A0; 
-	double coeff = kerr * A0 * A0 * A0 * em_relation * em_relation / 128;
+	double A3 = this->A0 * this->A0 * this->A0;
+	double em_relation = MU0 * MU / EPS0 * EPS;
+	double coeff = this->kerr * A3 * em_relation * em_relation / 128;
 
 	double integral;
 
 	try {
 
 		integral = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
-			[log_ptr, R, vt, rho, phi, z] (double z_perp) {
+			[this, vt, rho, phi, z] (double z_perp) {
 
 				try {
 
 					return SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, 2*R,
-						[log_ptr, R, vt, rho, phi, z, z_perp] (double rho_perp) {
+						[this, vt, rho, phi, z, z_perp] (double rho_perp) {
 
 							double max_vt = vt - z + z_perp; // grater then zero
 							double max_nu = PERIODS_NU * std::abs(rho - rho_perp);
@@ -150,7 +108,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 							try  {
 
 								delta_sum = SimpsonRunge(nodes_nu, MAX_ERROR).value(0, max_nu,
-									[R, rho, phi, max_vt, rho_perp, z_perp] (double nu) {
+									[this, rho, phi, max_vt, rho_perp, z_perp] (double nu) {
 
 										double sum = 0;
 										sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
@@ -166,17 +124,12 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 
 							} catch (double not_trusted) {
 
-								if (log_ptr) {
-									std::string mesg = KerrAmendment::exeption_msg;
-									mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
-									mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
-									mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-									mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
-									mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-									mesg += std::string(" (Z'= ") + std::to_string(z_perp);
-									mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
-									mesg += std::string(")");
-									log_ptr->warning(mesg);
+								if (this->global_log) {
+									std::string mesg = KerrAmendment::INTEGRAL_WARNING;
+									Point::SpaceTime<Point::Cylindrical> event{vt,rho,phi,z};
+									mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "Z'");
+									mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
+									this->global_log->warning(mesg);
 								}
 
 								delta_sum = not_trusted;
@@ -188,7 +141,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 							try {
 
 								step_sum = SimpsonRunge(MIN_NODES, MAX_ERROR).value(0, max_vt,
-									[log_ptr, R, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp) {
+									[this, vt, rho, phi, z, rho_perp, z_perp] (double vt_perp) {
 
 									double delta_vt = vt - vt_perp;
 									double delta_z = z - z_perp;
@@ -203,7 +156,7 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 									try {
 
 										res = SimpsonRunge(nodes_nu, MAX_ERROR).value( 0, max_nu,
-											[R, rho, phi, rho_perp, z_perp, vt_perp, casual, delta_vt] (double nu) {
+											[this, rho, phi, rho_perp, z_perp, vt_perp, casual, delta_vt] (double nu) {
 												double bessel = jn(0,nu * casual) + jn(2,nu * casual); 
 												double sum = 0;
 												sum += KerrAmendment::x_trans( -1, nu, rho, phi) *
@@ -220,18 +173,12 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 
 									} catch (double not_trusted) {
 
-										if (log_ptr) {
-											std::string mesg = KerrAmendment::exeption_msg;
-											mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
-											mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
-											mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-											mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
-											mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-											mesg += std::string(" (Z'= ") + std::to_string(z_perp);
-											mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
-											mesg += std::string(", VT'= ") + std::to_string(vt_perp);
-											mesg += std::string(")");
-											log_ptr->warning(mesg);
+										if (this->global_log) {
+											std::string mesg = KerrAmendment::INTEGRAL_WARNING;
+											Point::SpaceTime<Point::Cylindrical> event{vt,rho,phi,z};
+											mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "Z'");
+											mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
+											this->global_log->warning(mesg);
 										}
 
 										res = not_trusted;
@@ -240,21 +187,16 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 									if (std::isnan(res)) res = 0;
 									return res;
 
-								} );	// <---------------------------------------------------------------------------------------- d tau'
+								} ); // <---------------------------------------------------------------------------------------- d tau'
 
 							} catch (double not_trusted) {
 
-								if (log_ptr) {
-									std::string mesg = KerrAmendment::exeption_msg;
-									mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
-									mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
-									mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-									mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
-									mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-									mesg += std::string(" (Z'= ") + std::to_string(z_perp);
-									mesg += std::string(", RHO'= ") + std::to_string(rho_perp);
-									mesg += std::string(")");
-									log_ptr->warning(mesg);
+								if (this->global_log) {
+									std::string mesg = KerrAmendment::INTEGRAL_WARNING;
+									Point::SpaceTime<Point::Cylindrical> event{vt,rho,phi,z};
+									mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "Z'");
+									mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
+									this->global_log->warning(mesg);
 								}
 
 								step_sum = not_trusted;
@@ -266,16 +208,12 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 
 				} catch (double not_trusted) {
 
-					if (log_ptr) {
-						std::string mesg = KerrAmendment::exeption_msg;
-						mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
-						mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
-						mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-						mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
-						mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-						mesg += std::string(" (Z'= ") + std::to_string(z_perp);
-						mesg += std::string(")");
-						log_ptr->warning(mesg);
+					if (this->global_log) {
+						std::string mesg = KerrAmendment::INTEGRAL_WARNING;
+						Point::SpaceTime<Point::Cylindrical> event{vt,rho,phi,z};
+						mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "Z'");
+						mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
+						this->global_log->warning(mesg);
 					}
 
 					return not_trusted;
@@ -284,58 +222,47 @@ double KerrAmendment::electric_x (double vt, double rho, double phi, double z) c
 
 	} catch (double not_trusted) {
 
-		if (log_ptr) {
-			std::string mesg = KerrAmendment::exeption_msg;
-			mesg = std::regex_replace(mesg, std::regex("\\$VAR" ), "Z'");
-			mesg = std::regex_replace(mesg, std::regex("\\$TIME"), std::to_string(vt));
-			mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-			mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(phi));
-			mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-			log_ptr->warning(mesg);
+		if (this->global_log) {
+			std::string mesg = KerrAmendment::INTEGRAL_WARNING;
+			Point::SpaceTime<Point::Cylindrical> tmp{vt,rho,phi,z};
+			mesg = std::regex_replace(mesg, std::regex("\\$NAME" ), "Z'");
+			mesg = std::regex_replace(mesg, std::regex("\\$POINT"), tmp.to_str());
+			this->global_log->warning(mesg);
 		}
 
 		integral = not_trusted;
-
-		std::cout << "Ex (" << vt << ',' << rho << ',' << phi << ',' << z << ") => ";
-		std::cout << - coeff * integral << std::endl;
 	}
 
 	return - coeff * integral;
 }
 
-double KerrAmendment::electric_rho (double vt, double rho, double phi, double z) const
+double KerrAmendment::electric_rho (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
-double KerrAmendment::electric_phi (double vt, double rho, double phi, double z) const
+double KerrAmendment::electric_phi (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
-double KerrAmendment::electric_z (double vt, double rho, double phi, double z) const
+double KerrAmendment::electric_z (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	return 0;
 }
 
-double KerrAmendment::magnetic_rho (double vt, double rho, double phi, double z) const
+double KerrAmendment::magnetic_rho (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	throw std::logic_error("KerrAmendment::magnetic_rho is not implemented");
 }
 
-double KerrAmendment::magnetic_phi (double vt, double rho, double phi, double z) const
+double KerrAmendment::magnetic_phi (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	throw std::logic_error("KerrAmendment::magnetic_phi is not implemented");
 }
 
-double KerrAmendment::magnetic_z (double vt, double rho, double phi, double z) const
+double KerrAmendment::magnetic_z (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	throw std::logic_error("KerrAmendment::magnetic_z is not implemented");
 }
 
@@ -398,7 +325,7 @@ double KerrAmendment::N_sum (double R, int m, double nu, double vt, double rho, 
 double KerrAmendment::N1 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 
 	return 3 * m * jn(m, nu*rho) * i1 * i1 * i1_perp;
@@ -407,8 +334,8 @@ double KerrAmendment::N1 (double R, int m, double nu, double vt, double rho, dou
 double KerrAmendment::N2 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 
@@ -418,8 +345,8 @@ double KerrAmendment::N2 (double R, int m, double nu, double vt, double rho, dou
 double KerrAmendment::N3 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 	double bessel_diff = jn(m-1, rho*nu) - jn(m+1, rho*nu);
@@ -430,8 +357,8 @@ double KerrAmendment::N3 (double R, int m, double nu, double vt, double rho, dou
 double KerrAmendment::N4 (double R, int m, double nu, double vt, double rho, double z)
 {
 	double sqrt_vt_z = std::sqrt(vt * vt - z * z);
-	double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-	double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+	double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+	double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 	double i1_perp = KerrAmendment::int_bessel_011_perp(vt, z, rho, R);
 	double i2_perp = KerrAmendment::int_bessel_001_perp(vt, z, rho, R);
 	double bessel_diff = jn(m-1,rho*nu) - jn(m+1,rho*nu);
@@ -483,35 +410,3 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	res /= std::sqrt(4*rho2*vt_z - (vt_z+rho2-R2) * (vt_z+rho2-R2) );
 	return res / M_PI;
 }
-
-double KerrAmendment::observed_from (double x, double y, double z) const
-{
-	throw std::logic_error("MissileField::observed_from is not implemented!");
-}
-
-double KerrAmendment::observed_to (double x, double y, double z) const
-{
-	throw std::logic_error("MissileField::observed_from is not implemented!");
-}
-
-
-// namespace { extern "C" {
-
-// 	void kerr_module (ModuleManager* core, Logger* global_logger, double R, double A0, double mu, double eps, double chi3)
-// 	{
-// 		ModuleEntity linear, kerr;
-		
-// 		linear.source = new UniformPlainDisk(R,A0);
-// 		kerr.source = new UniformPlainDisk(R,A0); // linear.source;
-
-// 		linear.medium = new Homogeneous(mu,eps);
-// 		kerr.medium = new KerrMedium(mu,eps,chi3,0);
-
-// 		linear.field = new MissileField( (UniformPlainDisk*) linear.source, (Homogeneous*) linear.medium );
-// 		kerr.field = new KerrAmendment( (MissileField*) linear.field, (KerrMedium*) kerr.medium, (UniformPlainDisk*) kerr.source, global_logger);
-
-// 		core->load_module("UniformDisk.TrancientResponse",linear);
-// 		core->load_module("UniformDisk.KerrAmendmend",kerr);
-// 	}
-
-// } }

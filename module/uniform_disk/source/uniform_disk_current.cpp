@@ -8,112 +8,30 @@
 
 #include "uniform_disk_current.hpp"
 
-// Linear Homogeneous Medium
-
-Homogeneous::Homogeneous(double realative_mu, double realative_eps)
-{
-	if (realative_mu > 0)
-		this->mu_r = realative_mu;
-	else
-		std::invalid_argument("Relative permeability must be positive.");
-	
-	if (realative_eps > 0)
-		this->eps_r = realative_eps;
-	else
-		std::invalid_argument("Relative permittivity must be positive.");
-}
-
-double Homogeneous::relative_permittivity (double ct, double z) const
-{
-	UNUSED(ct); UNUSED(z);
-	return Homogeneous::eps_r;
-}
-
-double Homogeneous::relative_permeability (double ct, double z) const
-{
-	UNUSED(ct); UNUSED(z);
-	return Homogeneous::mu_r;
-}
-
-// Linear umiform electric current
-
-UniformPlainDisk::UniformPlainDisk(double disk_radius, double magnitude)
-: LinearCurrent() {
-	if (disk_radius > 0) this->R = disk_radius;
-	else std::invalid_argument("Relative permittivity must be positive.");
-	
-	if (magnitude > 0) this->A0 = magnitude;
-	else std::invalid_argument("Electic current magnitude must be positive.");
-}
-
-double UniformPlainDisk::time_shape (double vt) const
-{
-	return Math::heaviside_sfunc(vt,0);
-}
-
-double UniformPlainDisk::rho (double rho, double phi, double z) const
-{
-	double coeffisient = Math::kronecker_delta(z,0);
-	coeffisient *= Math::heaviside_sfunc(rho,0) - Math::heaviside_sfunc(rho,R);
-	return coeffisient * std::cos(phi);
-}
-
-double UniformPlainDisk::phi (double rho, double phi, double z) const
-{
-	double coeffisient = Math::kronecker_delta(z,0);
-	coeffisient *= Math::heaviside_sfunc(rho,0) - Math::heaviside_sfunc(rho,R);
-	return - coeffisient * std::sin(phi);
-}
-
-double UniformPlainDisk::z (double rho, double phi, double z) const
-{
-	UNUSED(phi); UNUSED(rho); UNUSED(z);
-	return 0;
-}
-
-double UniformPlainDisk::get_magnitude() const
-{
-	return this->A0;
-}
-
-double UniformPlainDisk::get_disk_radius() const
-{
-	return this->R;
-}
-
 // Electric field
 
-std::size_t MissileField::STATIC_TERMS_NUMBER = 100;
+std::size_t TransientResponse::STATIC_TERMS_NUMBER = 100;
 
-MissileField::MissileField (double radius, double magnitude)
-: LinearField(new UniformPlainDisk(1, 1), new Homogeneous(1, 1)), A0(magnitude), R(radius) {}
+TransientResponse::TransientResponse (double radius, double magnitude, double eps_r, double mu_r, Logger* global_log)
+: CylindricalField<Point::Cylindrical>(global_log,1), A0(magnitude), R(radius), MU(mu_r), EPS(eps_r) {}
 
-MissileField::MissileField (UniformPlainDisk* source, Homogeneous* medium)
-: LinearField(source,medium)
+void TransientResponse::set_yterms_num (std::size_t number)
 {
-	this->A0 = source->get_magnitude();
-	this->R = source->get_disk_radius();
+	TransientResponse::STATIC_TERMS_NUMBER = number;
 }
 
-void MissileField::set_yterms_num (std::size_t number)
+std::size_t TransientResponse::get_yterms_num ()
 {
-	MissileField::STATIC_TERMS_NUMBER = number;
+	return TransientResponse::STATIC_TERMS_NUMBER;
 }
 
-std::size_t MissileField::get_yterms_num ()
+double TransientResponse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	return MissileField::STATIC_TERMS_NUMBER;
-}
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	if (isnan(sqrt_vt_z)) return 0;
 
-double MissileField::electric_rho (double ct, double rho, double phi, double z) const
-{
-	double vt_z = ct*ct - z*z;
-	if (vt_z < 1e-9) return 0;
-	double sqrt_vt_z = std::sqrt(vt_z);
-	double R = this->R;
-	double value = this->A0 / 2;
-	value *= std::sqrt(LinearMedium::MU0 * medium->relative_permeability(ct,z));
-	value /= std::sqrt(LinearMedium::EPS0 * medium->relative_permittivity(ct,z));
+	double rho = event.rho(), phi = event.phi();
+	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -131,22 +49,20 @@ double MissileField::electric_rho (double ct, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		double i1 = this->int_bessel_011(sqrt_vt_z, rho, R);
+		double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
 		value *= i1 * std::cos(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::electric_phi (double ct, double rho, double phi, double z) const
+double TransientResponse::electric_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double vt_z = ct*ct - z*z;
-	if (vt_z < 1e-9) return 0;
-	double sqrt_vt_z = std::sqrt(vt_z);
-	double R = this->R;
-	double value = this->A0 / 2;
-	value *= std::sqrt(LinearMedium::MU0 * medium->relative_permeability(ct,z));
-	value /= std::sqrt(LinearMedium::EPS0 * medium->relative_permittivity(ct,z));
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	if (std::isnan(sqrt_vt_z)) return 0;
+
+	double rho = event.rho(), phi = event.phi();
+	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -168,29 +84,28 @@ double MissileField::electric_phi (double ct, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-		double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+		double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+		double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 		value *= - (i2 - i1) * std::sin(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::electric_z (double ct, double rho, double phi, double z) const
+double TransientResponse::electric_z (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(ct); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	return 0;
 }
 
 // Magnetic field
 
-double MissileField::magnetic_rho (double vt, double rho, double phi, double z) const
+double TransientResponse::magnetic_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double vt_z = vt*vt - z*z;
-	if (vt_z < 1e-9) return 0;
-	double sqrt_vt_z = std::sqrt(vt_z);
-	double R = this->R;
-	double value = this->A0 / 2;
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	if (isnan(sqrt_vt_z)) return 0;
+
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
+	double value = A0 / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -205,7 +120,7 @@ double MissileField::magnetic_rho (double vt, double rho, double phi, double z) 
 			return j1(nu*rho) * j1(nu*R) * U0 / rho / nu;
 		};
 
-		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+		double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
 		double i3 = i1 + 2 * R * I.value(0, 1e4, ui_112);
 
 		value *= i3 * std::cos(phi);
@@ -213,21 +128,20 @@ double MissileField::magnetic_rho (double vt, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 		
-		value *= MissileField::int_lommel_001(vt, rho, z, R) - 
-				 MissileField::int_lommel_011(vt, rho, z, R);
+		value *= TransientResponse::int_lommel_001(vt, rho, z, R) - 
+				 TransientResponse::int_lommel_011(vt, rho, z, R);
 		return value * std::sin(phi);
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::magnetic_phi (double vt, double rho, double phi, double z) const
+double TransientResponse::magnetic_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double vt_z = vt*vt - z*z;
-	if (vt_z < 1e-9) return 0;
-	double sqrt_vt_z = std::sqrt(vt_z);
-	if (sqrt_vt_z < 1e-9) return 0;
-	double R = this->R;
-	double value = this->A0 / 2;
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	if (isnan(sqrt_vt_z)) return 0;
+
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
+	double value = A0 / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -250,8 +164,8 @@ double MissileField::magnetic_phi (double vt, double rho, double phi, double z) 
 			return j1(nu*rho) * j1(nu*R) * U0 / rho / nu;
 		};
 
-		double i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-		double i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+		double i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+		double i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 		double i3 = i1 + 2 * R * I.value(0, 1e4, ui_112);
 		double i4 = i2 + R * I.value(0, 1e4, ui_012);
 
@@ -260,63 +174,35 @@ double MissileField::magnetic_phi (double vt, double rho, double phi, double z) 
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		value *= MissileField::int_lommel_011(vt, rho, z, R) * std::cos(phi);
+		value *= TransientResponse::int_lommel_011(vt, rho, z, R) * std::cos(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double MissileField::magnetic_z (double vt, double rho, double phi, double z) const
+double TransientResponse::magnetic_z (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double value = this->A0;
-	double R = this->R;
-	mpf_class vt_z = mpf_class(vt * vt);
-	mpf_add( vt_z.get_mpf_t(), vt_z.get_mpf_t(), mpf_class(- z * z).get_mpf_t() );
-	if (vt_z.get_d() <= 0) return 0;
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	if (isnan(sqrt_vt_z)) return 0;
+
+	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
+	double value = A0 / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
-		throw std::logic_error("MissileField::magnetic_z is not implemented for -DNUMERIC_PDISK_LINEAR_INT");
+		throw std::logic_error("TransientResponse::magnetic_z is not implemented for -DNUMERIC_PDISK_LINEAR_INT");
 
 	#else /* NUMERIC_PDISK_LINEAR_INT */
 
-		value *= MissileField::int_lommel_111(vt, rho, z, R) * std::sin(phi);
+		value *= TransientResponse::int_lommel_111(vt, rho, z, R) * std::sin(phi);
 		return value;
 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-/* double MissileField::energy_cart (double x, double y, double z) const
-{
-	double R = this->R;
-	double tau = this->source->get_duration();
-
-	double rho = std::sqrt(x*x + y*y);
-	double phi = std::atan2(y, x);
-	double tau1 = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
-	double tau2 = tau1 + 2*tau;
-
-	auto f = [this, rho, phi, z] (double vt) {
-		double Erho = this->electric_rho(vt,rho,phi,z);
-		double Ephi = this->electric_phi(vt,rho,phi,z);
-		return Erho*Erho + Ephi*Ephi;
-	};
-
-	try { 
-		return SimpsonRunge(5e1, this->accuracy, 1e5).value(tau1,tau2,f); 
-	} catch (double not_trusted) {
-		std::string mesg = AbstractField::int_exept_mgs; // Removed from AbstractField
-		mesg = std::regex_replace(mesg, std::regex("\\$RHO" ), std::to_string(rho));
-		mesg = std::regex_replace(mesg, std::regex("\\$PHI" ), std::to_string(180*phi/M_PI));
-		mesg = std::regex_replace(mesg, std::regex("\\$Z"   ), std::to_string(z));
-		global_log->warning(mesg);
-		return not_trusted; 
-	}
-} */
-
 // =============================================================================
 
-double MissileField::static_magnitude (double z) const
+double TransientResponse::static_magnitude (double z) const
 {
 	double R2 = this->R * this->R;
 	double z2 = z*z;
@@ -329,18 +215,20 @@ double MissileField::static_magnitude (double z) const
 	return res * sum;
 }
 
-double MissileField::static_magnitude (double rho, double phi, double z, double eps) const
+double TransientResponse::static_magnitude (const Point::Cylindrical& point, double eps) const
 {
-	if (z + rho < 0.05) return this->A0/4;
+	if (point.z() + point.rho() < 0.05) return this->A0/4;
 	double R2 = this->R * this->R;
-	double z2 = z*z;
-	double ct = rho + std::sqrt(R2 + z2) + eps;
-	return this->magnetic_y(ct,rho,phi,z);
+	double z2 = point.z()*point.z();
+	double ct = point.rho() + std::sqrt(R2 + z2) + eps;
+	Point::SpaceTime<Point::Cylindrical> event{point};
+	event.ct() = ct;
+	return this->magnetic_y(event);
 }
 
 // integrals
 
-double MissileField::int_bessel_001 (double sqrt_vt_z, double rho, double R)
+double TransientResponse::int_bessel_001 (double sqrt_vt_z, double rho, double R)
 {
 	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
@@ -363,7 +251,7 @@ double MissileField::int_bessel_001 (double sqrt_vt_z, double rho, double R)
 	return std::acos(numer/denumer) / M_PI;
 }
 
-double MissileField::int_bessel_011 (double sqrt_vt_z, double rho, double R)
+double TransientResponse::int_bessel_011 (double sqrt_vt_z, double rho, double R)
 {
 	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
@@ -391,7 +279,7 @@ double MissileField::int_bessel_011 (double sqrt_vt_z, double rho, double R)
 	return res / (4 * M_PI * rho2);
 }
 
-double MissileField::int_lommel_001 (double vt, double rho, double z, double R)
+double TransientResponse::int_lommel_001 (double vt, double rho, double z, double R)
 {
 	mp_bitcnt_t bitrate = mp_bitcnt_t(256);
 	mpf_set_default_prec(bitrate);
@@ -410,7 +298,7 @@ double MissileField::int_lommel_001 (double vt, double rho, double z, double R)
 	if (rho == 0) {
 		if (R < std::sqrt(ct_z.get_d())) {
 			mpf_class sum = mpf_class(0);
-			for (std::size_t m = 0; m <= MissileField::STATIC_TERMS_NUMBER; m++) {
+			for (std::size_t m = 0; m <= TransientResponse::STATIC_TERMS_NUMBER; m++) {
 				yacob = Math::yacobi_polinom(m, 1 - 2 * R * R / ct_z);
 				mpf_mul(yacob.get_mpf_t(), yacob.get_mpf_t(), ctz_in_pow.get_mpf_t());
 				mpf_add(sum.get_mpf_t(), sum.get_mpf_t(), yacob.get_mpf_t());
@@ -424,26 +312,27 @@ double MissileField::int_lommel_001 (double vt, double rho, double z, double R)
 		if (R >= std::sqrt(ct_z.get_d())) return 1;
 	}
 
-	throw std::logic_error("MissileField::int_lommel_001 is not implemented for non zero rho!");
+	throw std::logic_error("TransientResponse::int_lommel_001 is not implemented for non zero rho!");
 }
 
-double MissileField::int_lommel_011 (double vt, double rho, double z, double R)
+double TransientResponse::int_lommel_011 (double vt, double rho, double z, double R)
 {
-	return MissileField::int_lommel_001(vt, rho, z, R) / 2;
+	return TransientResponse::int_lommel_001(vt, rho, z, R) / 2;
 }
 
-double MissileField::int_lommel_111 (double vt, double rho, double z, double R)
+double TransientResponse::int_lommel_111 (double /*vt*/, double /*rho*/, double /*z*/, double /*R*/)
 {
-	UNUSED(vt); UNUSED(rho); UNUSED(z); UNUSED(R);
-	throw std::logic_error("MissileField::int_lommel_111 is not implemented");
+	throw std::logic_error("TransientResponse::int_lommel_111 is not implemented");
 }
 
-double MissileField::observed_from (double rho, double phi, double z) const
+double TransientResponse::observed_from (const Point::Cylindrical& point) const
 {
+	double rho = point.rho(), z = point.z();
 	return (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
 }
 
-double MissileField::observed_to (double rho, double phi, double z) const
+double TransientResponse::observed_to (const Point::Cylindrical& point) const
 {
+	double rho = point.rho(), z = point.z();
 	return std::sqrt((rho+R)*(rho+R) + z*z);
 }

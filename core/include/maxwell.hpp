@@ -10,8 +10,10 @@
 #include "integral.hpp"
 #include "phys_math.hpp"
 
-#include "abstract_field.hpp"
+#include "cylindrical_field.hpp"
+#include "cartesian_field.hpp"
 #include "linear_duhamel.hpp"
+#include "space_point.hpp"
 #include "noise.hpp"
 
 #include "logger.hpp"

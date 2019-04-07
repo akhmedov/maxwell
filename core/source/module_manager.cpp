@@ -67,7 +67,7 @@ ModuleEntity ModuleManager::get_module (const std::string& name)
 {
     auto it = module.find(name);
     if (it == module.end())
-        return {nullptr, nullptr, nullptr};
+        return {nullptr, nullptr, nullptr, nullptr, nullptr};
     return it->second;
 }
 

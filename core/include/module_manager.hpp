@@ -10,8 +10,6 @@
 #define module_manager_hpp
 
 #include "logger.hpp"
-#include "linear_medium.hpp"
-#include "linear_source.hpp"
 #include "abstract_field.hpp"
 
 #include <dlfcn.h>
@@ -20,9 +18,11 @@
 #include <map>
 
 struct ModuleEntity {
-    LinearCurrent* source; // TODO: use union {LinearCurrent, LinearCharge}
-    LinearMedium* medium;
-    AbstractField* field;
+    void* source; // TODO: not implemented
+    void* medium; // TODO: not implemented
+    AbstractField<Point::Cartesian3D>* field_cart3_arg;
+    AbstractField<Point::Cylindrical>* field_cyl_arg;
+    AbstractField<Point::Spherical>* field_sph_arg;
 };
 
 class ModuleManager {

@@ -8,43 +8,48 @@
 
 #pragma once
 
+#include "space_point.hpp"
+
 #include <cmath>
 #include <string>
 #include <vector>
+#include <limits>
+#include <regex>
 
 // Forward declaration.
 struct Logger;
 
-struct AbstractField {
-	AbstractField(Logger *log = nullptr, double acc = 1)
-		: global_log(log),
-		  accuracy(acc)
-        {}
-	virtual ~AbstractField () = default;
+template <class System> struct AbstractField {
 	
-	virtual double electric_rho (double ct, double rho, double phi, double z) const = 0;
-	virtual double electric_phi (double ct, double rho, double phi, double z) const = 0;
-	virtual double electric_z (double ct, double rho, double phi, double z) const = 0;
+    AbstractField (Logger* log, double err = 0) : error(err), global_log(log) {}
+	virtual ~AbstractField () = default;
 
-	virtual double electric_x (double ct, double rho, double phi, double z) const;
-	virtual double electric_y (double ct, double rho, double phi, double z) const;
-	std::vector<double> electric_cylindric (double ct, double rho, double phi, double z) const;
-	std::vector<double> electric_cartesian (double ct, double rho, double phi, double z) const;
+	virtual double electric_x (const Point::SpaceTime<System>& event) const = 0;
+	virtual double electric_y (const Point::SpaceTime<System>& event) const = 0;
+	virtual double electric_z (const Point::SpaceTime<System>& event) const = 0;
 
-	virtual double magnetic_rho (double ct, double rho, double phi, double z) const = 0;
-	virtual double magnetic_phi (double ct, double rho, double phi, double z) const = 0;
-	virtual double magnetic_z (double ct, double rho, double phi, double z) const = 0;
+	virtual double electric_rho (const Point::SpaceTime<System>& event) const = 0;
+	virtual double electric_phi (const Point::SpaceTime<System>& event) const = 0;
 
-	virtual double magnetic_x (double ct, double rho, double phi, double z) const;
-	virtual double magnetic_y (double ct, double rho, double phi, double z) const;
-	std::vector<double> magnetic_cylindric (double ct, double rho, double phi, double z) const;
-	std::vector<double> magnetic_cartesian (double ct, double rho, double phi, double z) const;
+	virtual double electric_r (const Point::SpaceTime<System>& event) const = 0;
+	virtual double electric_theta (const Point::SpaceTime<System>& event) const = 0;
 
-	virtual double energy_cart (double x, double y, double z, double from, double to) const;
-	virtual double energy (double rho, double phi, double z, double from, double to) const;
+	virtual double magnetic_x (const Point::SpaceTime<System>& event) const = 0;
+	virtual double magnetic_y (const Point::SpaceTime<System>& event) const = 0;
+	virtual double magnetic_z (const Point::SpaceTime<System>& event) const = 0;
 
-	virtual double observed_from (double x, double y, double z) const = 0;
-	virtual double observed_to (double x, double y, double z) const = 0;
+	virtual double magnetic_rho (const Point::SpaceTime<System>& event) const = 0;
+	virtual double magnetic_phi (const Point::SpaceTime<System>& event) const = 0;
+
+	virtual double magnetic_r (const Point::SpaceTime<System>& event) const = 0;
+	virtual double magnetic_theta (const Point::SpaceTime<System>& event) const = 0;
+
+	virtual double energy   (const System& point) const = 0;
+	virtual double energy_e (const System& point) const = 0;
+	virtual double energy_h (const System& point) const = 0;
+
+	virtual double observed_from (const System& point) const = 0;
+	virtual double observed_to   (const System& point) const = 0;
 
 	constexpr static const double C = 299792458;
 	constexpr static const double C2 = C * C;
@@ -52,41 +57,32 @@ struct AbstractField {
 	constexpr static const double MU0 = 4 * M_PI * 10e-7;
 
 protected:
-	Logger *global_log{};
-	double accuracy{};
+
+    double error; // %
+    Logger* global_log{};
+    static const std::string INTEGRAL_WARNING;
 };
 
-struct ZeroField : public AbstractField {
-	double electric_rho(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double electric_phi(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double electric_z(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double magnetic_rho(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double magnetic_phi(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double magnetic_z(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const override
-        {
-		return 0;
-	}
-	double energy_cart(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const
-        {
-		return 0;
-	}
-	double energy(double/*ct*/, double/*rho*/, double/*phi*/, double/*z*/) const 
-        {
-		return 0;
-	}
+template <class System> const std::string AbstractField<System>::INTEGRAL_WARNING = "Integral in $NAME is not trusted at $POINT";
+
+template <class System> struct ZeroField : public AbstractField<System> {
+	double electric_x (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_y (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_z (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_rho (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_phi (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_r (const Point::SpaceTime<System>&) const override { return 0; }
+	double electric_theta (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_x (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_y (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_z (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_rho (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_phi (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_r (const Point::SpaceTime<System>&) const override { return 0; }
+	double magnetic_theta (const Point::SpaceTime<System>&) const override { return 0; }
+	double energy   (const System&) const override { return 0; }
+	double energy_e (const System&) const override { return 0; }
+	double energy_h (const System&) const override { return 0; }
+	double observed_from (const System&) const override { return 0; }
+	double observed_to   (const System&) const override { return 0; }
 };

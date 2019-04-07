@@ -94,7 +94,7 @@ double SimpsonRunge::value (double from, double to, const std::function<double(d
 		// refactor of exit criteria
 		if (std::abs(newI) < 1e-5 ) return 0;
 		double error = 100 * std::abs((oldI - newI) / newI);
-		if (error < epsilon)  {
+		if (error < epsilon) {
 			newI = 32 * newI / 31 - oldI / 31; // Runge error linearization
 			return (to - from) / 6 * newI;
 		}

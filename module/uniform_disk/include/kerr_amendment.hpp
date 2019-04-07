@@ -19,7 +19,6 @@
 #define MAX_ERROR	10 // %
 
 #include "maxwell.hpp"
-#include "nonlinear_field.hpp"
 #include "uniform_disk_current.hpp"
 
 #include <regex>
@@ -28,50 +27,30 @@
 
 using namespace std::complex_literals;
 
-// TODO: rename class with name of medium that provides Kerr Effect
-// TODO: implement Multiple inheritance (virtual inheritance)
-struct KerrMedium : public NonlinearMedium, public Homogeneous {
+struct KerrAmendment : protected TransientResponse {
 
-	using Homogeneous::relative_permittivity;
-	using Homogeneous::relative_permeability;
-	
-	KerrMedium (double realative_mu, double realative_eps, double xi3, double sigma);
-	double conductivity (double ct, double z) const;
-	double relative_permittivity (double ct, double z, std::size_t term) const;
-	double relative_permeability (double ct, double z, std::size_t term) const;
+	KerrAmendment (double R, double A0, double eps_r, double mu_r, double chi3, Logger* global_logger = NULL);
 
-private:
-	/* double eps_r;
-	double mu_r; */
-	double sigma;
-	double xi3;
-};
+	// TODO: move from here
+	double current_x (const Point::SpaceTime<Point::Cylindrical>& event) const;
+	double current_rho (const Point::SpaceTime<Point::Cylindrical>& event) const;
+	double current_phi (const Point::SpaceTime<Point::Cylindrical>& event) const;
 
-struct KerrAmendment : public NonlinearField {
-
-	KerrAmendment (MissileField* field, KerrMedium* medium, UniformPlainDisk* source, Logger* global_logger = NULL);
-	double electric_x (double ct, double rho, double phi, double z) const;
-
-	double electric_rho (double ct, double rho, double phi, double z) const;
-	double electric_phi (double ct, double rho, double phi, double z) const;
-	double electric_z (double ct, double rho, double phi, double z) const;
-
-	double magnetic_rho (double ct, double rho, double phi, double z) const;
-	double magnetic_phi (double ct, double rho, double phi, double z) const;
-	double magnetic_z (double ct, double rho, double phi, double z) const;
-
-	double current_x (double ct, double rho, double phi, double z) const;
-	double current_rho (double ct, double rho, double phi, double z) const;
-	double current_phi (double ct, double rho, double phi, double z) const;
-
-	double observed_from (double x, double y, double z) const;
-	double observed_to (double x, double y, double z) const;
+	double electric_x (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double electric_phi (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double electric_z (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double magnetic_rho (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double magnetic_phi (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double magnetic_z (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	double observed_from (const Point::Cylindrical& point) const override;
+	double observed_to (const Point::Cylindrical& point) const override;
 
 protected:
 
 	static double x_trans (int m, double nu, double rho, double phi);
 
-	static double N_sum (double R, int m, double nu, double ct, double rho_perp, double z); 
+	static double N_sum (double R, int m, double nu, double ct, double varrho, double z); 
 	static double N1    (double R, int m, double nu, double ct, double varrho, double z);
 	static double N2    (double R, int m, double nu, double ct, double varrho, double z);
 	static double N3    (double R, int m, double nu, double ct, double varrho, double z);
@@ -80,16 +59,8 @@ protected:
 	static double int_bessel_011_perp (double vt, double z, double rho, double R);
 	static double int_bessel_001_perp (double vt, double z, double rho, double R);
 
-protected:
-
-	static const std::string exeption_msg;
-	MissileField* linear_field;
-	double A0;
-	double R;
-
 private:
-
-	Logger* global_logger;
+	double kerr;
 };
 
 #endif /* kerr_amendment_hpp */

@@ -11,169 +11,181 @@
 #include "phys_math.hpp"
 
 #include <cmath>
-#include <array>
 #include <vector>
+#include <string>
+#include <initializer_list>
 
 namespace Point {
 
-    template <std::size_t dim> struct Space : public std::array<double,dim> {
-        using std::array<double,dim>::array;
-        Space (const std::vector<double>& data);
-        virtual double radius () const;
-    };
+    struct Polar;
+    struct Spherical;
+    struct Cylindrical;
+    struct Cartesian3D;
+    struct Cartesian2D;
 
-    // TODO: implement converters
-    struct SingleDim : public Space<1> {
-        using Space<1>::Space;
-        SingleDim(double z);
-        double radius () const;
-        double& z() { return at(0); }
-    };
-
-    template <class System> struct SpaceTime : public System {
-        using System::System;
-        // SpaceTime () = default;
-        SpaceTime (const System& base);
-        SpaceTime (const std::vector<double>& data);
-        bool casuality ();
-        double& ct() { return time; }
-        double ct() const { return time; }
+    struct System : public std::vector<double> {
+        using std::vector<double>::vector;
+        virtual ~System () = default;
+        virtual double radius () const { throw std::logic_error("Not implemented in Point::System"); }
+        std::string to_str() const { std::string s; for (auto i : *this) s+=std::to_string(i); return s; }
     private:
-        double time{};
+        using vector<double>::erase;
+        using vector<double>::insert;
+        using vector<double>::emplace;
+        using vector<double>::pop_back;
+        using vector<double>::push_back;
+        using vector<double>::emplace_back;
     };
 
-    // TODO: implement converters
-    struct Cartesian2D : public Space<2> {
-        using Space<2>::Space;
-        Cartesian2D(double x, double y);
-        double radius () const;
+    template <class SystemImp> struct SpaceTime : public SystemImp {
+        SpaceTime () = default;
+        ~SpaceTime () = default;
+        SpaceTime (const SystemImp& base) : SystemImp(base) { }
+        SpaceTime (const std::initializer_list<double> il) : SystemImp(il.begin()+1,il.end()), ctime(*il.begin()) 
+        { if (il.size() != 1+this->size()) throw std::logic_error("Number of arguments is not legal!"); }
+        double ct () const { return this->ctime; }
+        double& ct () { return this->ctime; }
+        double sqrt_vt2_z2 () const;
+        bool casuality () { return this->ct() <= this->radius(); }
+        std::string to_str() const { std::string s = std::to_string(ct()); return s.append(SystemImp::to_str()); }
+        template <class InputBase> static SpaceTime<SystemImp> convert (const SpaceTime<InputBase>& pt);
+    private:
+        double ctime{};
+    };
+
+    struct OneDim : public System {
+        OneDim () : System(1,0) {}
+        virtual ~OneDim () = default;
+        OneDim (double val) : System(1,0) { at(0) = val; }
+        double radius() const override { return at(0); }
+        double& z() { return at(0); }
+        double z() const { return at(0); }
+    protected:
+        using System::System;
+    };
+
+    struct Cartesian2D : public System {
+        Cartesian2D () : System(2,0) {}
+        Cartesian2D (double x, double y) : System(2,0) { at(0) = x; at(1) = y; }
+        virtual ~Cartesian2D () = default;
+        double radius () const override { return std::sqrt(x()*x() + y()*y()); }
         double& x() { return at(0); }
         double& y() { return at(1); }
         double x() const { return at(0); }
         double y() const { return at(1); }
+
+        static Cartesian2D convert (const Polar& point);
+        static Cartesian2D convert (const Spherical& point);
+        static Cartesian2D convert (const Cartesian2D& point);
+        static Cartesian2D convert (const Cartesian3D& point);
+        static Cartesian2D convert (const Cylindrical& point);
+    protected:
+        using System::System;
     };
 
-    struct Cartesian3D : public Space<3> {
-        using Space<3>::Space;
-        Cartesian3D(double x, double y, double z);
-        double radius () const;
+    struct Cartesian3D : public System {
+        Cartesian3D () : System(3,0) {}
+        Cartesian3D (double x, double y, double z) : System(3,0) { at(0) = x; at(1) = y; at(2) = z; }
+        virtual ~Cartesian3D () = default;
+        double radius () const override { return std::sqrt(x()*x() + y()*y() + z()*z()); }
         double& x() { return at(0); }
         double& y() { return at(1); }
         double& z() { return at(2); }
         double x() const { return at(0); }
         double y() const { return at(1); }
         double z() const { return at(2); }
+
+        static Cartesian3D convert (const Polar& point);
+        static Cartesian3D convert (const Spherical& point);
+        static Cartesian3D convert (const Cartesian2D& point);
+        static Cartesian3D convert (const Cartesian3D& point);
+        static Cartesian3D convert (const Cylindrical& point);
+    protected:
+        using System::System;
     };
 
-    // TODO: implement converters
-    struct Polar : public Space<2> {
-        using Space<2>::Space;
-        Polar(double rho, double phi);
-        double radius () const;
+    struct Polar : public System {
+        Polar () : System(2,0) {}
+        Polar (double rho, double phi) : System(2,0) { at(0) = rho; at(1) = phi; }
+        virtual ~Polar () = default;
+        double radius () const override { return rho(); }
         double& phi() { return at(0); }
         double& rho() { return at(1); }
         double phi() const { return at(0); }
         double rho() const { return at(1); }
+
+        static Polar convert (const Polar& point);
+        static Polar convert (const Spherical& point);
+        static Polar convert (const Cartesian2D& point);
+        static Polar convert (const Cartesian3D& point);
+        static Polar convert (const Cylindrical& point);
+    protected:
+        using System::System;
     };
 
-    struct Cylindrical : public Space<3> {
-        using Space<3>::Space;
-        Cylindrical(double rho, double phi, double z);
-        double radius () const;
+    struct Cylindrical : public System {
+        Cylindrical () : System(3,0) {}
+        Cylindrical (double rho, double phi, double z) : System(3,0) { at(0) = rho; at(1) = phi; at(2) = z; }
+        virtual ~Cylindrical () = default;
+        double radius () const override { return std::sqrt(rho()*rho() + z()*z()); }
         double& rho() { return at(0); }
         double& phi() { return at(1); }
         double& z()   { return at(2); }
         double rho() const { return at(0); }
         double phi() const { return at(1); }
         double z()   const { return at(2); }
+
+        static Cylindrical convert (const Polar& point);
+        static Cylindrical convert (const Spherical& point);
+        static Cylindrical convert (const Cartesian2D& point);
+        static Cylindrical convert (const Cartesian3D& point);
+        static Cylindrical convert (const Cylindrical& point);
+    protected:
+        using System::System;
     };
 
-    struct Spherical : public Space<3> {
-        using Space<3>::Space;
-        Spherical(double r, double phi, double theta);
-        double radius () const;
+    struct Spherical : public System {
+        Spherical() : System(3,0) {}
+        Spherical (double r, double phi, double theta) : System(3,0) { at(0) = r; at(1) = phi; at(2) = theta; }
+        virtual ~Spherical () = default;
+        double radius () const override { return r(); }
         double& r()     { return at(0); }
         double& phi()   { return at(1); }
         double& theta() { return at(2); }
         double r()     const { return at(0); }
         double phi()   const { return at(1); }
         double theta() const { return at(2); }
+
+        static Spherical convert (const Polar& point);
+        static Spherical convert (const Spherical& point);
+        static Spherical convert (const Cartesian2D& point);
+        static Spherical convert (const Cartesian3D& point);
+        static Spherical convert (const Cylindrical& point);
+    protected:
+        using System::System;
     };
 
-    Cartesian3D cartesian3d (const Cylindrical& pt);
-    Cartesian3D cartesian3d (const Spherical& pt);
-    template <class System> SpaceTime<Cartesian3D> cartesian (const SpaceTime<System>& pt);
-
-    Cylindrical cylindrical (const Cartesian3D& pt);
-    Cylindrical cylindrical (const Spherical& pt);
-    template <class System> SpaceTime<Cylindrical> cylindrical (const SpaceTime<System>& pt);
-
-    Spherical spherical (const Cartesian3D& pt);
-    Spherical spherical (const Cylindrical& pt);
-    template <class System> SpaceTime<Spherical> spherical (const SpaceTime<System>& pt);
-
+    bool equals (const System& pt1, const System& pt2, double eps = DBL_MIN);
     template <class System> bool equals (const SpaceTime<System>& pt1, const SpaceTime<System>& pt2, double eps = DBL_MIN);
-    template <std::size_t dim> bool equals (const Space<dim>& pt1, const Space<dim>& pt2, double eps = DBL_MIN);
 };
 
-template <std::size_t dim> Point::Space<dim>::Space (const std::vector<double>& data)
+template <class SystemImp> double Point::SpaceTime<SystemImp>::sqrt_vt2_z2 () const
 {
-    for (std::size_t i = 0; i < data.size(); i++)
-        this->at(i) = data.at(i);
-}
-
-template <class System> Point::SpaceTime<System>::SpaceTime (const System& base)
-{
-    for (std::size_t i = 0; i < base.size(); i++)
-        this->at(i) = base.at(i);
-}
-
-template <class System> Point::SpaceTime<System>::SpaceTime (const std::vector<double>& data)
-{
-    this->ct() = data[0];
-    for (std::size_t i = 1; i < data.size(); i++) this->at(i-1) = data.at(i);
-}
-
-template <class System> bool Point::SpaceTime<System>::casuality ()
-{
-    return !(this->ct() < this->radius());
+    return std::sqrt(ct()*ct()-this->z()*this->z());
 }
 
 template <class System> bool Point::equals (const Point::SpaceTime<System>& pt1, const Point::SpaceTime<System>& pt2, double eps)
 {
     bool intime = Math::compare(pt1.ct(), pt2.ct(), eps);
-    bool inspace = Point::equals((System)pt1,(System)pt2,eps);
+    bool inspace = Point::equals(static_cast<System>(pt1),static_cast<System>(pt2),eps);
     return intime && inspace;
 }
 
-template <std::size_t dim> bool Point::equals (const Point::Space<dim>& pt1, const Point::Space<dim>& pt2, double eps)
+template <class System> template <class InputBase>
+Point::SpaceTime<System> Point::SpaceTime<System>::convert (const Point::SpaceTime<InputBase>& pt)
 {
-    for (auto i = 0u; i < dim; i++)
-        if (!Math::compare(pt1[i], pt2[i], eps))
-            return false;
-    return true;
-}
-
-template <class System> Point::SpaceTime<Point::Cartesian3D> Point::cartesian (const Point::SpaceTime<System>& pt)
-{
-    Point::Cartesian3D base = cartesian((System) pt);
-    Point::SpaceTime<Point::Cartesian3D> res{base};
-    res.ct() = pt.ct();
-    return res;
-}
-
-template <class System> Point::SpaceTime<Point::Cylindrical> Point::cylindrical (const Point::SpaceTime<System>& pt)
-{
-    Point::Cylindrical base = cylindrical((System) pt);
-    Point::SpaceTime<Point::Cylindrical> res{base};
-    res.ct() = pt.ct();
-    return res;
-}
-
-template <class System> Point::SpaceTime<Point::Spherical> Point::spherical (const Point::SpaceTime<System>& pt)
-{
-    Point::Spherical base = spherical((System) pt);
-    Point::SpaceTime<Point::Spherical> res{base};
+    System base = System::convert(static_cast<InputBase>(pt));
+    Point::SpaceTime<System> res{base};
     res.ct() = pt.ct();
     return res;
 }

@@ -10,61 +10,18 @@
 
 // Linear current distribution of time squared shape
 
-MeandrPeriod::MeandrPeriod (double disk_radius, double magnitude, double duration)
-: UniformPlainDisk(disk_radius, magnitude) 
+SquaredPulse::SquaredPulse (double radius, double magnitude, double eps_r, double mu_r, double duration, Logger* global_log)
+: TransientResponse(radius,magnitude,eps_r,mu_r,global_log), tau(duration) {}
+
+double SquaredPulse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	this->tau = duration;
-}
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
+	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
+	if (std::isnan(sqrt_vt_z)) return 0;
 
-double MeandrPeriod::rho (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
-	throw std::logic_error("MeandrPeriod::rho is not implemented");
-}
-
-double MeandrPeriod::phi (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
-	throw std::logic_error("MeandrPeriod::phi is not implemented");
-}
-
-double MeandrPeriod::z (double ct, double rho, double phi, double z) const
-{
-	UNUSED(ct); UNUSED(rho); UNUSED(phi); UNUSED(z);
-	throw std::logic_error("MeandrPeriod::z is not implemented");
-}
-
-double MeandrPeriod::get_duration () const
-{
-	return this->tau;
-}
-
-UniformPlainDisk* MeandrPeriod::updisk () const
-{
-	return new UniformPlainDisk(this->R, this->A0);
-}
-
-// Electric field
-
-SquaredPulse::SquaredPulse (MeandrPeriod* source, Homogeneous* medium)
-: MissileField(source, medium) {
-	this->A0 = source->get_magnitude();
-	this->R = source->get_disk_radius();
-	this->tau = source->get_duration();
-}
-
-double SquaredPulse::electric_rho (double vt, double rho, double phi, double z) const
-{
-	double R = this->R;
-	double tau = this->tau;
-	double value = this->A0 / 2;
-
-	double sqrt_vt_z  = std::sqrt(vt*vt - z*z);
-	double sqrt_tau_z = std::sqrt((vt-tau)*(vt-tau) - z*z);
-	if (std::isnan(sqrt_vt_z) || (sqrt_vt_z == 0)) return 0;
-
-	value *= std::sqrt(LinearMedium::MU0 * medium->relative_permeability(vt,z));
-	value /= std::sqrt(LinearMedium::EPS0 * medium->relative_permittivity(vt,z));
+	double rho = event.rho(), phi = event.phi();
+	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -96,7 +53,7 @@ double SquaredPulse::electric_rho (double vt, double rho, double phi, double z) 
 		double i1;
 
 		if (std::isnan(sqrt_tau_z) || (sqrt_tau_z == 0)) {
-			i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
+			i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
 		} else {
 			i1 = SquaredPulse::int_bessel_011(sqrt_vt_z, sqrt_tau_z, rho, R);
 		}
@@ -106,18 +63,15 @@ double SquaredPulse::electric_rho (double vt, double rho, double phi, double z) 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double SquaredPulse::electric_phi (double vt, double rho, double phi, double z) const
+double SquaredPulse::electric_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double R = this->R;
-	double tau = this->tau;
-	double value = this->A0 / 2;
+	double sqrt_vt_z = event.sqrt_vt2_z2();
+	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
+	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
+	if (std::isnan(sqrt_vt_z)) return 0;
 
-	double sqrt_vt_z  = std::sqrt(vt*vt - z*z);
-	double sqrt_tau_z = std::sqrt((vt-tau)*(vt-tau) - z*z);
-	if (std::isnan(sqrt_vt_z) || (sqrt_vt_z == 0)) return 0;
-
-	value *= std::sqrt(LinearMedium::MU0 * medium->relative_permeability(vt,z));
-	value /= std::sqrt(LinearMedium::EPS0 * medium->relative_permittivity(vt,z));
+	double rho = event.rho(), phi = event.phi();
+	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
 
 	#ifdef NUMERIC_PDISK_LINEAR_INT
 
@@ -156,8 +110,8 @@ double SquaredPulse::electric_phi (double vt, double rho, double phi, double z) 
 
 		double i1 = 0, i2 = 0;
 		if (std::isnan(sqrt_tau_z) || (sqrt_tau_z == 0)) {
-			i1 = MissileField::int_bessel_011(sqrt_vt_z, rho, R);
-			i2 = MissileField::int_bessel_001(sqrt_vt_z, rho, R);
+			i1 = TransientResponse::int_bessel_011(sqrt_vt_z, rho, R);
+			i2 = TransientResponse::int_bessel_001(sqrt_vt_z, rho, R);
 		} else {
 			i1 = SquaredPulse::int_bessel_011(sqrt_vt_z, sqrt_tau_z, rho, R);
 			i2 = SquaredPulse::int_bessel_001(sqrt_vt_z, sqrt_tau_z, rho, R);	
@@ -169,62 +123,54 @@ double SquaredPulse::electric_phi (double vt, double rho, double phi, double z) 
 	#endif /* NUMERIC_PDISK_LINEAR_INT */
 }
 
-double SquaredPulse::electric_z (double vt, double rho, double phi, double z) const
+double SquaredPulse::electric_z (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(phi); UNUSED(rho); UNUSED(z);
 	return 0;
 }
 
-double SquaredPulse::magnetic_rho (double vt, double rho, double phi, double z) const
+double SquaredPulse::magnetic_rho (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	throw std::logic_error("SquaredPulse::magnetic_rho is not implemented");
 }
 
-double SquaredPulse::magnetic_phi (double vt, double rho, double phi, double z) const
+double SquaredPulse::magnetic_phi (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	throw std::logic_error("SquaredPulse::magnetic_phi is not implemented");
 }
 
-double SquaredPulse::magnetic_z (double vt, double rho, double phi, double z) const
+double SquaredPulse::magnetic_z (const Point::SpaceTime<Point::Cylindrical>&) const
 {
-	UNUSED(vt); UNUSED(rho); UNUSED(phi); UNUSED(z);
 	throw std::logic_error("SquaredPulse::magnetic_z is not implemented");
 }
 
 double SquaredPulse::int_bessel_001 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R)
 {
-	double i1_from = MissileField::int_bessel_001(sqrt_vt_z,rho,R);
-	double i1_to = MissileField::int_bessel_001(sqrt_tau_z,rho,R);
+	double i1_from = TransientResponse::int_bessel_001(sqrt_vt_z,rho,R);
+	double i1_to = TransientResponse::int_bessel_001(sqrt_tau_z,rho,R);
 	return i1_from - i1_to;
 }
 
 double SquaredPulse::int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R)
 {
-	double i1_from = MissileField::int_bessel_011(sqrt_vt_z,rho,R);
-	double i1_to = MissileField::int_bessel_011(sqrt_tau_z,rho,R);
+	double i1_from = TransientResponse::int_bessel_011(sqrt_vt_z,rho,R);
+	double i1_to = TransientResponse::int_bessel_011(sqrt_tau_z,rho,R);
 	return i1_from - i1_to;
 }
 
 namespace { extern "C" {
 
-	void tr_module (ModuleManager* core, Logger* global_logger, double R, double A0, double mu, double eps)
+	void tr_module (ModuleManager* core, Logger* log, double R, double A0, double mu, double eps)
 	{
 		ModuleEntity tr;
-		tr.source = new UniformPlainDisk(R,A0);
-		tr.medium = new Homogeneous(mu,eps);
-		tr.field = new MissileField( (UniformPlainDisk*) tr.source, (Homogeneous*) tr.medium);
+		tr.field_cyl_arg = new TransientResponse(R,A0,mu,eps,log);
 		const char* name = "UniformDisk.TrancientResponse";
 		core->load_module(name,tr);
 	}
 
-	void meandr_module (ModuleManager* core, Logger* global, double R, double A0, double tau0, double mu, double eps)
+	void meandr_module (ModuleManager* core, Logger* log, double R, double A0, double tau0, double mu, double eps)
 	{
 		ModuleEntity tr;
-		tr.source = new MeandrPeriod(R, A0, tau0);
-		tr.medium = new Homogeneous(mu,eps);
-		tr.field = new SquaredPulse( (MeandrPeriod*) tr.source, (Homogeneous*) tr.medium);
+		tr.field_cyl_arg = new SquaredPulse(R,A0,mu,eps,tau0,log);
 		const char* name = "UniformDisk.MeandrMonocycle";
 		core->load_module(name,tr);
 	}

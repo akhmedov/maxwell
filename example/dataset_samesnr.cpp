@@ -25,9 +25,9 @@ static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
 static const double TAU0 = 1; // duration of signals
 
-static vector<AbstractField*> SIGNAL;
+static vector<AbstractField<Point::Cylindrical>*> SIGNAL;
 
-AbstractField* arbitrary_signal (const function<double(double)>& shape) 
+AbstractField<Point::Cylindrical>* arbitrary_signal (const function<double(double)>& shape) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -36,15 +36,9 @@ AbstractField* arbitrary_signal (const function<double(double)>& shape)
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, NAN, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
-	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
-	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
-	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	AbstractField<Point::Cylindrical>* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth(shape);
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
-	return duhamel;
+	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(linear, TAU0, shape);
 }
 
 void append (int id, Dataset* ds)
@@ -60,7 +54,8 @@ void append (int id, Dataset* ds)
 
     for (float ct = from; ct < to; ct += 0.05) {
         time.push_back(ct);
-        func.push_back(SIGNAL.at(id)->electric_x(ct,rho,phi,z));
+        Point::SpaceTime<Point::Cylindrical> event{ct,rho,phi,z};
+        func.push_back(SIGNAL.at(id)->electric_x(event));
     }
 
     ds->append(id,space,time,func);

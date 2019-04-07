@@ -17,7 +17,7 @@ using namespace std;
 
 static const int    RADIX       = 2;
 static const int    SPARKS_NUM  = 10;
-static const int    POINTS_NUM  = 100; // TODO:
+// static const int    POINTS_NUM  = 100; // TODO: add testing
 static const double DUTY_SYCLE  = 0.5;
 static       double DATASUM     = 0;
 static const double NOISE_POWER = 1.0;

@@ -27,12 +27,12 @@ void DatasetHelper::to_json (nlohmann::json& js, const DatasetHelper::SeriesItem
 }
 
 Dataset::Dataset (std::size_t rdx, double dc, double noise_pw)
-: radix(rdx), noise_power(noise_pw), duty_cycle(dc), noise(0,std::sqrt(noise_power))
+: radix(rdx), duty_cycle(dc), noise_power(noise_pw), noise(0,std::sqrt(noise_power))
 {
 	script.emplace_back();
 
 	for (double time = 0; time < 2; time += 0.01)
-		series[time] = {noise.value(0,0,0,0), {script.front()}};
+		series[time] = {noise.value(), {script.front()}};
 }
 
 double Dataset::count_snr_db (std::vector<double> field, double noise_power)
@@ -61,7 +61,7 @@ void Dataset::append (std::size_t id, const std::vector<double>& space, const st
 
 	for (std::size_t i = 0; i < field.size(); i++) {
 		DatasetHelper::SeriesItem item;
-		item.magnitude = field[i] + noise.value(0,0,0,0,0);
+		item.magnitude = field[i] + noise.value();
 		item.info.push_back(script.back());
 		series[absolut + time[i] - relative] = item;
 	}
@@ -76,13 +76,13 @@ void Dataset::append_duty_cycle (double dlt_time, std::size_t points)
 
 	for (std::size_t i = 0; i < points; i++) {
 		DatasetHelper::SeriesItem item;
-		item.magnitude = noise.value(0,0,0,0,0);
+		item.magnitude = noise.value();
 		item.info.emplace_back();
 		series.emplace(absolut_from + dlt_time * i, std::move(item));
 	}
 }
 
-void Dataset::superpos (std::size_t id, const std::vector<double>& space, const std::vector<double>& time, const std::vector<double>& field, double crossection)
+void Dataset::superpos (std::size_t /*id*/, const std::vector<double>& /*space*/, const std::vector<double>& /*time*/, const std::vector<double>& /*field*/, double /*crossection*/)
 {
 	throw std::logic_error("Not implemented!");
 }

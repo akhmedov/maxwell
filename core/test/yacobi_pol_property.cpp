@@ -39,8 +39,8 @@ bool Test::yacobi_pol_property ()
 
 	if (std::abs(res_basic - res_fast) > eps) return false;
 
-	for (double arg = -1; arg < 1; arg += 0.01) {
-		double res_fast = Math::yacobi_polinom(0, arg).get_d();
+	for (arg = -1; arg < 1; arg += 0.01) {
+		res_fast = Math::yacobi_polinom(0, arg).get_d();
 		if (std::abs(res_fast - 1) > eps) return false;
 	}
 

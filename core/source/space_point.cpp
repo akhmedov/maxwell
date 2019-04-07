@@ -8,114 +8,153 @@
 
 #include "space_point.hpp"
 
-Point::Cartesian2D::Cartesian2D(double x, double y)
-{ 
-    this->at(0) = x;
-    this->at(1) = y;
+bool Point::equals (const Point::System& pt1, const Point::System& pt2, double eps)
+{
+    if (pt1.size() != pt2.size()) return false;
+    for (auto i = 0u; i < pt1.size(); i++)
+        if (!Math::compare(pt1[i], pt2[i], eps))
+            return false;
+    return true;
 }
 
-double Point::Cartesian2D::radius () const
+// Converters to Cartesian2D
+
+Point::Cartesian2D Point::Cartesian2D::convert (const Point::Polar& pt)
 {
-    return std::sqrt(x()*x() + y()*y());
+    double x = pt.rho() * std::cos(pt.phi());
+    double y = pt.rho() * std::sin(pt.phi());
+    return Point::Cartesian2D(x, y);
 }
 
-Point::Cartesian3D::Cartesian3D(double x, double y, double z)
+Point::Cartesian2D Point::Cartesian2D::convert (const Point::Spherical& pt)
 {
-    this->at(0) = x;
-    this->at(1) = y;
-    this->at(2) = z;
+    double x = pt.r() * std::sin(pt.theta()) * std::cos(pt.phi());
+    double y = pt.r() * std::sin(pt.theta()) * std::sin(pt.phi());
+    return Point::Cartesian2D(x,y);
 }
 
-double Point::Cartesian3D::radius () const
+Point::Cartesian2D Point::Cartesian2D::convert (const Point::Cartesian2D& pt)
 {
-    return std::sqrt(x()*x() + y()*y() + z()*z());
+    return pt;
 }
 
-Point::Polar::Polar(double rho, double phi)
+Point::Cartesian2D Point::Cartesian2D::convert (const Point::Cartesian3D& pt)
 {
-    this->at(0) = rho;
-    this->at(1) = phi;
+    return Point::Cartesian2D(pt.x(), pt.y());
 }
 
-double Point::Polar::radius () const
+Point::Cartesian2D Point::Cartesian2D::convert (const Point::Cylindrical& pt)
 {
-    return std::abs(rho());
+    double x = pt.rho() * std::cos(pt.phi());
+    double y = pt.rho() * std::sin(pt.phi());
+    return Point::Cartesian2D(x, y);
 }
 
-Point::Cylindrical::Cylindrical(double rho, double phi, double z)
+// Converters to Cartesian3D
+
+Point::Cartesian3D Point::Cartesian3D::convert (const Point::Cartesian3D& pt)
 {
-    this->at(0) = rho;
-    this->at(1) = phi;
-    this->at(2) = z;
+    return pt;
 }
 
-double Point::Cylindrical::radius () const
+Point::Cartesian3D Point::Cartesian3D::convert (const Point::Cylindrical& pt)
 {
-    return std::sqrt(rho() * rho() + z() * z());
+    double x = pt.rho() * std::cos(pt.phi());
+    double y = pt.rho() * std::sin(pt.phi());
+    double z = pt.z();
+    return Point::Cartesian3D(x,y,z);
 }
 
-Point::Spherical::Spherical(double r, double phi, double theta)
+Point::Cartesian3D Point::Cartesian3D::convert (const Point::Spherical& pt)
 {
-    this->at(0) = r;
-    this->at(1) = phi;
-    this->at(2) = theta;
+    double x = pt.r() * std::sin(pt.theta()) * std::cos(pt.phi());
+    double y = pt.r() * std::sin(pt.theta()) * std::sin(pt.phi());
+    double z = pt.r() * std::cos(pt.theta());
+    return Point::Cartesian3D(x,y,z);
 }
 
-double Point::Spherical::radius () const
+Point::Cartesian3D Point::Cartesian3D::convert (const Point::Polar& pt)
 {
-    return std::abs(r());
+    double x = pt.rho() * std::cos(pt.phi());
+    double y = pt.rho() * std::sin(pt.phi());
+    return Point::Cartesian3D(x,y,0);
 }
 
-Point::Cartesian3D Point::cartesian3d (const Point::Cylindrical& pt)
+Point::Cartesian3D Point::Cartesian3D::convert (const Point::Cartesian2D& pt)
 {
-    Point::Cartesian3D res;
-    res.x() = pt.rho() * std::cos(pt.phi());
-    res.y() = pt.rho() * std::sin(pt.phi());
-    res.z() = pt.z();
-    return res;
+    return Point::Cartesian3D(pt.x(), pt.y(), 0);
 }
 
-Point::Cartesian3D Point::cartesian3d (const Point::Spherical& pt)
+// Converters to Cylindrical
+
+Point::Cylindrical Point::Cylindrical::convert (const Point::Cartesian3D& pt)
 {
-    Point::Cartesian3D res;
-    res.x() = pt.r() * std::sin(pt.theta()) * std::cos(pt.phi());
-    res.y() = pt.r() * std::sin(pt.theta()) * std::sin(pt.phi());
-    res.z() = pt.r() * std::cos(pt.theta());
-    return res;
+    double rho = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y());
+    double phi = std::atan2(pt.y(),pt.x());
+    double z = pt.z();
+    return Point::Cylindrical(rho,phi,z);
 }
 
-Point::Cylindrical Point::cylindrical (const Point::Cartesian3D& pt)
+Point::Cylindrical Point::Cylindrical::convert (const Point::Spherical& pt)
 {
-    Point::Cylindrical res;
-    res.rho() = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y());
-    res.phi() = std::atan2(pt.y(),pt.x());
-    res.z() = pt.z();
-    return res;
+    double rho = pt.r() * std::sin(pt.theta());
+    double phi = pt.phi();
+    double z = pt.r() * std::cos(pt.theta());
+    return Point::Cylindrical(rho,phi,z);
 }
 
-Point::Cylindrical Point::cylindrical (const Point::Spherical& pt)
+Point::Cylindrical Point::Cylindrical::convert (const Point::Cylindrical& pt)
 {
-    Point::Cylindrical res;
-    res.rho() = pt.r() * std::sin(pt.theta());
-    res.phi() = pt.phi();
-    res.z() = pt.r() * std::cos(pt.theta());
-    return res;
+    return pt;
 }
 
-Point::Spherical Point::spherical (const Point::Cartesian3D& pt)
+Point::Cylindrical Point::Cylindrical::convert (const Point::Polar& pt)
 {
-    Point::Spherical res;
-    res.r() = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y() + pt.z() * pt.z());
-    res.phi() = std::atan2(pt.y(),pt.x());
-    res.theta() = std::acos( pt.z() / res.r() );
-    return res;
+    return Point::Cylindrical(pt.rho(),pt.phi(),0);
 }
 
-Point::Spherical Point::spherical (const Point::Cylindrical& pt)
+Point::Cylindrical Point::Cylindrical::convert (const Point::Cartesian2D& pt)
 {
-    Point::Spherical res;
-    res.r() = std::sqrt(pt.rho() * pt.rho() + pt.z() * pt.z());
-    res.phi() = pt.phi();
-    res.theta() = std::atan2( pt.rho(), pt.z() );
-    return res;
+    double rho = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y());
+    double phi = std::atan2(pt.y(),pt.x());
+    return Point::Cylindrical(rho,phi,0);
+}
+
+// Converters to Spherical
+
+Point::Spherical Point::Spherical::convert (const Point::Cartesian3D& pt)
+{
+    double r = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y() + pt.z() * pt.z());
+    double phi = std::atan2(pt.y(),pt.x());
+    double theta = std::acos( pt.z() / r );
+    return Point::Spherical(r,phi,theta);
+}
+
+Point::Spherical Point::Spherical::convert (const Point::Cylindrical& pt)
+{
+    double r = std::sqrt(pt.rho() * pt.rho() + pt.z() * pt.z());
+    double phi = pt.phi();
+    double theta = std::atan2( pt.rho(), pt.z() );
+    return Point::Spherical(r,phi,theta);
+}
+
+Point::Spherical Point::Spherical::convert (const Point::Spherical& pt)
+{
+    return pt;
+}
+
+Point::Spherical Point::Spherical::convert (const Point::Cartesian2D& pt)
+{
+    double r = std::sqrt(pt.x() * pt.x() + pt.y() * pt.y());
+    double phi = std::atan2(pt.y(),pt.x());
+    double theta = std::acos( 0 );
+    return Point::Spherical(r,phi,theta);
+}
+
+Point::Spherical Point::Spherical::convert (const Point::Polar& pt)
+{
+    double r = std::sqrt(pt.rho() * pt.rho());
+    double phi = pt.phi();
+    double theta = std::atan2( pt.rho(), 0 );
+    return Point::Spherical(r,phi,theta);
 }

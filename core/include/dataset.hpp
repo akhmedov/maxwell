@@ -64,7 +64,7 @@ private:
 	std::size_t radix;
 	double duty_cycle;
 	double noise_power;
-	AdditiveWhiteGaussian noise;
+	WhiteGaussian noise;
 	std::list<DatasetHelper::Metadata> script; // signals cannt come at the same time
  	std::map<double, DatasetHelper::SeriesItem> series;
 };

@@ -23,7 +23,7 @@ double EPS = 1; // relative dielectric pirmativity
 
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
-AbstractField* trancient_recponce () 
+AbstractField<Point::Cylindrical>* trancient_recponce () 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -33,10 +33,10 @@ AbstractField* trancient_recponce ()
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, 0.0, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	return mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 }
 
-AbstractField* rectangular_shape (double tau0) 
+AbstractField<Point::Cylindrical>* rectangular_shape (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -46,10 +46,10 @@ AbstractField* rectangular_shape (double tau0)
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	return mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 }
 
-AbstractField* arbitrary_signal (double tau0) 
+AbstractField<Point::Cylindrical>* arbitrary_signal (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -58,47 +58,39 @@ AbstractField* arbitrary_signal (double tau0)
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
-	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
-	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
-	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss(vt,tau0);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
-	return duhamel;
+	auto shape = [tau0] (double ct) { return Function::gauss_perp(ct,tau0,1); };
+	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, tau0, shape, NULL);
 }
 
-vector<vector<double>> arguments (double tau0, bool swap_axis)
+vector<Point::Cylindrical> arguments (bool swap_axis)
 {
-	vector<vector<double>> data;
+	Point::Cartesian3D cart;
+	vector<Point::Cylindrical> data;
 
 	double x = 0;
 	for (double y = -2*R; y <= 2*R; y += 0.05) {
 		for (double z = 0; z <= 5*R; z += 0.05) {
-			double rho = sqrt(x*x + y*y);
-			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
-			if (from - 0.01 > 0) from -= 0.01;
-			double to = tau0 + sqrt((rho+R)*(rho+R) + z*z) + 0.01;
-			vector<double> tmp {x, y, z, from, to};
-			if (swap_axis) swap(tmp[0],tmp[1]);
-			data.emplace_back(move(tmp));
+			if (swap_axis) cart = Point::Cartesian3D(y,x,z);
+			else cart = Point::Cartesian3D(x,y,z);
+			data.push_back(Point::Cylindrical::convert(cart));
 		}
 	}
 
 	return data;
 }
 
-void plot (const vector<vector<double>>& arg, const vector<double>& res, double tau0, bool swap_axis)
+void plot (const vector<Point::Cylindrical>& arg, const vector<double>& res, double tau0, bool swap_axis)
 {
     vector<vector<double>> data;
     data.reserve(arg.size());
     for (auto i = 0u; i < arg.size(); i++) {
-        vector<double> tmp{ arg[i][0], arg[i][1], arg[i][2], arg[i][3], arg[i][4], res[i] };
+        vector<double> tmp{ arg[i].rho(), arg[i].phi(), arg[i].z(), res[i] };
         data.emplace_back(move(tmp));
     }
 
-	string script = "W_" + str_of(tau0) + (swap_axis?"_xz" :"_yz") + ".gnp";
+	string script = "W_" + str_of(tau0) + (swap_axis ? "_xz" : "_yz") + ".gnp";
 	GnuPlot plot = GnuPlot(script);
 	plot.set_colormap(Colormap::gray);
     plot.plot_colormap(data, !swap_axis, 2);
@@ -106,14 +98,12 @@ void plot (const vector<vector<double>>& arg, const vector<double>& res, double 
 
 void plot_energy_distribution (double tau0, bool swap_axis)
 {
-	AbstractField* model = trancient_recponce();
-	auto arg = arguments(tau0, swap_axis);
+	AbstractField<Point::Cylindrical>* model = trancient_recponce();
+	vector<Point::Cylindrical> arg = arguments(swap_axis);
 	vector<double> res(arg.size());
 
-	CalculationManager cluster(3);
-	cluster.start(arg, res, [model] (const auto& entry) {
-		return model->energy_cart(entry[0], entry[1], entry[2], entry[3], entry[4]);
-	});
+	CalculationManager cluster(4);
+	cluster.start(arg, res, model, &AbstractField<Point::Cylindrical>::energy_e);
 
 	// progress of calculation in persent
 	while (cluster.progress() != arg.size()) {
@@ -123,9 +113,6 @@ void plot_energy_distribution (double tau0, bool swap_axis)
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 	cout << endl;
-
-	// std::cout << "Wainting...\n";
-	// cluster.wait();
 
 	plot(arg, res, tau0, swap_axis);
 	delete model;

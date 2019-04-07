@@ -11,20 +11,13 @@ cmake_minimum_required(VERSION 3.0)
 set(PROJECT_NAME maxwell)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(SOURCES
-    ${SOURCE_DIR}/abstract_field.cpp
     ${SOURCE_DIR}/dataset.cpp
     ${SOURCE_DIR}/function.cpp
     ${SOURCE_DIR}/gnu_plot.cpp
     ${SOURCE_DIR}/integral.cpp
-    ${SOURCE_DIR}/linear_duhamel.cpp
-    ${SOURCE_DIR}/linear_field.cpp
-    ${SOURCE_DIR}/linear_medium.cpp
-    ${SOURCE_DIR}/linear_source.cpp
     ${SOURCE_DIR}/logger.cpp
     ${SOURCE_DIR}/mysql_connect.cpp
     ${SOURCE_DIR}/noise.cpp
-    ${SOURCE_DIR}/nonlinear_field.cpp
-    ${SOURCE_DIR}/nonlinear_medium.cpp
     ${SOURCE_DIR}/phys_math.cpp
     ${SOURCE_DIR}/module_manager.cpp
     ${SOURCE_DIR}/space_point.cpp

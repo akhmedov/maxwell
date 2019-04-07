@@ -28,7 +28,7 @@ bool Test::I2_time_partder ()
 
 					auto I2 = [rho, R, z] (double ct) {
 						double vt_z = std::sqrt(ct * ct - z * z);
-						return MissileField::int_bessel_001(vt_z,rho,R); 
+						return TransientResponse::int_bessel_001(vt_z,rho,R); 
 					};
 					
 					double anal = KerrAmendment::int_bessel_001_perp(ct,z,rho,R);
