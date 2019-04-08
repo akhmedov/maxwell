@@ -13,7 +13,6 @@
 #include <gmpxx.h>
 
 #include <exception>
-#include <iostream>
 
 #include "maxwell.hpp"
 

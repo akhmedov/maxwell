@@ -6,13 +6,7 @@
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
-#ifndef UNUSED
-#define UNUSED(expr) do { (void)(expr); } while (0)
-#endif
-
 #pragma once
-
-#include <abstract_field.hpp>
 
 #include <random>
 

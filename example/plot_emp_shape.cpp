@@ -9,16 +9,19 @@
 #include "maxwell.hpp"
 #include "gnu_plot.hpp"
 
+#include <iostream>
+#include <vector>
+
 using namespace std;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
-static const double TAU0 = R/4; // duration of exitation
+static const double TAU0 = R; // duration of exitation
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
 
-AbstractField* create_model () 
+AbstractField<Point::Cylindrical>* create_model () 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -26,31 +29,24 @@ AbstractField* create_model ()
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, TAU0, EPS, MU);
-	if (!loaded) throw logic_error("Library loading error");
-	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
-	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
-	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
-    cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_duration(TAU0);
-	free_shape->set_time_depth([] (double vt) {return Function::gauss_perp(vt,TAU0,1);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
-	return duhamel;
+	if (!loaded) throw std::logic_error("Library loading error");
+	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
+	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
+	auto shape = [] (double ct) { return Function::gauss_perp(ct,TAU0,1); };
+	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
-vector<vector<double>> plot_arguments (AbstractField* model, double x, double y, double z)
+template <typename System> vector<vector<double>> plot_arguments (AbstractField<Point::Cylindrical>* model, const System& point)
 {
-    double rho = sqrt(x*x + y*y);
-    double phi = atan2(y,x);
-
-	double from = model->observed_from(rho, phi, z);
-	double to = model->observed_to(rho, phi, z);
+	Point::Cylindrical cyln = Point::Cylindrical::convert(point);
+	double from = model->observed_from(cyln) - 0.1;
+	double to = model->observed_to(cyln) + 0.1;
+	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
     vector<vector<double>> data;
-	for (double ct = from; ct <= to; ct += 0.01) {
-        double Ex = model->electric_x(ct, rho, phi, z);
-		data.push_back({ct, Ex});
+	for (event.ct() = from; event.ct() <= to; event.ct() += 0.01) {
+        double Ex = model->electric_x(event);
+		data.push_back({event.ct(), Ex});
     }
 
 	return data;
@@ -68,8 +64,10 @@ void plot_script (vector<vector<double>> data, string name)
 
 int main ()
 {
-    AbstractField* model = create_model();
-    auto data = plot_arguments(model, 0, 0, 1.6);
+    AbstractField<Point::Cylindrical>* model = create_model();
+    auto data = plot_arguments(model, Point::Cartesian3D(0.5,0.5,2));
     plot_script(data, "emp_shape.gnp");
+
+	delete model;
     return 0;
 }

@@ -8,7 +8,6 @@
 
 #include "noise.hpp"
 
-
 double Noise::power (std::size_t samples)
 {
 	double sum = 0;

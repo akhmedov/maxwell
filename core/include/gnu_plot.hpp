@@ -9,29 +9,13 @@
 #ifndef gnu_plot_hpp
 #define gnu_plot_hpp
 
-#include <cmath>
+#include "logger.hpp"
+
 #include <regex>
-#include <algorithm>
-#include <iostream>
-#include <tuple>
-#include <cstdlib>
-#include <fstream>
-#include <cstddef>
 #include <string>
+#include <fstream>
 #include <vector>
-#include <list>
 #include <map>
-
-typedef std::vector<std::string> Text;
-
-template <typename T> 
-using Plot2D = std::vector<std::pair<T, T>>;
-
-template <typename T> 
-using PlotMulti = std::vector<std::vector<T>>;
-
-template <typename T> 
-using Plot3D = std::vector<std::tuple<T, T, T>>;
 
 /*
 -- Data structure for GnuPlot:: module 
@@ -44,7 +28,7 @@ using Plot3D = std::vector<std::tuple<T, T, T>>;
 enum Colormap {gray, parula};
 
 struct GnuPlot {
-	GnuPlot (std::string filename);
+	GnuPlot (std::string filename, Logger* global_log = NULL);
 	void set_gnuplot_bin (std::string filename);
 	void set_font_size (std::size_t size);
 	void set_ox_label (std::string text);
@@ -58,20 +42,18 @@ struct GnuPlot {
 	void cage_on (bool status = true);
 
 	void plot2d (const std::vector<std::vector<double>> &array);
-	void plot_multi (const std::vector<std::vector<double>> &array, 
-					 const std::vector<std::string> &title);
+	void plot_multi (const std::vector<std::vector<double>> &array, const std::vector<std::string> &title);
 	void plot3d (const std::vector<std::vector<double>> &matrix);
 	void plot_colormap (const std::vector<std::vector<double>> &array, int axis1, int axis2);
-	void call_gnuplot ();
 
 protected:
 
 	static std::vector<std::vector<double>> datagrid_from (const std::vector<std::vector<double>>& array, int axis1, int axis2);
 
 private:
-	void direct_gnuplot_call (const Text &plot_data) const;
+	void direct_gnuplot_call (const std::vector<std::string> &plot_data) const;
 	void write_script (const std::string &plot_data) const;
-	void write_commants_to_script (const Text &plot_data, const std::vector<std::string> &title = {}) const;
+	void write_commants_to_script (const std::vector<std::string> &plot_data, const std::vector<std::string> &title = {}) const;
 
 	// templates
 
@@ -100,6 +82,8 @@ private:
 	bool is_plot_in_cage;
 	bool is_3d_plot;
 	bool is_colormap_plot;
+
+	Logger* log;
 };
 
 #endif /* gnu_plot_hpp */

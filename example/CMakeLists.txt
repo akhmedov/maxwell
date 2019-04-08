@@ -12,7 +12,7 @@ set(PROJECT_NAME example)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCES
     # ${SOURCE_DIR}/plot_awgn_power.cpp
-    # ${SOURCE_DIR}/plot_emp_shape.cpp
+    ${SOURCE_DIR}/plot_emp_shape.cpp
     # ${SOURCE_DIR}/plot_emp_surface.cpp
     # ${SOURCE_DIR}/plot_kerr_source.cpp
     # ${SOURCE_DIR}/plot_energy_slyse.cpp

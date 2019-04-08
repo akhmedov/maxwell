@@ -15,7 +15,6 @@
 
 #include <regex>
 #include <string>
-#include <iostream>
 
 #define INIT_NODES 1e3
 #define MAX_NODES  1e6
@@ -121,7 +120,7 @@ template <template <class System> class AbstractFieldImpl, class System> struct 
 
 		try {
 			return integral.value(0, event.ct() - event.z(), core);
-		} catch (double not_trusted) {
+		} catch (double not_trusted) {			
 
 			if (this->global_log) {
 				std::string mesg = DuhamelSuperpose::INTEGRAL_WARNING;
@@ -130,9 +129,12 @@ template <template <class System> class AbstractFieldImpl, class System> struct 
 				this->global_log->warning(mesg);
 			}
 
-			Point::SpaceTime<System> prev{event};
-			if (prev.ct() - STEP > 0) prev.ct() -= STEP;
-			return comp(this->tr,prev);
+			return not_trusted; 
+
+			// TODO: bugfix!!!
+			// Point::SpaceTime<System> prev{event};
+			// if (prev.ct() - STEP > 0) prev.ct() -= STEP;
+			// return comp(this->tr,prev);
 		}
 	}
 

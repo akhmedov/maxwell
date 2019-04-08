@@ -6,7 +6,7 @@
 //  Copyright © 2018 Rolan Akhmedov. All rights reserved.
 //
 
-#include"logger.hpp"
+#include "logger.hpp"
 
 Logger::Logger (const std::string &posix_path)
 : file_name(posix_path) {

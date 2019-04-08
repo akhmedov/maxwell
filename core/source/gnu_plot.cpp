@@ -77,8 +77,8 @@ const std::string GnuPlot::CMAP =
 "pause -1 'Hit return to continue'\n"
 ;
 
-GnuPlot::GnuPlot (std::string filename)
-{
+GnuPlot::GnuPlot (std::string filename, Logger* global_log)
+: log(global_log) {
 	this->script_name = filename;	
 
 	std::string extention = filename.substr(filename.find_last_of(".") + 1);
@@ -161,12 +161,16 @@ void GnuPlot::cage_on ( bool status)
 
 void GnuPlot::write_script (const std::string &text) const
 {
-	std::cout << "Write comands to " << this->script_name << " script... ";
 	std::ofstream script;
 	script.open( this->script_name );
 	script << text;
 	script.close();
-	std::cout << "Done." << std::endl;
+
+	if (this->log) {
+		std::string msg = "Write comands to $FNAME script... Done.";
+		msg = std::regex_replace(msg, std::regex("\\$FNAME"), this->script_name);
+		this->log->info(msg);
+	}
 }
 
 std::vector<std::vector<double>> GnuPlot::datagrid_from (const std::vector<std::vector<double>>& datalist, int axis1, int axis2)
@@ -259,14 +263,14 @@ void GnuPlot::plot2d (const std::vector<std::vector<double>> &array)
 	this->write_script(text);
 }
 
-void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &title) 
+void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const std::vector<std::string> &labels) 
 {
 	std::string LT_FOR = "set for [i=1:$LINES] linetype i dt i\n";
 	const std::string LT_ITEM = "set style line $ITEM lt $ITEM lc rgb 'black' lw 1 \n";
 	const std::string PLOT = "'$grid' using 1:1+$ITEM with lines ls $ITEM title '$TITLE',\\\n";
 
 	if (arrays.empty()) throw std::invalid_argument("Empty plot dataset.");
-	if (arrays[0].size()-1 != title.size()) throw std::invalid_argument("Size of input arrays does not match.");
+	if (arrays[0].size()-1 != labels.size()) throw std::invalid_argument("Size of input arrays does not match.");
 
 	std::string data;
 	for (auto&& line : arrays) {
@@ -282,8 +286,8 @@ void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const 
 
 	switch (this->color_schem) {
 		case Colormap::gray: {
-			std::string linetype = std::regex_replace(LT_FOR, std::regex("\\$LINES"), std::to_string(title.size()));
-			for (std::size_t i = 1; i <= title.size(); i++) {
+			std::string linetype = std::regex_replace(LT_FOR, std::regex("\\$LINES"), std::to_string(labels.size()));
+			for (std::size_t i = 1; i <= labels.size(); i++) {
 				std::string lti = LT_ITEM;
 				lti = std::regex_replace(lti, std::regex("\\$ITEM"), std::to_string(i));
 				linetype.append(lti);
@@ -296,10 +300,10 @@ void GnuPlot::plot_multi (const std::vector<std::vector<double>> &arrays, const 
 	}
 
 	std::string plot_cmd;
-	for (std::size_t i = 1; i <= title.size(); i++) {
+	for (std::size_t i = 1; i <= labels.size(); i++) {
 		std::string plot = PLOT;
 		plot = std::regex_replace(plot, std::regex("\\$ITEM"), std::to_string(i));
-		plot = std::regex_replace(plot, std::regex("\\$TITLE"), title[i-1]);
+		plot = std::regex_replace(plot, std::regex("\\$TITLE"), labels[i-1]);
 		plot_cmd.append(plot);
 	}
 
@@ -345,23 +349,7 @@ void GnuPlot::plot3d (const std::vector<std::vector<double>> &matrix)
 	this->write_script(text);
 }
 
-void GnuPlot::call_gnuplot ()
-{
-	std::cout << "Call gnuplot binary..." << std::endl;
-	std::cout.flush();
-	std::string command = this->gnuplot_path.append(" -c ");
-	system( command.append(this->script_name).c_str() );
-}
-
 void GnuPlot::set_colormap (const Colormap &schem)
 {
 	color_schem = schem;
 }
-
-/* void GnuPlot::direct_gnuplot_call (const Text &plot_data) const
-{
-	std::string cmd_list;
-	cmd_list.append("set term x11; ");
-	// if (this->is_title_on) cmd_list.("set title \"" << this->title << "\";");
-	if (this->is_3d_plot) thi
-} */

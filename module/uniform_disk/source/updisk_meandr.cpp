@@ -18,7 +18,7 @@ double SquaredPulse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& e
 	double sqrt_vt_z = event.sqrt_vt2_z2();
 	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
 	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
-	if (std::isnan(sqrt_vt_z)) return 0;
+	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
@@ -68,7 +68,7 @@ double SquaredPulse::electric_phi (const Point::SpaceTime<Point::Cylindrical>& e
 	double sqrt_vt_z = event.sqrt_vt2_z2();
 	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
 	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
-	if (std::isnan(sqrt_vt_z)) return 0;
+	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
@@ -155,6 +155,16 @@ double SquaredPulse::int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double
 	double i1_from = TransientResponse::int_bessel_011(sqrt_vt_z,rho,R);
 	double i1_to = TransientResponse::int_bessel_011(sqrt_tau_z,rho,R);
 	return i1_from - i1_to;
+}
+
+double SquaredPulse::observed_from (const Point::Cylindrical& point) const
+{
+	return TransientResponse::observed_from(point);
+}
+
+double SquaredPulse::observed_to (const Point::Cylindrical& point) const
+{
+	return this->tau + TransientResponse::observed_to(point);
 }
 
 namespace { extern "C" {

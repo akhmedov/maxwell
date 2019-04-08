@@ -15,9 +15,7 @@
 
 #include <gmp.h>
 #include <gmpxx.h>
-
 #include <exception>
-#include <iostream>
 
 #include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
@@ -33,6 +31,9 @@ struct SquaredPulse : public TransientResponse {
 	double magnetic_rho (const Point::SpaceTime<Point::Cylindrical>& event) const;
 	double magnetic_phi (const Point::SpaceTime<Point::Cylindrical>& event) const;
 	double magnetic_z (const Point::SpaceTime<Point::Cylindrical>& event) const;
+
+	double observed_from (const Point::Cylindrical& point) const;
+	double observed_to (const Point::Cylindrical& point) const;
 
 	static double int_bessel_001 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R); // I2 in thesis.pdf
 	static double int_bessel_011 (double sqrt_vt_z, double sqrt_tau_z, double rho, double R); // I1 in thesis.pdf
