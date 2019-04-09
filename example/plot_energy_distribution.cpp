@@ -87,7 +87,8 @@ void plot (const vector<Point::Cylindrical>& arg, const vector<double>& res, dou
     vector<vector<double>> data;
     data.reserve(arg.size());
     for (auto i = 0u; i < arg.size(); i++) {
-        vector<double> tmp{ arg[i].rho(), arg[i].phi(), arg[i].z(), res[i] };
+		Point::Cartesian3D point = Point::Cartesian3D::convert(arg[i]);
+        vector<double> tmp{ point.x(), point.y(), point.z(), res[i] };
         data.emplace_back(move(tmp));
     }
 

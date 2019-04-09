@@ -65,7 +65,7 @@ void plot_script (vector<vector<double>> data, string name)
 int main ()
 {
     AbstractField<Point::Cylindrical>* model = create_model();
-    auto data = plot_arguments(model, Point::Cartesian3D(0.5,0.5,2));
+    auto data = plot_arguments(model, Point::Cartesian3D(0.5,0.3,2));
     plot_script(data, "emp_shape.gnp");
 
 	delete model;

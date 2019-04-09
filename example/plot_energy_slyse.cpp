@@ -24,7 +24,20 @@ static const double EPS = 1; // relative dielectric pirmativity
 
 auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 
-AbstractField* rectangular_shape (double tau0) 
+AbstractField<Point::Cylindrical>* trancient_recponce () 
+{
+	string MODULE_PATH = "module/uniform_disk"; // module dir path
+	string MODULE_NAME = "uniform_disk"; // library name
+	int SUBMODULE = 1; // submodule index (trancient responce)
+
+	ModuleManager mng = ModuleManager(NULL);
+	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, 0.0, EPS, MU);
+	if (!loaded) throw std::logic_error("Library loading error");
+	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
+}
+
+AbstractField<Point::Cylindrical>* rectangular_shape (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -34,10 +47,10 @@ AbstractField* rectangular_shape (double tau0)
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	return mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	return mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 }
 
-AbstractField* arbitrary_signal (double tau0) 
+AbstractField<Point::Cylindrical>* arbitrary_signal (double tau0) 
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
@@ -46,42 +59,35 @@ AbstractField* arbitrary_signal (double tau0)
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);
 	if (!loaded) throw std::logic_error("Library loading error");
-	LinearCurrent* source = mng.get_module(mng.get_loaded()[SUBMODULE]).source;
-	LinearMedium* medium = mng.get_module(mng.get_loaded()[SUBMODULE]).medium;
-	AbstractField* linear = mng.get_module(mng.get_loaded()[SUBMODULE]).field;
+	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-
-	FreeTimeCurrent* free_shape = new FreeTimeCurrent(source);
-	free_shape->set_time_depth([tau0] (double vt) {return Function::gauss_perp(vt,tau0,1);});
-	LinearDuhamel* duhamel = new LinearDuhamel(free_shape, medium, (LinearField*) linear, NULL);
-	return duhamel;
+	auto shape = [tau0] (double ct) { return Function::gauss_perp(ct,tau0,1); };
+	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, tau0, shape, NULL);
 }
 
-vector<vector<double>> arguments (double tau0, double z)
+vector<Point::Cylindrical> arguments (double z)
 {
 	double range = z;
-	vector<vector<double>> data;
+	vector<Point::Cylindrical> data;
 
 	for (double x = -range; x <= range; x += 0.05) {
 		for (double y = -range; y <= range; y += 0.05) {
-			double rho = sqrt(x*x + y*y);
-			double from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
-			if (from - 0.01 > 0) from -= 0.01;
-			double to = tau0 + sqrt((rho+R)*(rho+R) + z*z) + 0.01;
-			vector<double> tmp { x, y, z, from, to };
-			data.emplace_back(move(tmp));
+			Point::Cartesian3D cart = Point::Cartesian3D(x,y,z);
+			Point::Cylindrical cyl = Point::Cylindrical::convert(cart);
+			data.push_back(cyl);
 		}
 	}
 
 	return data;
 }
 
-void plot (const vector<vector<double>>& arg, const vector<double>& res, double tau0, double z)
+void plot (const vector<Point::Cylindrical>& arg, const vector<double>& res, double tau0, double z)
 {
     vector<vector<double>> data;
     data.reserve(arg.size());
     for (auto i = 0u; i < arg.size(); i++) {
-        vector<double> tmp{ arg[i][0], arg[i][1], arg[i][2], arg[i][3], arg[i][4], res[i] };
+		Point::Cartesian3D point = Point::Cartesian3D::convert(arg[i]);
+        vector<double> tmp{ point.x(), point.y(), point.z(), res[i] };
         data.emplace_back(move(tmp));
     }
 
@@ -91,26 +97,21 @@ void plot (const vector<vector<double>>& arg, const vector<double>& res, double 
 	plot->plot_colormap(data, 0, 1);
 }
 
-void print_max (const vector<vector<double>>& args, const vector<double>& res)
+void print_max (const vector<Point::Cylindrical>& args, const vector<double>& res)
 {
-	size_t idx = max_element(res.begin(), res.end()) - res.begin();
-
-	cout << "  x = " << str_of(args[idx][0]);
-	cout << "; y = " << str_of(args[idx][1]);
-	cout << "; z = " << str_of(args[idx][2]);
-	cout << "W(x,y,z) = " << str_of(res[idx]) << endl;
+	auto idx = max_element(res.begin(), res.end()) - res.begin();
+	cout << "x,y,z = " << args[idx].to_str() << endl;
+	cout << "W(x,y,z) = " << std::to_string(res[idx]) << endl;
 }
 
 void plot_energy_slyse (double tau0, double z)
 {
-	AbstractField* model = arbitrary_signal(tau0);
-	auto args = arguments (tau0, z);
+	AbstractField<Point::Cylindrical>* model = arbitrary_signal(tau0);
+	vector<Point::Cylindrical> args = arguments (z);
 	vector<double> res(args.size());
 
 	CalculationManager cluster(6);
-	cluster.start(args, res, [model] (const auto& arg) {
-		return model->energy_cart(arg[0], arg[1], arg[2], arg[3], arg[4]);
-	});
+	cluster.start(args, res, model, &AbstractField<Point::Cylindrical>::energy_e);
 
 	// progress of calculation in persent
 	while (cluster.progress() != args.size()) {
@@ -120,9 +121,6 @@ void plot_energy_slyse (double tau0, double z)
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 	cout << endl;
-
-	// std::cout << "Wainting...\n";
-	// cluster.wait();
 
 	print_max(args, res);
 	plot(args, res, tau0, z);

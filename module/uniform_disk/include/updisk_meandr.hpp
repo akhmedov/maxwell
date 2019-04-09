@@ -6,10 +6,6 @@
 //  Copyright © 2018 Rolan Akhmedov. All rights reserved.
 //
 
-#ifndef UNUSED
-#define UNUSED(expr) do { (void)(expr); } while (0)
-#endif
-
 #ifndef updisk_meandr_hpp
 #define updisk_meandr_hpp
 
