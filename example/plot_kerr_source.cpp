@@ -23,7 +23,7 @@ void nonlinear_current (double phi, double z)
 	double mu_r = 1;
 	double xi3 = 0;
 	// double inv_em_relation = NonlinearMedium::EPS0 * eps_r / NonlinearMedium::MU0 * mu_r;
-	double A0 = 2;//* inv_em_relation;
+	double A0 = 2; // * inv_em_relation;
 
 	Homogeneous* linear_medium = new Homogeneous(mu_r, eps_r);
 	KerrMedium* kerr_medium = new KerrMedium(mu_r, eps_r, xi3, 0);

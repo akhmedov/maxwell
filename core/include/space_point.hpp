@@ -8,6 +8,8 @@
 
 #pragma once
 
+#define STRLEN 5
+
 #include "phys_math.hpp"
 
 #include <cmath>
@@ -27,7 +29,7 @@ namespace Point {
         using std::vector<double>::vector;
         virtual ~System () = default;
         virtual double radius () const { throw std::logic_error("Not implemented in Point::System"); }
-        std::string to_str() const { std::string s; for (auto i : *this) s+=std::to_string(i); return s; }
+        std::string to_str() const { std::string s; for (auto i : *this) s+=std::to_string(i).substr(0,STRLEN); return s; }
     private:
         using vector<double>::erase;
         using vector<double>::insert;
@@ -41,13 +43,14 @@ namespace Point {
         SpaceTime () = default;
         ~SpaceTime () = default;
         SpaceTime (const SystemImp& base) : SystemImp(base) { }
+        SpaceTime (double ct, const SystemImp& base) : SystemImp(base), ctime(ct) { }
         SpaceTime (const std::initializer_list<double> il) : SystemImp(il.begin()+1,il.end()), ctime(*il.begin()) 
         { if (il.size() != 1+this->size()) throw std::logic_error("Number of arguments is not legal!"); }
         double ct () const { return this->ctime; }
         double& ct () { return this->ctime; }
         double sqrt_vt2_z2 () const;
         bool casuality () { return this->ct() <= this->radius(); }
-        std::string to_str() const { std::string s = std::to_string(ct()); return s.append(SystemImp::to_str()); }
+        std::string to_str() const { std::string s = std::to_string(ct()).substr(0,STRLEN); return s.append(SystemImp::to_str()); }
         template <class InputBase> static SpaceTime<SystemImp> convert (const SpaceTime<InputBase>& pt);
     private:
         double ctime{};

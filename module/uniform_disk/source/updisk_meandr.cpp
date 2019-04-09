@@ -166,30 +166,3 @@ double SquaredPulse::observed_to (const Point::Cylindrical& point) const
 {
 	return this->tau + TransientResponse::observed_to(point);
 }
-
-namespace { extern "C" {
-
-	void tr_module (ModuleManager* core, Logger* log, double R, double A0, double mu, double eps)
-	{
-		ModuleEntity tr;
-		tr.field_cyl_arg = new TransientResponse(R,A0,mu,eps,log);
-		const char* name = "UniformDisk.TrancientResponse";
-		core->load_module(name,tr);
-	}
-
-	void meandr_module (ModuleManager* core, Logger* log, double R, double A0, double tau0, double mu, double eps)
-	{
-		ModuleEntity tr;
-		tr.field_cyl_arg = new SquaredPulse(R,A0,mu,eps,tau0,log);
-		const char* name = "UniformDisk.MeandrMonocycle";
-		core->load_module(name,tr);
-	}
-
-	void load_module (ModuleManager* core, Logger* global, double R, double A0, double tau0, double mu, double eps)
-	{
-		tr_module (core, global, R, A0, mu, eps);
-		meandr_module (core, global, R, A0, tau0, mu, eps);
-		// kerr_medium ();
-	}
-
-} }

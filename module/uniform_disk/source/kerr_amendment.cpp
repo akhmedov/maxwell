@@ -410,3 +410,38 @@ double KerrAmendment::int_bessel_001_perp (double vt, double z, double rho, doub
 	res /= std::sqrt(4*rho2*vt_z - (vt_z+rho2-R2) * (vt_z+rho2-R2) );
 	return res / M_PI;
 }
+
+namespace { extern "C" {
+
+	void tr_module (ModuleManager* core, Logger* log, double R, double A0, double mu, double eps)
+	{
+		ModuleEntity tr;
+		tr.field_cyl_arg = new TransientResponse(R,A0,mu,eps,log);
+		const char* name = "UniformDisk.TrancientResponse";
+		core->load_module(name,tr);
+	}
+
+	void meandr_module (ModuleManager* core, Logger* log, double R, double A0, double tau0, double mu, double eps)
+	{
+		ModuleEntity squared;
+		squared.field_cyl_arg = new SquaredPulse(R,A0,eps,mu,tau0,log);
+		const char* name = "UniformDisk.MeandrMonocycle";
+		core->load_module(name,squared);
+	}
+
+	void kerr_module (ModuleManager* core, Logger* log, double R, double A0, double /*tau0*/, double mu, double eps)
+	{
+		ModuleEntity kerr;
+		kerr.field_cyl_arg = new KerrAmendment(R, A0, eps, mu, 1, log);
+		const char* name = "UniformDisk.NonlinearKerrAmendment";
+		core->load_module(name,kerr);
+	}
+
+	void load_module (ModuleManager* core, Logger* global, double R, double A0, double tau0, double mu, double eps)
+	{
+		tr_module (core, global, R, A0, mu, eps);
+		meandr_module (core, global, R, A0, tau0, mu, eps);
+		kerr_module (core, global, R, A0, tau0, mu, eps);
+	}
+
+} }

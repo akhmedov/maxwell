@@ -20,6 +20,7 @@
 
 #include "maxwell.hpp"
 #include "uniform_disk_current.hpp"
+#include "updisk_meandr.hpp"
 
 #include <regex>
 #include <string>
@@ -27,7 +28,7 @@
 
 using namespace std::complex_literals;
 
-struct KerrAmendment : protected TransientResponse {
+struct KerrAmendment : public TransientResponse {
 
 	KerrAmendment (double R, double A0, double eps_r, double mu_r, double chi3, Logger* global_logger = NULL);
 
@@ -43,6 +44,7 @@ struct KerrAmendment : protected TransientResponse {
 	double magnetic_rho (const Point::SpaceTime<Point::Cylindrical>& event) const override;
 	double magnetic_phi (const Point::SpaceTime<Point::Cylindrical>& event) const override;
 	double magnetic_z (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+
 	double observed_from (const Point::Cylindrical& point) const override;
 	double observed_to (const Point::Cylindrical& point) const override;
 
