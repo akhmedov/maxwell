@@ -28,7 +28,7 @@ AbstractField<Point::Cylindrical>* trancient_recponce ()
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
-	int SUBMODULE = 1; // submodule index (trancient responce)
+	int SUBMODULE = 2; // submodule index (trancient responce)
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, 0.0, EPS, MU);
@@ -54,7 +54,7 @@ AbstractField<Point::Cylindrical>* arbitrary_signal (double tau0)
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
-	int SUBMODULE = 1; // submodule index (trancient responce)
+	int SUBMODULE = 2; // submodule index (trancient responce)
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, tau0, EPS, MU);

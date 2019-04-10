@@ -3,7 +3,7 @@
 #  example.maxwell
 #
 #  Created by Oleh Zahrychanskyi on 28.02.19
-#  Copyright © 2019 Oleh Zahrychanskyi. All rights reserved.
+#  Copyright © 2019 Rolan Akhmedov. All rights reserved.
 #
 
 cmake_minimum_required(VERSION 3.0)

@@ -25,10 +25,11 @@ AbstractField<Point::Cylindrical>* create_model ()
 {
 	string MODULE_PATH = "module/uniform_disk"; // module dir path
 	string MODULE_NAME = "uniform_disk"; // library name
-	int SUBMODULE = 1; // submodule index (trancient responce)
+	int SUBMODULE = 2; // submodule index (trancient responce)
 
 	ModuleManager mng = ModuleManager(NULL);
 	bool loaded = mng.load_module(MODULE_PATH, MODULE_NAME, R, A0, TAU0, EPS, MU);
+
 	if (!loaded) throw std::logic_error("Library loading error");
 	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;

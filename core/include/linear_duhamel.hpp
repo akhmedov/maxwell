@@ -129,12 +129,10 @@ template <template <class System> class AbstractFieldImpl, class System> struct 
 				this->global_log->warning(mesg);
 			}
 
-			return not_trusted; 
-
 			// TODO: bugfix!!!
-			// Point::SpaceTime<System> prev{event};
-			// if (prev.ct() - STEP > 0) prev.ct() -= STEP;
-			// return comp(this->tr,prev);
+			Point::SpaceTime<System> prev{static_cast<System>(event)};
+			if (event.ct() - STEP > 0) prev.ct() = event.ct() - STEP;
+			return comp(this->tr,prev);
 		}
 	}
 

@@ -21,7 +21,7 @@ struct Logger;
 
 template <class System> struct AbstractField {
 	
-    AbstractField (Logger* log, double err = 0) : error(err), global_log(log) {}
+    AbstractField (Logger* log, double err = 3 /* % */) : error(err), global_log(log) {}
 	virtual ~AbstractField () = default;
 
 	virtual double electric_x (const Point::SpaceTime<System>& event) const = 0;
