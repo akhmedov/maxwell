@@ -28,7 +28,7 @@ std::size_t TransientResponse::get_yterms_num ()
 double TransientResponse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
 	double sqrt_vt_z = event.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
@@ -59,7 +59,7 @@ double TransientResponse::electric_rho (const Point::SpaceTime<Point::Cylindrica
 double TransientResponse::electric_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
 	double sqrt_vt_z = event.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
@@ -102,7 +102,7 @@ double TransientResponse::electric_z (const Point::SpaceTime<Point::Cylindrical>
 double TransientResponse::magnetic_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
 	double sqrt_vt_z = event.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
 	double value = A0 / 2;
@@ -138,7 +138,7 @@ double TransientResponse::magnetic_rho (const Point::SpaceTime<Point::Cylindrica
 double TransientResponse::magnetic_phi (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
 	double sqrt_vt_z = event.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
 	double value = A0 / 2;
@@ -183,7 +183,7 @@ double TransientResponse::magnetic_phi (const Point::SpaceTime<Point::Cylindrica
 double TransientResponse::magnetic_z (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
 	double sqrt_vt_z = event.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double vt = event.ct(), rho = event.rho(), phi = event.phi(), z = event.z();
 	double value = A0 / 2;

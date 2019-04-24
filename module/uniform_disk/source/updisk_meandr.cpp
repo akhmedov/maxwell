@@ -18,7 +18,7 @@ double SquaredPulse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& e
 	double sqrt_vt_z = event.sqrt_vt2_z2();
 	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
 	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
@@ -68,7 +68,7 @@ double SquaredPulse::electric_phi (const Point::SpaceTime<Point::Cylindrical>& e
 	double sqrt_vt_z = event.sqrt_vt2_z2();
 	Point::SpaceTime<Point::Cylindrical> event_tau = event; event_tau.ct() -= tau;
 	double sqrt_tau_z = event_tau.sqrt_vt2_z2();
-	if (isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
+	if (std::isnan(sqrt_vt_z) || sqrt_vt_z == 0) return 0;
 
 	double rho = event.rho(), phi = event.phi();
 	double value = A0 * std::sqrt(MU0 * MU / EPS0 * EPS) / 2;
