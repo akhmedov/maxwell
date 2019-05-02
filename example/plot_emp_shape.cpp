@@ -53,8 +53,16 @@ template <typename System> vector<vector<double>> plot_arguments (AbstractField<
 	return data;
 }
 
+
+
 void plot_script (vector<vector<double>> data, string name)
 {
+	// vector<double> arg, fnc;
+	// for (auto i : data) {
+	// 	arg.push_back(i.at(0));
+	// 	fnc.push_back(i.at(1));
+	// }
+
 	GnuPlot plot = GnuPlot(name);
 	plot.set_ox_label("ct, m");
 	plot.set_oy_label("Ex, V/m");

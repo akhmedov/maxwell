@@ -24,7 +24,7 @@ namespace Function {
 	double gauss_perp_normed (double x, double duration, std::size_t order);
 	double sigmoid (double x, double duration);
 	double smoozed_rect (double x, double duration, double sensivity);
-	double gauss_perp (double x, double duration, std::size_t order);
+	// double gauss_perp (double x, double duration, std::size_t order);
 };
 
 #endif /* function_hpp */
