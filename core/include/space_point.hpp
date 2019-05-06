@@ -170,7 +170,7 @@ namespace Point {
 
     bool equals (const System& pt1, const System& pt2, double eps = DBL_MIN);
     template <class System> bool equals (const SpaceTime<System>& pt1, const SpaceTime<System>& pt2, double eps = DBL_MIN);
-};
+}
 
 template <class SystemImp> double Point::SpaceTime<SystemImp>::sqrt_vt2_z2 () const
 {

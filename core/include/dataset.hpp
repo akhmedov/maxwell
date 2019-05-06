@@ -34,7 +34,7 @@ namespace DatasetHelper {
 	};
 
 	void to_json (nlohmann::json& js, const SeriesItem& item);
-};
+}
 
 struct Dataset {
 
