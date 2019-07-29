@@ -328,11 +328,12 @@ double TransientResponse::int_lommel_111 (double /*vt*/, double /*rho*/, double 
 double TransientResponse::observed_from (const Point::Cylindrical& point) const
 {
 	double rho = point.rho(), z = point.z();
-	return (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z) : z;
+	double from = (rho > R) ? std::sqrt((rho-R)*(rho-R) + z*z)-0.01 : z-0.01;
+	return (from > 0) ? from : 0.005;
 }
 
 double TransientResponse::observed_to (const Point::Cylindrical& point) const
 {
 	double rho = point.rho(), z = point.z();
-	return std::sqrt((rho+R)*(rho+R) + z*z);
+	return std::sqrt((rho+R)*(rho+R) + z*z) + 0.01;
 }
