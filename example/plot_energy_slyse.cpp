@@ -7,8 +7,7 @@
 //
 
 #include "maxwell.hpp"
-#include "gnu_plot.hpp"
-#include "module_manager.hpp"
+#include "pyplot_manager.hpp"
 
 #include <vector>
 #include <string> // string() to_string()
@@ -83,18 +82,21 @@ vector<Point::Cylindrical> arguments (double z)
 
 void plot (const vector<Point::Cylindrical>& arg, const vector<double>& res, double tau0, double z)
 {
-    vector<vector<double>> data;
-    data.reserve(arg.size());
+	vector<pair<double,double>> XY;
+    XY.reserve(arg.size());
     for (auto i = 0u; i < arg.size(); i++) {
 		Point::Cartesian3D point = Point::Cartesian3D::convert(arg[i]);
         vector<double> tmp{ point.x(), point.y(), point.z(), res[i] };
-        data.emplace_back(move(tmp));
+		XY.emplace_back(point.x(), point.y());
     }
 
-	string script = str_of(tau0) + "_" + str_of(z) + ".gnp" ;
-	GnuPlot* plot = new GnuPlot(script);
-	plot->set_colormap(Colormap::gray);
-	plot->plot_colormap(data, 0, 1);
+	string script = "We_" + str_of(tau0) + "_" + str_of(z) + ".py" ;
+	PyPlotManager plot = PyPlotManager(script);
+	plot.set_title("Pulse duration: " + to_string(tau0));
+	plot.set_ox_label("OX, R");
+	plot.set_oy_label("OY, R");
+	plot.set_colormap(ScriptManager::Colormap::coolwarm); // grey, jet, hot, coolwarm
+	plot.colormap(XY, res);
 }
 
 void print_max (const vector<Point::Cylindrical>& args, const vector<double>& res)

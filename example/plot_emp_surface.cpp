@@ -7,7 +7,7 @@
 //
 
 #include "maxwell.hpp"
-#include "gnu_plot.hpp"
+#include "pyplot_manager.hpp"
 
 using namespace std;
 
@@ -33,8 +33,11 @@ AbstractField<Point::Cylindrical>* load_model ()
 	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
-vector<vector<double>> plot_data (AbstractField<Point::Cylindrical>* model, double x_from, double x_to, double y, double z)
+int main ()
 {
+	AbstractField<Point::Cylindrical>* model = load_model();
+
+	double x_from = 0, x_to = 1.5, y = 0, z = 2;
 	double from = model->observed_from(Point::Cylindrical::convert(Point::Cartesian3D(x_from,y,z)));
 	double to   = model->observed_to(Point::Cylindrical::convert(Point::Cartesian3D(x_to,y,z)));
 
@@ -46,30 +49,22 @@ vector<vector<double>> plot_data (AbstractField<Point::Cylindrical>* model, doub
 		}
 	}
 
-	vector<double> res(args.size());
+	vector<double> Z(args.size());
 	CalculationManager cluster(6);
-	cluster.start(args, res, model, &AbstractField<Point::Cylindrical>::electric_x);
+	cluster.start(args, Z, model, &AbstractField<Point::Cylindrical>::electric_x);
 	cluster.wait();
 
-	vector<vector<double>> data;
+	vector<pair<double,double>> XY;
 	for (size_t i = 0; i < args.size(); i++) {
 		Point::Cartesian3D pt = Point::Cartesian3D::convert(args[i]);
-        data.push_back({ res[i], args[i].ct(), pt.x() });
+        XY.emplace_back(args[i].ct(), pt.x());
     }
 
-	return data;
-}
-
-void plot (const vector<vector<double>>& data)
-{
-	GnuPlot plot = GnuPlot("emp_surface.gnp");
-    plot.plot3d(data);
-}
-
-int main ()
-{
-	AbstractField<Point::Cylindrical>* model = load_model();
-	vector<vector<double>> data = plot_data(model, 0, 1.5, 0, 2);
-	plot(data);
+	PyPlotManager plot = PyPlotManager("Ex_ct_x.py");
+	plot.set_title("Ex(ct,x)");
+	plot.set_ox_label("ct, R");
+	plot.set_oy_label("x, R");
+	plot.set_colormap(ScriptManager::Colormap::jet); // grey, jet, hot, coolwarm
+	plot.plot3d(XY, Z);
     return 0;
 }

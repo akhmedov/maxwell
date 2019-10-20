@@ -7,16 +7,19 @@
 //
 
 #include "maxwell.hpp"
-#include "gnu_plot.hpp"
+#include "script_manager.hpp"
 using namespace std;
 
-struct Test : GnuPlot {
+struct Test : public ScriptManager {
     static bool vector_to_matrix ();
 };
 
 bool Test::vector_to_matrix ()
 {
-	std::vector<std::vector<double>> ARRAY, MATRIX, matrix;
+	std::vector<std::pair<double,double>> XY;
+	std::vector<double> Z;
+	std::vector<std::vector<double>> MATRIX, matrix;
+	double xmin, xstep, xmax, ymin, ystep, ymax;
 
 	auto equals = [] (const std::vector<std::vector<double>> &a, 
 					  const std::vector<std::vector<double>> &b) {
@@ -27,11 +30,8 @@ bool Test::vector_to_matrix ()
 		} return true;
 	};
 
-	ARRAY = {
-		{-1, 1, 3}, { 0, 1, 0}, { 1, 1, 3},
-		{-1, 0, 3}, { 0, 0, 3}, { 1, 0, 0},
-		{-1,-1, 0}, { 0,-1, 0}, { 1,-1, 3}
-	};
+	XY = {{-1,1}, {0,1}, {1,1}, {-1,0}, {0,0}, {1,0}, {-1,-1}, {0,-1}, {1,-1}};
+	Z = {3, 0, 3, 3, 3, 0, 0, 0, 3};
 
 	MATRIX = {
 		{3, 0, 3},
@@ -39,20 +39,18 @@ bool Test::vector_to_matrix ()
 		{0, 0, 3}
 	};
 
-	matrix = GnuPlot::datagrid_from (ARRAY, 0, 1);
+	matrix = ScriptManager::datagrid_from(XY, Z, xmin, xstep, xmax, ymin, ystep, ymax);
 	if (!equals(MATRIX,matrix)) return false;
 
-	ARRAY = {
-		{-1, 1, 3}, { 0, 1, 0}, { 1, 1, 3},
-		{-1, 0, 3}, { 0, 0, 3}, { 1, 0, 0}
-	};
+	XY = {{-1,1}, {0,1}, {1,1}, {-1,0}, {0,0}, {1,0}};
+	Z = {3, 0, 3, 3, 3, 0};
 
 	MATRIX = {
 		{3, 0, 3},
 		{3, 3, 0}
 	};
 
-	matrix = GnuPlot::datagrid_from (ARRAY, 0, 1);
+	matrix = ScriptManager::datagrid_from(XY, Z, xmin, xstep, xmax, ymin, ystep, ymax);
 	if (!equals(MATRIX,matrix)) return false;
 
 	return true;

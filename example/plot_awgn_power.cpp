@@ -7,34 +7,34 @@
 //
 
 #include "maxwell.hpp"
-#include "gnu_plot.hpp"
+#include "pyplot_manager.hpp"
 
 #include <vector>
-#include <iomanip>
 #include <iostream>
 using namespace std;
 
 void awgn_power (const vector<int>& samples)
 {
-	vector<vector<double>> data;
-	vector<double> line;
+	vector<string> title;
+	vector<vector<double>> arg, fnc;
 
-	for  (double sigma = 0.1; sigma < 10; sigma += 0.1) {
-		line = {sigma};
-		WhiteGaussian* noise = new WhiteGaussian(0,sigma);
-		for (auto i : samples) line.push_back(noise->power(i));
-		data.push_back(line);
-		line.clear();
+	for (auto i : samples) {
+		title.push_back("N = " + to_string(i));
+		vector<double> X, Y;
+		for (double sigma = 0.1; sigma < 10; sigma += 0.1) {
+			WhiteGaussian* noise = new WhiteGaussian(0,sigma);
+			X.push_back(sigma);
+			Y.push_back(noise->power(i));
+		}
+		arg.push_back(X);
+		fnc.push_back(Y);
 	}
 
-	GnuPlot* plot = new GnuPlot( "awgn_power.gnp" );
-	plot->set_colormap(Colormap::gray);
-	plot->set_ox_label("sigma");
-	plot->set_oy_label("Pn, V*V");
-
-	vector<string> title;
-	for (auto i : samples) title.push_back("N = " + to_string(i));
-	plot->plot_multi(data, title);
+	PyPlotManager plot = PyPlotManager("awgn_power.py");
+	plot.set_ox_label("sigma");
+	plot.set_oy_label("Pn, V*V");
+	plot.set_colormap(ScriptManager::Colormap::grey);
+	plot.plot2d(arg, fnc, title);
 }
 
 int main ()

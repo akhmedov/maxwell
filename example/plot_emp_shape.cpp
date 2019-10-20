@@ -7,16 +7,15 @@
 //
 
 #include "maxwell.hpp"
-#include "gnu_plot.hpp"
+#include "pyplot_manager.hpp"
 
-#include <iostream>
 #include <vector>
-
+#include <iostream>
 using namespace std;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
-static const double TAU0 = R; // duration of exitation
+static const double TAU0 = 0.4 * R; // duration of exitation
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
@@ -37,45 +36,27 @@ AbstractField<Point::Cylindrical>* create_model ()
 	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
-template <typename System> vector<vector<double>> plot_arguments (AbstractField<Point::Cylindrical>* model, const System& point)
+int main ()
 {
-	Point::Cylindrical cyln = Point::Cylindrical::convert(point);
+    AbstractField<Point::Cylindrical>* model = create_model();
+
+	Point::Cartesian3D cart = Point::Cartesian3D(0.5,0,2);
+	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
 	double from = model->observed_from(cyln) - 0.1;
 	double to = model->observed_to(cyln) + 0.1;
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
-    vector<vector<double>> data;
-	for (event.ct() = from; event.ct() <= to; event.ct() += 0.01) {
-        double Ex = model->electric_x(event);
-		data.push_back({event.ct(), Ex});
-    }
+	vector<double> arg, fnc;
+	for (event.ct() = 1.8; event.ct() <= 2.8; event.ct() += 0.01) {
+		fnc.push_back(model->electric_x(event));
+		arg.push_back(event.ct());
+	}
 
-	return data;
-}
-
-
-
-void plot_script (vector<vector<double>> data, string name)
-{
-	// vector<double> arg, fnc;
-	// for (auto i : data) {
-	// 	arg.push_back(i.at(0));
-	// 	fnc.push_back(i.at(1));
-	// }
-
-	GnuPlot plot = GnuPlot(name);
-	plot.set_ox_label("ct, m");
-	plot.set_oy_label("Ex, V/m");
-	plot.grid_on();
-	plot.cage_on();
-	plot.plot2d(data);
-}
-
-int main ()
-{
-    AbstractField<Point::Cylindrical>* model = create_model();
-    auto data = plot_arguments(model, Point::Cartesian3D(0.5,0.3,2));
-    plot_script(data, "emp_shape.gnp");
+	PyPlotManager plot = PyPlotManager("emp_shape.py");
+	plot.set_ox_label("ct, R");
+	plot.set_oy_label("Ex, A/m");
+	plot.set_colormap(ScriptManager::Colormap::grey);
+	plot.plot2d(arg, fnc);
 
 	delete model;
     return 0;
