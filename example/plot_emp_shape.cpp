@@ -42,8 +42,6 @@ int main ()
 
 	Point::Cartesian3D cart = Point::Cartesian3D(0.5,0,2);
 	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
-	double from = model->observed_from(cyln) - 0.1;
-	double to = model->observed_to(cyln) + 0.1;
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
 	vector<double> arg, fnc;

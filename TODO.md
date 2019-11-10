@@ -14,6 +14,8 @@ TODO LIST
 08. SafeManager calculation on shared database
 09. Implement 1D and 2D Point::SpaceTime<System>
 10. PyPlot -> ScriptManager<PyPlot>
+11. GUI of feco, hfss, cst to Maxwell
+12. Spectrum calculations in AbstructField<>
 
 NEW MODULES TO IMPLEMENT
 ------
@@ -30,6 +32,7 @@ BUGS LIST
 2. warnings on GNU GCC 5.4.0 20160607
 3. MySQL client select_point execution time
 4. Initialization list constractor for Point::SpaceTime<System>
+5. override keyword for CartesianField, CylindricalField
 
 UPDATE LIST FOR c++17 STANDART
 ------

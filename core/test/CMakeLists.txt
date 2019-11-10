@@ -32,6 +32,7 @@ set(SOURCES
     ${SOURCE_DIR}/vector_to_matrix.cpp
     ${SOURCE_DIR}/yacobi_pol_compare.cpp
     ${SOURCE_DIR}/yacobi_pol_property.cpp
+    ${SOURCE_DIR}/fft.cpp
 )
 
 project(${PROJECT_NAME} LANGUAGES CXX)

@@ -15,7 +15,9 @@
 #include <string>
 #include <cmath>
 #include <cfloat>
+#include <vector>
 #include <cstddef>
+#include <complex>
 #include <stdexcept>
 #include <algorithm>
 #include <functional>
@@ -41,7 +43,18 @@ struct Math {
 	static double derivat3 ( std::function<double(double)>, double arg );
 	static double derivat4 ( std::function<double(double)>, double arg );
 	static double lommel (std::size_t terms, int order, double W, double Z);
+	static std::vector<std::complex<double>> fft (const std::vector<std::complex<double>> &vec); // DFT for any vec.size()
+	static std::vector<std::complex<double>> inv_fft (const std::vector<std::complex<double>> &vec); // IDFT for any vec.size()
+
 protected:
+
+	// needed for fft and inv_fft member function
+	static void transformRadix2 (std::vector<std::complex<double>> &vec); // Cooley-Tukey FFT algorithm for DFT
+	static void transformBluestein (std::vector<std::complex<double>> &vec); // Bluestein's chirp z-transform algorithm
+	static void convolve (const std::vector<std::complex<double>> &xvec, const std::vector<std::complex<double>> &yvec, std::vector<std::complex<double>> &outvec); // circular convolution of the given complex vectors
+	static size_t reverseBits (size_t x, int n);
+
+	// needed for yacobi polinom calculations
 	static std::size_t next_prime(std::size_t prime, std::size_t search_limit);
 	static std::size_t binom_prod (std::size_t n, std::size_t m);
 	static void divide3to1 (std::size_t &x, std::size_t &y, std::size_t &z, std::size_t k);

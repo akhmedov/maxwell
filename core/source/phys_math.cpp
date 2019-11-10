@@ -270,3 +270,126 @@ double Math::lommel (std::size_t terms, int order, double W, double Z)
 
 	return res.get_d();
 }
+
+std::vector<std::complex<double>> Math::fft (const std::vector<std::complex<double>> &vec)
+{
+	size_t n = vec.size();
+	std::vector<std::complex<double>> conv(vec);
+	if (n == 0) return conv;
+
+	else if ((n & (n - 1)) == 0) // Is power of 2
+		transformRadix2(conv);
+	else // More complicated algorithm for arbitrary sizes
+		transformBluestein(conv);
+
+	return conv;
+}
+
+std::vector<std::complex<double>> Math::inv_fft (const std::vector<std::complex<double>> &vec)
+{
+	std::vector<std::complex<double>> conv(vec);
+	std::transform(conv.cbegin(), conv.cend(), conv.begin(), static_cast<std::complex<double> (*)(const std::complex<double> &)>(std::conj));
+	std::vector<std::complex<double>> func = Math::fft(conv);
+	std::transform(func.cbegin(), func.cend(), func.begin(), static_cast<std::complex<double> (*)(const std::complex<double> &)>(std::conj));
+	return func;
+}
+
+void Math::transformRadix2 (std::vector<std::complex<double>> &vec)
+{
+	// Length variables
+	std::size_t n = vec.size();
+	int levels = 0;  // Compute levels = floor(log2(n))
+	for (std::size_t temp = n; temp > 1U; temp >>= 1)
+		levels++;
+	if (static_cast<std::size_t>(1U) << levels != n)
+		throw std::domain_error("Length is not a power of 2");
+	
+	// Trignometric table
+	std::vector<std::complex<double> > expTable(n / 2);
+	for (std::size_t i = 0; i < n / 2; i++)
+		expTable[i] = std::polar(1.0, -2 * M_PI * i / n);
+	
+	// Bit-reversed addressing permutation
+	for (std::size_t i = 0; i < n; i++) {
+		std::size_t j = Math::reverseBits(i, levels);
+		if (j > i) std::swap(vec[i], vec[j]);
+	}
+	
+	// Cooley-Tukey decimation-in-time radix-2 FFT
+	for (std::size_t size = 2; size <= n; size *= 2) {
+		std::size_t halfsize = size / 2;
+		std::size_t tablestep = n / size;
+		for (std::size_t i = 0; i < n; i += size) {
+			for (std::size_t j = i, k = 0; j < i + halfsize; j++, k += tablestep) {
+				std::complex<double> temp = vec[j + halfsize] * expTable[k];
+				vec[j + halfsize] = vec[j] - temp;
+				vec[j] += temp;
+			}
+		}
+		if (size == n)  // Prevent overflow in 'size *= 2'
+			break;
+	}
+
+}
+
+void Math::transformBluestein (std::vector<std::complex<double>> &vec)
+{
+	// Find a power-of-2 convolution length m such that m >= n * 2 + 1
+	std::size_t n = vec.size();
+	std::size_t m = 1;
+	while (m / 2 <= n) {
+		if (m > SIZE_MAX / 2)
+			throw std::length_error("Vector too large");
+		m *= 2;
+	}
+	
+	// Trignometric table
+	std::vector<std::complex<double>> expTable(n);
+	for (size_t i = 0; i < n; i++) {
+		unsigned long long temp = static_cast<unsigned long long>(i) * i;
+		temp %= static_cast<unsigned long long>(n) * 2;
+		double angle = M_PI * temp / n;
+		expTable[i] = std::polar(1.0, -angle);
+	}
+	
+	// Temporary vectors and preprocessing
+	std::vector<std::complex<double>> av(m);
+	for (std::size_t i = 0; i < n; i++)
+		av[i] = vec[i] * expTable[i];
+	std::vector<std::complex<double>> bv(m);
+	bv[0] = expTable[0];
+	for (std::size_t i = 1; i < n; i++)
+		bv[i] = bv[m - i] = std::conj(expTable[i]);
+	
+	// Convolution
+	std::vector<std::complex<double>> cv(m);
+	convolve(av, bv, cv);
+	
+	// Postprocessing
+	for (std::size_t i = 0; i < n; i++)
+		vec[i] = cv[i] * expTable[i];
+}
+
+void Math::convolve (const std::vector<std::complex<double>> &xvec, const std::vector<std::complex<double>> &yvec, std::vector<std::complex<double>> &outvec)
+{
+	std::size_t n = xvec.size();
+	if (n != yvec.size() || n != outvec.size())
+		throw std::domain_error("Mismatched lengths");
+	std::vector<std::complex<double> > xv = xvec;
+	std::vector<std::complex<double> > yv = yvec;
+	xv = Math::fft(xv);
+	yv = Math::fft(yv);
+	for (std::size_t i = 0; i < n; i++)
+		xv[i] *= yv[i];
+	xv = inv_fft(xv);
+	for (std::size_t i = 0; i < n; i++)  // Scaling (because this FFT implementation omits it)
+		outvec[i] = xv[i] / static_cast<double>(n);
+}
+
+std::size_t Math::reverseBits (std::size_t x, int n)
+{
+	std::size_t result = 0;
+	for (int i = 0; i < n; i++, x >>= 1)
+		result = (result << 1) | (x & 1U);
+	return result;
+}
