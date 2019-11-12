@@ -33,6 +33,7 @@ BUGS LIST
 3. MySQL client select_point execution time
 4. Initialization list constractor for Point::SpaceTime<System>
 5. override keyword for CartesianField, CylindricalField
+6. FFT frequency resolution and magnitude bugs
 
 UPDATE LIST FOR c++17 STANDART
 ------

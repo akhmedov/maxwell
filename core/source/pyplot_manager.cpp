@@ -104,6 +104,13 @@ void PyPlotManager::plot2d (const std::vector<std::vector<double>> &arg, const s
 	if (titles.size() != fnc.size()) throw std::invalid_argument("Invalid data: size of arg, fnc and titles must matches.");
 	if (arg.empty()) throw std::invalid_argument("Empty plot dataset.");
 
+	for (size_t graph = 0; graph < arg.size(); graph++) {
+		std::string error1 = "Invalid data: size of arg and fnc not matches at index: " + std::to_string(graph);
+		std::string error2 = "Empty plot dataset at index: " + std::to_string(graph);
+		if (arg[graph].size() != fnc[graph].size()) throw std::invalid_argument(error1);
+		if (arg[graph].size() == 0) throw std::invalid_argument(error2);
+	}
+
 	std::string data;
 
 	for (size_t graph = 0; graph < arg.size(); graph++) {

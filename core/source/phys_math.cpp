@@ -275,14 +275,25 @@ std::vector<std::complex<double>> Math::fft (const std::vector<std::complex<doub
 {
 	size_t n = vec.size();
 	std::vector<std::complex<double>> conv(vec);
-	if (n == 0) return conv;
 
-	else if ((n & (n - 1)) == 0) // Is power of 2
-		transformRadix2(conv);
-	else // More complicated algorithm for arbitrary sizes
-		transformBluestein(conv);
+	if (n == 0) return conv;
+	else if ((n & (n - 1)) == 0) transformRadix2(conv);
+	else transformBluestein(conv);
 
 	return conv;
+}
+
+std::vector<double> Math::fft_arg (size_t func_samples, double sampling_rate)
+{
+	if (!func_samples) std::vector<double>();
+	double fmax = 1 / sampling_rate / 2;
+	double fresolution = 2 * fmax / func_samples;
+	std::vector<double> frequency(func_samples);
+
+	for (size_t i = 0; i < func_samples; i++)
+		frequency[i] = -fmax + i * fresolution;
+
+	return frequency;
 }
 
 std::vector<std::complex<double>> Math::inv_fft (const std::vector<std::complex<double>> &vec)

@@ -44,6 +44,7 @@ struct Math {
 	static double derivat4 ( std::function<double(double)>, double arg );
 	static double lommel (std::size_t terms, int order, double W, double Z);
 	static std::vector<std::complex<double>> fft (const std::vector<std::complex<double>> &vec); // DFT for any vec.size()
+	static std::vector<double> fft_arg (size_t func_samples, double sampling_rate);
 	static std::vector<std::complex<double>> inv_fft (const std::vector<std::complex<double>> &vec); // IDFT for any vec.size()
 
 protected:
