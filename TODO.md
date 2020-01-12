@@ -34,6 +34,7 @@ BUGS LIST
 4. Initialization list constractor for Point::SpaceTime<System>
 5. override keyword for CartesianField, CylindricalField
 6. FFT frequency resolution and magnitude bugs
+7. LinearDuhamel<> inegtal exaption returns 0 - it is not correct
 
 UPDATE LIST FOR c++17 STANDART
 ------

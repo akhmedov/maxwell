@@ -114,25 +114,27 @@ template <template <class System> class AbstractFieldImpl, class System> struct 
 		auto core = [this,&event,&comp] (double tau) {
 			Point::SpaceTime<System> event_copy = event;
 			event_copy.ct() -= tau;
-			double shape = (tau == 0 || tau == this->tau0) ? 0 : Math::derivat4(func, tau);
+			double shape = (tau == 0 || tau == this->tau0) ? 0 : Math::derivat3(func, tau);
 			return shape * comp(this->tr,event_copy);
 		};
 
 		try {
-			return integral.value(0, event.ct() - event.z(), core);
-		} catch (double not_trusted) {			
+			return integral.value(0, (event.ct() - event.z()) * 10/9, core);
+		} catch (double not_trusted) {	
 
-			if (this->global_log) {
-				std::string mesg = DuhamelSuperpose::INTEGRAL_WARNING;
-				mesg = std::regex_replace(mesg, std::regex("\\$NAME"), "DuhamelSuperpose<System>::duhamel");
-				mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
-				this->global_log->warning(mesg);
-			}
+			return 0;		
 
-			// TODO: bugfix!!!
-			Point::SpaceTime<System> prev{static_cast<System>(event)};
-			if (event.ct() - STEP > 0) prev.ct() = event.ct() - STEP;
-			return comp(this->tr,prev);
+			// if (this->global_log) {
+			// 	std::string mesg = DuhamelSuperpose::INTEGRAL_WARNING;
+			// 	mesg = std::regex_replace(mesg, std::regex("\\$NAME"), "DuhamelSuperpose<System>::duhamel");
+			// 	mesg = std::regex_replace(mesg, std::regex("\\$POINT"), event.to_str());
+			// 	this->global_log->warning(mesg);
+			// }
+
+			// // TODO: bugfix!!!
+			// Point::SpaceTime<System> prev{static_cast<System>(event)};
+			// if (event.ct() - STEP > 0) prev.ct() = event.ct() - STEP;
+			// return comp(this->tr,prev);
 		}
 	}
 

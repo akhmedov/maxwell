@@ -15,7 +15,7 @@ using namespace std;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
-static const double TAU0 = 0.4 * R; // duration of exitation
+static const double TAU0 = R; // duration of exitation
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
@@ -32,7 +32,7 @@ AbstractField<Point::Cylindrical>* create_model ()
 	if (!loaded) throw std::logic_error("Library loading error");
 	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	auto shape = [] (double ct) { return Function::gauss_perp(ct,TAU0,1); };
+	auto shape = [] (double ct) { return Function::sinc(ct,TAU0); };
 	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
@@ -40,12 +40,12 @@ int main ()
 {
     AbstractField<Point::Cylindrical>* model = create_model();
 
-	Point::Cartesian3D cart = Point::Cartesian3D(0.5,0,2);
+	Point::Cartesian3D cart = Point::Cartesian3D(0,0,0.1);
 	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
 	vector<double> arg, fnc;
-	for (event.ct() = 1.8; event.ct() <= 2.8; event.ct() += 0.01) {
+	for (event.ct() = model->observed_from(cyln); event.ct() <= model->observed_to(cyln); event.ct() += 0.001) {
 		fnc.push_back(model->electric_x(event));
 		arg.push_back(event.ct());
 	}
