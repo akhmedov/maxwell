@@ -14,7 +14,7 @@
 
 using namespace std;
 
-static const int    RADIX       = 2;
+/* static const int    RADIX       = 2;
 static const int    SPARKS_NUM  = 10;
 // static const int    POINTS_NUM  = 100; // TODO: add testing
 static const double DUTY_SYCLE  = 0.5;
@@ -53,13 +53,14 @@ bool check_metadata (const nlohmann::json& dataset)
     bool sp_comp = SPARKS_NUM == dataset["sparks"].get<int>();
     // bool pn_comp = POINTS_NUM == dataset["points"].get<int>();
     return nm_comp && dc_comp && np_comp && nw_comp && rd_comp && sp_comp;
-}
+} */
 
 
 int main ()
 {
-    create_dataset();
-    nlohmann::json dataset = Dataset::read_file(TESTFILE);
-    if (!check_metadata(dataset)) return 1;
+    // create_dataset();
+    // nlohmann::json dataset = Dataset::read_file(TESTFILE);
+    // if (!check_metadata(dataset)) return 1;
+    // return 0;
     return 0;
-} 
+}

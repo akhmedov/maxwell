@@ -14,7 +14,7 @@
 
 using namespace std;
 
-static const int    RADIX       = 2;
+/* static const int    RADIX       = 2;
 static const int    SPARKS_NUM  = 10;
 // static const int    POINTS_NUM  = 100; // TODO:
 static const double DUTY_SYCLE  = 0.5;
@@ -61,12 +61,14 @@ bool check_ ()
 {
     // TODO: check interal script and parsed script
     return false;
-}
+} */
 
 int main ()
 {
-    create_dataset();
-    nlohmann::json dataset = Dataset::read_file(TESTFILE);
-    if (!check_values(dataset)) return 1;
+    // create_dataset();
+    // nlohmann::json dataset = Dataset::read_file(TESTFILE);
+    // if (!check_values(dataset)) return 1;
+    // return 0;
+
     return 0;
 } 

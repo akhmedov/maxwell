@@ -9,13 +9,15 @@
 #include "maxwell.hpp"
 #include "dataset.hpp"
 
+#include <cmath>
 #include <vector>
+#include <random>
 #include <iostream>
 #include <functional>
 using namespace std;
 
-static const int 	RADIX  = 3;
-static const float 	DCYCLE = 0.5;
+static const int 	RADIX  = 4;
+static const float 	DCYCLE = 400;
 static const float 	NPOWER = 10;
 
 static const double R  = 1; // disk radius
@@ -41,38 +43,50 @@ AbstractField<Point::Cylindrical>* arbitrary_signal (const function<double(doubl
 	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(linear, TAU0, shape);
 }
 
-void append (int id, Dataset* ds)
+void append (double rho, double phi, double z, int id, Dataset::Dataset* ds)
 {
     vector<double> time, func;
 
-    double rho = 0, phi = 0, z = 2;
-    vector<double> space {rho,phi,z};
+    std::vector<double> coord {rho,phi,z};
+    Point::Cylindrical observer {rho,phi,z};
 
-    float from = (rho > R) ? sqrt((rho-R)*(rho-R) + z*z) : z;
-	if (from - 0.01 > 0) from -= 0.01;
-	float to = TAU0 + sqrt((rho+R)*(rho+R) + z*z) + 0.01;
-
-    for (float ct = from; ct < to; ct += 0.05) {
-        time.push_back(ct);
+    for (float ct = SIGNAL.at(id)->observed_from(observer); ct < SIGNAL.at(id)->observed_to(observer); ct += 0.02) {
         Point::SpaceTime<Point::Cylindrical> event{ct,rho,phi,z};
         func.push_back(SIGNAL.at(id)->electric_x(event));
     }
 
-    ds->append(id,space,time,func);
+    Dataset::Annotation annotation = Dataset::Annotation(id, 0.02, coord);
+    ds->append(func, annotation);
 }
 
 int main ()
 {
     vector<function<double(double)>> SHAPE = {
+        [] (double time) {return Function::gauss(time,TAU0);},
         [] (double time) {return Function::gauss_perp(time,TAU0,1);},
         [] (double time) {return Function::sinc(time,TAU0);}
     };
 
+    SIGNAL.push_back(new ZeroField<Point::Cylindrical>());
     for (auto& i : SHAPE) SIGNAL.push_back(arbitrary_signal(i));
 
-	Dataset* ds = new Dataset(RADIX, DCYCLE, NPOWER);
-    for (int spark = 0; spark < 10; spark++) append(spark % 2 ? 1 : 0, ds);
+    std::random_device random;
+    std::mt19937 generator(random());
+    std::uniform_int_distribution<std::size_t> signal_id_distr(0, SIGNAL.size() - 1);
+    std::uniform_real_distribution<double> rho_distr(0, R);
+    std::uniform_real_distribution<double> phi_distr(0, M_PI_2);
+    std::uniform_real_distribution<double> z_distr(R, 3*R);
 
-    Dataset::serialize("one-by-one.json", ds->get_dataset("one-by-one"), false);
+	Dataset::Dataset* dataset = new Dataset::Dataset(RADIX, DCYCLE, NPOWER);
+    for (int spark = 0; spark < 9000; spark++) {
+        if (spark % 100 == 0) cout << "Sparks ready:" << spark << endl;
+        size_t signal_id = signal_id_distr(generator);
+        double rho = rho_distr(generator);
+        double phi = phi_distr(generator);
+        double z = z_distr(generator);
+        append(rho, phi, z, signal_id, dataset);
+    }
+
+    dataset->serialize_to_json("one-by-one.json", false);
     return 0;
 }

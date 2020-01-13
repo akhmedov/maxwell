@@ -66,6 +66,7 @@ protected:
 template <class System> const std::string AbstractField<System>::INTEGRAL_WARNING = "Integral in $NAME is not trusted at $POINT";
 
 template <class System> struct ZeroField : public AbstractField<System> {
+	ZeroField() : AbstractField<System>(NULL,0) {}
 	double electric_x (const Point::SpaceTime<System>&) const override { return 0; }
 	double electric_y (const Point::SpaceTime<System>&) const override { return 0; }
 	double electric_z (const Point::SpaceTime<System>&) const override { return 0; }
