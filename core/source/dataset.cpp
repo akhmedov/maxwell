@@ -28,8 +28,8 @@ void Dataset::to_json (nlohmann::json& js, const SeriesItem& item)
 	};
 }
 
-Dataset::Dataset::Dataset (std::size_t rdx, std::size_t item_lth, double noise_pw)
-: radix(rdx), item_length(item_lth), noise_power(noise_pw), noise(0,std::sqrt(noise_pw))
+Dataset::Dataset::Dataset (std::size_t rdx, std::size_t item_lth, double noise_pw, const std::vector<std::string>& cl_label)
+: radix(rdx), item_length(item_lth), noise_power(noise_pw), noise(0,std::sqrt(noise_pw)), class_label(cl_label)
 {
 	this->generator = std::mt19937(this->random_device());
 }
@@ -69,6 +69,7 @@ void Dataset::Dataset::serialize_to_json (std::string filename, bool binary)
 		{"item_length", this->item_length},
 		{"items_in_dataset", this->dataset.size()},
 		{"noise_power", this->noise_power},
+		{"class_label", this->class_label},
 		{"dataset", this->dataset}
 	};
 

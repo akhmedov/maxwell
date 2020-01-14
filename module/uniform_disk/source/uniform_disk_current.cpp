@@ -241,7 +241,7 @@ double TransientResponse::int_bessel_001 (double sqrt_vt_z, double rho, double R
 	}
 
 	if (R < std::abs(rho - sqrt_vt_z)) return 0.0;
-	if (R > rho + sqrt_vt_z) return 1.0;
+	if (R > rho + sqrt_vt_z && rho < R) return 1.0;
 
 	double R2 = R * R;
 	double rho2 = rho * rho;
@@ -264,7 +264,7 @@ double TransientResponse::int_bessel_011 (double sqrt_vt_z, double rho, double R
 	}
 	
 	if (R < std::abs(rho - sqrt_vt_z)) return 0;
-	if (R > rho + sqrt_vt_z) return 0.5;
+	if (R > rho + sqrt_vt_z && rho < R) return 0.5;
 	
 	double res = 0;
 	double R2 = R * R;

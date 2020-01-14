@@ -45,7 +45,7 @@ namespace Dataset {
 
 	struct Dataset {
 
-		Dataset (std::size_t radix, std::size_t item_length, double noise_power);
+		Dataset (std::size_t radix, std::size_t item_length, double noise_power, const std::vector<std::string>& cl_label);
 		void append (const std::vector<double>& field, const Annotation& data);
 		void serialize_to_json (std::string file_name, bool binary = false);
 		~Dataset();
@@ -56,11 +56,12 @@ namespace Dataset {
 
 		std::random_device random_device;
     	std::mt19937 generator;
-
+		
 		std::size_t radix;
 		std::size_t item_length;
 		double noise_power;
 		WhiteGaussian noise;
+		std::vector<std::string> class_label;
 		std::vector<SeriesItem> dataset;
 	};
 

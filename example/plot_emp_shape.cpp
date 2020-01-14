@@ -32,20 +32,21 @@ AbstractField<Point::Cylindrical>* create_model ()
 	if (!loaded) throw std::logic_error("Library loading error");
 	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	auto shape = [] (double ct) { return Function::sinc(ct,TAU0); };
-	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
+	// auto shape = [] (double ct) { return Function::sinc(ct,TAU0); };
+	// return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
+	return tr;
 }
 
 int main ()
 {
     AbstractField<Point::Cylindrical>* model = create_model();
 
-	Point::Cartesian3D cart = Point::Cartesian3D(0,0,0.1);
+	Point::Cylindrical cart = Point::Cylindrical(3,0,2);
 	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
 	vector<double> arg, fnc;
-	for (event.ct() = model->observed_from(cyln); event.ct() <= model->observed_to(cyln); event.ct() += 0.001) {
+	for (event.ct() = model->observed_from(cyln); event.ct() <= model->observed_to(cyln); event.ct() += 0.01) {
 		fnc.push_back(model->electric_x(event));
 		arg.push_back(event.ct());
 	}

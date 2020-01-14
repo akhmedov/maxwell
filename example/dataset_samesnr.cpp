@@ -17,15 +17,15 @@
 using namespace std;
 
 static const int 	RADIX  = 4;
-static const float 	DCYCLE = 400;
+static const float 	DCYCLE = 150;
 static const float 	NPOWER = 10;
 
 static const double R  = 1; // disk radius
 static const double A0 = 1; // max current magnitude
+static const double TAU0 = R; // duration of signals
 
 static const double MU  = 1; // relative magnetic permatiity
 static const double EPS = 1; // relative dielectric pirmativity
-static const double TAU0 = 1; // duration of signals
 
 static vector<AbstractField<Point::Cylindrical>*> SIGNAL;
 
@@ -77,7 +77,8 @@ int main ()
     std::uniform_real_distribution<double> phi_distr(0, M_PI_2);
     std::uniform_real_distribution<double> z_distr(R, 3*R);
 
-	Dataset::Dataset* dataset = new Dataset::Dataset(RADIX, DCYCLE, NPOWER);
+    vector<string> class_label = {"void", "gauss", "gauss_perp", "sinc"};
+	Dataset::Dataset* dataset = new Dataset::Dataset(RADIX, DCYCLE, NPOWER, class_label);
     for (int spark = 0; spark < 9000; spark++) {
         if (spark % 100 == 0) cout << "Sparks ready:" << spark << endl;
         size_t signal_id = signal_id_distr(generator);
