@@ -63,7 +63,7 @@ int main ()
 {
     vector<function<double(double)>> SHAPE = {
         [] (double time) {return Function::gauss(time,TAU0);},
-        [] (double time) {return Function::gauss_perp(time,TAU0,1);},
+        [] (double time) {return 0.5 * Function::gauss_perp(time,TAU0,1);},
         [] (double time) {return Function::sinc(time,TAU0);}
     };
 
@@ -79,7 +79,7 @@ int main ()
 
     vector<string> class_label = {"void", "gauss", "gauss_perp", "sinc"};
 	Dataset::Dataset* dataset = new Dataset::Dataset(RADIX, DCYCLE, NPOWER, class_label);
-    for (int spark = 0; spark < 9000; spark++) {
+    for (int spark = 0; spark < 10000; spark++) {
         if (spark % 100 == 0) cout << "Sparks ready:" << spark << endl;
         size_t signal_id = signal_id_distr(generator);
         double rho = rho_distr(generator);

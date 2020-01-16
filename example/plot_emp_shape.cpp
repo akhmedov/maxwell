@@ -32,9 +32,8 @@ AbstractField<Point::Cylindrical>* create_model ()
 	if (!loaded) throw std::logic_error("Library loading error");
 	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	// auto shape = [] (double ct) { return Function::sinc(ct,TAU0); };
-	// return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
-	return tr;
+	auto shape = [] (double ct) { return Function::gauss_perp(ct,TAU0,1); };
+	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
 int main ()
