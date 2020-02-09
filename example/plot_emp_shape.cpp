@@ -40,7 +40,7 @@ int main ()
 {
     AbstractField<Point::Cylindrical>* model = create_model();
 
-	Point::Cylindrical cart = Point::Cylindrical(3,0,2);
+	Point::Cylindrical cart = Point::Cylindrical(R/2,M_PI/8,4*R/10);
 	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 

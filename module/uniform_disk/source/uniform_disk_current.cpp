@@ -228,7 +228,7 @@ double TransientResponse::static_magnitude (const Point::Cylindrical& point, dou
 
 // integrals
 
-double TransientResponse::int_bessel_001 (double sqrt_vt_z, double rho, double R)
+double TransientResponse::int_bessel_001 (double sqrt_vt_z, double rho, double R) // I2
 {
 	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
@@ -251,7 +251,7 @@ double TransientResponse::int_bessel_001 (double sqrt_vt_z, double rho, double R
 	return std::acos(numer/denumer) / M_PI;
 }
 
-double TransientResponse::int_bessel_011 (double sqrt_vt_z, double rho, double R)
+double TransientResponse::int_bessel_011 (double sqrt_vt_z, double rho, double R) // I1
 {
 	if (sqrt_vt_z == 0) throw std::invalid_argument("ct-z = 0 is not allowed");
 	if (rho < 0) throw std::invalid_argument("rho < 0 is not legal");
@@ -279,7 +279,7 @@ double TransientResponse::int_bessel_011 (double sqrt_vt_z, double rho, double R
 	return res / (4 * M_PI * rho2);
 }
 
-double TransientResponse::int_lommel_001 (double vt, double rho, double z, double R)
+double TransientResponse::int_lommel_001 (double vt, double rho, double z, double R) // I2
 {
 	mp_bitcnt_t bitrate = mp_bitcnt_t(256);
 	mpf_set_default_prec(bitrate);

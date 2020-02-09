@@ -42,3 +42,4 @@ UPDATE LIST FOR c++17 STANDART
 - paralel algorithms
 - use std::variant receiver evants
 - use std::filsistems::exists() for file check in Dataset:: and GnuPlot::
+- use std::cyl_bessel_i to replace usage of depricated functon jn(m,z) from <cmath>

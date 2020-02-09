@@ -15,6 +15,7 @@
 #include <vector>
 #include <limits>
 #include <regex>
+#include <exception>
 
 // Forward declaration.
 struct Logger;
@@ -50,6 +51,11 @@ template <class System> struct AbstractField {
 
 	virtual double observed_from (const System& point) const = 0;
 	virtual double observed_to   (const System& point) const = 0;
+
+	virtual double modal_jm  (const Point::ModalSpaceTime<System>&) const
+	{ throw std::logic_error("AbstractField<System>::modal_jm is not implemented!"); }
+	virtual double modal_vmh (const Point::ModalSpaceTime<System>&) const
+	{ throw std::logic_error("AbstractField<System>::modal_jm is not implemented!"); }
 
 	constexpr static const double C = 299792458;
 	constexpr static const double C2 = C * C;

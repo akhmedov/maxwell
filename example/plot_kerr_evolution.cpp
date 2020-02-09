@@ -1,9 +1,9 @@
 //
-//  nonlinear_current.cpp
+//  plot_kerr_evolution.cpp
 //  example.maxwell
 //
-//  Created by Rolan Akhmedov on 28.02.19.
-//  Copyright © 2019 Rolan Akhmedov. All rights reserved.
+//  Created by Rolan Akhmedov on 09.02.20.
+//  Copyright © 2020 Rolan Akhmedov. All rights reserved.
 //
 
 #include "maxwell.hpp"
@@ -38,12 +38,11 @@ AbstractField<Point::Cylindrical>* create_model ()
 	return kerr;
 }
 
-
-vector<double> nonlinear_current (AbstractField<Point::Cylindrical>* model, const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events)
+vector<double> nonlinear_evolution (AbstractField<Point::Cylindrical>* model, const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events)
 {
 	vector<double> res(events.size());
-	CalculationManager cluster(5);
-	cluster.start(events, res, model, &AbstractField<Point::Cylindrical>::modal_jm);
+	CalculationManager cluster(4);
+	cluster.start(events, res, model, &AbstractField<Point::Cylindrical>::modal_vmh);
 
 	auto str_of = [] (double val) { return to_string(val).substr(0,4); };
 	while (cluster.progress() != events.size()) {
@@ -54,27 +53,22 @@ vector<double> nonlinear_current (AbstractField<Point::Cylindrical>* model, cons
 	}
 	cout << endl;
 
-	// cluster.wait();
 	delete model;
 	return res;
 }
 
-void plot_colormap (const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events, const vector<double>& res)
+void plot_evolution (const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events, const vector<double>& res)
 {
-	vector<pair<double,double>> args;
-	args.reserve(events.size());
-	for (auto i = 0u; i < events.size(); i++) {
-		double ct_z = events[i].ct() - events[i].z();
-		double nu = events[i].nu();
-		args.emplace_back(nu, ct_z);
-	}
+	vector<double> arg;
+	arg.reserve(events.size());
+	for (auto i = 0u; i < events.size(); i++)
+		arg.push_back(events[i].nu());
 
-	PyPlotManager plot = PyPlotManager("kerr_source.py");
-	plot.set_title("jm, V/m");
+	PyPlotManager plot = PyPlotManager("kerr_evolution.py");
 	plot.set_ox_label("nu");
-	plot.set_oy_label("ct_z, R");
-	plot.set_colormap(ScriptManager::Colormap::coolwarm); // grey, jet, hot, coolwarm
-	plot.colormap(args, res);
+	plot.set_oy_label("Vmh");
+	plot.set_colormap(ScriptManager::Colormap::grey); // grey, jet, hot, coolwarm
+	plot.plot2d(arg, res);
 }
 
 int main ()
@@ -82,15 +76,15 @@ int main ()
 	AbstractField<Point::Cylindrical>* kerr = create_model();
 	vector<Point::ModalSpaceTime<Point::Cylindrical>> events;
 
-	for (double ct = 2; ct < 2.3; ct += 0.01) {
-		for (double nu = 0; nu < 20; nu += 0.01) {
-			Point::ModalSpaceTime<Point::Cylindrical> observer = {3, nu, ct, 0.0, 0.0, 2.0};
-			events.push_back(observer);
-		}
+	for (double nu = 0; nu < 10; nu += 1) {
+		Point::ModalSpaceTime<Point::Cylindrical> observer = {1, nu, 2.1, 0.0, 0.0, 2.0};
+		events.push_back(observer);
 	}
 
-	vector<double> res = nonlinear_current(kerr, events);
-	plot_colormap(events, res);
+	cout << "Argument ready, number of items: " << events.size() << endl;
+
+	vector<double> res = nonlinear_evolution(kerr, events);
+	plot_evolution(events, res);
 
     return 0;
 }

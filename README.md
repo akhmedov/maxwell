@@ -9,7 +9,7 @@ ABSTRACT
 - Some of unit tests fail and there are a lot of uncovered features
 - Compilation warnings and "not implemented" exaptions are presented
 - The first ready to use release is planning for
-- December 31, 2019
+- December 31, 2020
 ```
 
 Maxwell is a library for high performance numerical simulation of

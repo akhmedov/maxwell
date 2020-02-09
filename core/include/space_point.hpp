@@ -44,6 +44,11 @@ namespace Point {
         ~SpaceTime () = default;
         SpaceTime (const SystemImp& base) : SystemImp(base) { }
         SpaceTime (double ct, const SystemImp& base) : SystemImp(base), ctime(ct) { }
+        SpaceTime (const std::initializer_list<double>::iterator& from, const std::initializer_list<double>::iterator& to) : SystemImp(from+1,to), ctime(*from)
+        {
+            if (std::distance(from,to) != 1+this->size()) throw std::logic_error("Number of arguments is not legal!");
+            // TODO: bug!!! case never works
+        }
         SpaceTime (const std::initializer_list<double> il) : SystemImp(il.begin()+1,il.end()), ctime(*il.begin()) 
         { if (il.size() != 1+this->size()) throw std::logic_error("Number of arguments is not legal!"); }
         double ct () const { return this->ctime; }
@@ -54,6 +59,21 @@ namespace Point {
         template <class InputBase> static SpaceTime<SystemImp> convert (const SpaceTime<InputBase>& pt);
     private:
         double ctime{};
+    };
+
+    template <class SystemImp> struct ModalSpaceTime : public SpaceTime<SystemImp> {
+        ModalSpaceTime () = default;
+        ~ModalSpaceTime () = default;
+        ModalSpaceTime (const SystemImp& base) : SpaceTime<SystemImp>(base) { }
+        ModalSpaceTime (double m, double nu, const SpaceTime<SystemImp>& base) : SpaceTime<SystemImp>(base), _m(m), _nu(nu) { }
+        ModalSpaceTime (const std::initializer_list<double> il) : SpaceTime<SystemImp>(il.begin()+2,il.end()), _m(*(il.begin())), _nu(*(il.begin()+1)) { }
+        double m() const { return this->_m; }
+        double& m() { return this->_m; }
+        double nu() const { return this->_nu; }
+        double& nu() { return this->_nu; }
+    private:
+        double _m;
+        double _nu;
     };
 
     struct OneDim : public System {

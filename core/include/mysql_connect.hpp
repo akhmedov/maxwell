@@ -38,7 +38,6 @@ struct MySQL {
 	void select_point (double ct, double rho, double phi, double z);
 	std::size_t insert_point (double ct, double rho, double phi, double z);
 	std::vector<std::size_t> select_entity ();
-
 	double get_result () const;
 	void update_result (double value);
 
@@ -73,11 +72,17 @@ private:
 	static const std::string PRIBLEM_EXISTS;
 	static const std::string SELECT_ENTITY;
 
-	static const std::string DELETE_POINT;
-	static const std::string SELECT_POINT;
-	static const std::string INSERT_POINT;
+	static const std::string DELETE_OBSERVER;
+	static const std::string SELECT_OBSERVER;
+	static const std::string INSERT_OBSERVER;
 	static const std::string UPDATE_RESULT;
 	static const std::string SELECT_RESULT;
+
+	static const std::string DELETE_MODE;
+	static const std::string SELECT_MODE;
+	static const std::string INSERT_MODE;
+	static const std::string UPDATE_EVOLUTION;
+	static const std::string SELECT_EVOLUTION;
 };
 
 #endif /* mysql_connect_hpp */

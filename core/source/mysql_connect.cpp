@@ -16,13 +16,19 @@ const std::string MySQL::INSERT_PROBLEM    = "INSERT INTO problem SET comment = 
 const std::string MySQL::UPDATE_COMMENT    = "UPDATE problem SET comment = '$COMMENT' WHERE id = $PROBLEM;";
 const std::string MySQL::DELETE_PROBLEM    = "DELETE FROM problem WHERE id = $PROBLEM;";
 const std::string MySQL::PRIBLEM_EXISTS    = "SELECT EXISTS(SELECT id FROM problem WHERE id = $PROBLEM);";
-const std::string MySQL::SELECT_ENTITY     = "SELECT id FROM entity WHERE problem_id = $PROBLEM;";
+const std::string MySQL::SELECT_ENTITY     = "SELECT id FROM observer WHERE problem_id = $PROBLEM;";
 
-const std::string MySQL::DELETE_POINT      = "DELETE FROM entity WHERE id = $POINT;";
-const std::string MySQL::SELECT_POINT      = "SELECT id,result FROM entity WHERE problem_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
-const std::string MySQL::INSERT_POINT      = "INSERT INTO entity SET problem_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
-const std::string MySQL::UPDATE_RESULT     = "UPDATE entity SET result = $VALUE WHERE id = $POINT;";
-const std::string MySQL::SELECT_RESULT     = "SELECT result FROM entity WHERE id = $POINT;";
+const std::string MySQL::DELETE_OBSERVER   = "DELETE FROM observer WHERE id = $POINT;";
+const std::string MySQL::SELECT_OBSERVER   = "SELECT id,result FROM observer WHERE problem_id = $HEAD AND ct = $TIME AND rho = $RADIAL AND phi = $AZIMUTH AND z = $DISTANCE;";
+const std::string MySQL::INSERT_OBSERVER   = "INSERT INTO observer SET problem_id = $HEAD, ct = $TIME, rho = $RADIAL, phi = $AZIMUTH, z = $DISTANCE;";
+const std::string MySQL::UPDATE_RESULT     = "UPDATE observer SET result = $VALUE WHERE id = $POINT;";
+const std::string MySQL::SELECT_RESULT     = "SELECT result FROM observer WHERE id = $POINT;";
+
+const std::string MySQL::DELETE_MODE	   = "DELETE";
+const std::string MySQL::SELECT_MODE	   = "INSERT";
+const std::string MySQL::INSERT_MODE	   = "INSERT";
+const std::string MySQL::UPDATE_EVOLUTION  = "UPDATE";
+const std::string MySQL::SELECT_EVOLUTION  = "SELECT";
 
 MySQL::MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db)
 : hostname(host), username(user), password(pass), database(db)
@@ -123,7 +129,7 @@ void MySQL::delete_point ()
 {
 	if (!point_selected) throw std::logic_error("No point selected");
 
-	std::string request = MySQL::DELETE_POINT;
+	std::string request = MySQL::DELETE_OBSERVER;
 	request = std::regex_replace(request, std::regex("\\$POINT"), std::to_string(point_id));
 
 	int error_code = mysql_query(this->connection, request.c_str());
@@ -136,7 +142,7 @@ void MySQL::select_point (double ct, double rho, double phi, double z)
 {
 	if (!problem_selected) throw std::logic_error("No problem_id selected");
 
-	std::string request = MySQL::SELECT_POINT;
+	std::string request = MySQL::SELECT_OBSERVER;
 	request = std::regex_replace(request, std::regex("\\$HEAD"), std::to_string(problem_id));
 	request = std::regex_replace(request, std::regex("\\$TIME"), std::to_string(ct));
 	request = std::regex_replace(request, std::regex("\\$RADIAL"), std::to_string(rho));
@@ -165,7 +171,7 @@ std::size_t MySQL::insert_point (double ct, double rho, double phi, double z)
 {
 	if (!problem_selected) throw std::logic_error("Problem is not selected");
 
-	std::string request = MySQL::INSERT_POINT;
+	std::string request = MySQL::INSERT_OBSERVER;
 	request = std::regex_replace(request, std::regex("\\$HEAD"), std::to_string(problem_id));
 	request = std::regex_replace(request, std::regex("\\$TIME"), std::to_string(ct));
 	request = std::regex_replace(request, std::regex("\\$RADIAL"), std::to_string(rho));

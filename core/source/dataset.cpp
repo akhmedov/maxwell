@@ -55,10 +55,10 @@ void Dataset::Dataset::append (const std::vector<double>& field, const Annotatio
 
 double Dataset::Dataset::count_snr_db (std::vector<double> field, double noise_power)
 {
-	double signal_pawer = 0;
-	for (auto i : field) signal_pawer += i*i;
-	signal_pawer /= field.size();
-	return 10 * log10(signal_pawer/noise_power);
+	double signal_power = 0;
+	for (auto i : field) signal_power += i*i;
+	signal_power /= field.size();
+	return 10 * log10(signal_power/noise_power);
 }
 
 void Dataset::Dataset::serialize_to_json (std::string filename, bool binary)

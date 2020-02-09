@@ -31,7 +31,8 @@ bool Test::I2_time_partder ()
 						return TransientResponse::int_bessel_001(vt_z,rho,R); 
 					};
 					
-					double anal = KerrAmendment::int_bessel_001_perp(ct,z,rho,R);
+					double vt_z = ct * ct - z * z;
+					double anal = KerrAmendment::int_bessel_001_perp(vt_z,rho,R);
 					auto num3 = Math::derivat3(I2, ct);
 					auto num4 = Math::derivat4(I2, ct);
 
