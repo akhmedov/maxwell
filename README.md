@@ -164,7 +164,6 @@ Name                | Contribution
 Rolan Akhmedov      | project director <br>
 Oleksandr Dumin     | consultation in applied physics methods <br>
 Oleh Zahrychanskyi  | build system and multithreading <br>
-Yurii Sanin         | build system support for Windows <br>
 
 LIST OF USEFULL COMMANDS
 ------

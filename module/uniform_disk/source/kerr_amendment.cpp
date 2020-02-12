@@ -11,6 +11,11 @@
 #define RHO_EPS 1e-3
 #define NU_MAX 10
 
+#define NU_ABS_ERROR 10
+#define Z_ABS_ERROR 10
+#define CT_ABS_ERROR 10
+#define RHO_ABS_ERROR 10
+
 KerrAmendment::KerrAmendment (double R, double A0, double eps_r, double mu_r, double chi3, Logger* log)
 : TransientResponse(R,A0,eps_r,mu_r,log), kerr(chi3) {}
 
@@ -35,11 +40,11 @@ double KerrAmendment::electric_x (const Point::SpaceTime<Point::Cylindrical>& ev
 
 double KerrAmendment::electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {
-	double coeff = std::pow((MU0 * MU) / (EPS0 * EPS), 2);
-	coeff *= EPS0 * kerr * std::pow(A0,3) / std::pow(2,7);
-	coeff *= std::sqrt(eps_r/(eps_r+kerr));
+	double coeff = std::pow((this->MU0 * this->MU) / (this->EPS0 * this->EPS), 2);
+	coeff *= this->EPS0 * this->kerr * std::pow(this->A0,3) / std::pow(2,7);
+	coeff *= std::sqrt(this->EPS/(this->EPS+this->kerr));
 
-	auto extantion = [event, this] (double nu) {
+	auto extantion = [this, event] (double nu) {
 		Point::ModalSpaceTime<Point::Cylindrical> mode1(1, nu, event);
 		Point::ModalSpaceTime<Point::Cylindrical> mode3(3, nu, event);
 		double term1 = this->modal_vmh(mode1) * (jn(0, event.rho() * nu) + jn(2, event.rho() * nu));
@@ -93,7 +98,7 @@ double KerrAmendment::modal_vmh (const Point::ModalSpaceTime<Point::Cylindrical>
 		auto tmp = event; tmp.ct() = event.ct()-event.z()+z; tmp.z() = z; // TODO: test copy constructor
 		double term1 = j0(j0arg) * (event.ct()-event.z()+z) * this->modal_jm(tmp);
 
-		SimpsonRunge timeIntegr = SimpsonRunge(10 /* init_terms */, 10 /* % */);
+		SimpsonRunge timeIntegr = SimpsonRunge(10 /* init_terms */, CT_ABS_ERROR /* % */);
 		auto term2 = [event, z, this] (double ct) {
 			double besselArg = event.nu() * std::sqrt((event.ct() - ct)*(event.ct() - ct) - (event.z() - z)*(event.z() - z));
 			auto tmp = event; tmp.ct() = ct; tmp.z() = z; // TODO: test copy constructor
@@ -108,7 +113,7 @@ double KerrAmendment::modal_vmh (const Point::ModalSpaceTime<Point::Cylindrical>
 		}
 	};
 
-	SimpsonRunge distIntegr = SimpsonRunge(10 /* init_terms */, 10 /* % */);
+	SimpsonRunge distIntegr = SimpsonRunge(10 /* init_terms */, Z_ABS_ERROR /* % */);
 	try {
 		return distIntegr.value(0, event.z(), unterint_vmh); // TODO: maybe 5R must be used
 	} catch (double val) {
@@ -128,7 +133,7 @@ double KerrAmendment::modal_jm (const Point::ModalSpaceTime<Point::Cylindrical>&
 		double b = KerrAmendment::beta(ct_z, rho, R);
 		double g = KerrAmendment::gamma(ct_z, rho, R);
 		double l = KerrAmendment::lambda(ct_z, rho, R);
-		double term1 =    j0(event.nu() * rho) * (3*a + b + 3*g + l); 
+		double term1 = j0(event.nu() * rho) * (3*a + b + 3*g + l); 
 		double term2 = jn(2, event.nu() * rho) * (3*a + b - 3*g - l);
 		return rho * (term1 + term2);
 	};
@@ -145,7 +150,7 @@ double KerrAmendment::modal_jm (const Point::ModalSpaceTime<Point::Cylindrical>&
 
 	double from = std::abs(std::sqrt(ct_z) - R) + RHO_EPS;
 	double to = std::sqrt(ct_z) + R - RHO_EPS;
-	SimpsonRunge integrate = SimpsonRunge(10 /* init_terms */, 1 /* % */);
+	SimpsonRunge integrate = SimpsonRunge(10 /* init_terms */, RHO_ABS_ERROR /* % */);
 
 	switch (static_cast<int>(event.m())) {
 		case 1: case -1: 

@@ -84,7 +84,7 @@ int main ()
 
 	for (double ct = 2; ct < 2.3; ct += 0.01) {
 		for (double nu = 0; nu < 20; nu += 0.01) {
-			Point::ModalSpaceTime<Point::Cylindrical> observer = {3, nu, ct, 0.0, 0.0, 2.0};
+			Point::ModalSpaceTime<Point::Cylindrical> observer = {1, nu, ct, 0.0, 0.0, 2.0};
 			events.push_back(observer);
 		}
 	}

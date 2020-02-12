@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS problem (
 
 -- slave table headding
 
-CREATE TABLE IF NOT EXISTS observer (
+CREATE TABLE IF NOT EXISTS probe (
 	id       	BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
 	problem_id  BIGINT NOT NULL,
 	ct       	DOUBLE(20,7) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS observer (
 	result  	DOUBLE(20,7) DEFAULT NULL,
 	PRIMARY KEY (id),
 	FOREIGN KEY (problem_id) REFERENCES problem (id) ON DELETE CASCADE,
-	CONSTRAINT unique_observer UNIQUE (problem_id, ct, rho, phi, z)
+	CONSTRAINT unique_probe UNIQUE (problem_id, ct, rho, phi, z)
 ) ENGINE=InnoDB;
 
 -- sub-slave table headding
@@ -41,12 +41,12 @@ CREATE TABLE IF NOT EXISTS observer (
 CREATE TABLE IF NOT EXISTS evolution (
 	id       	BIGINT NOT NULL UNIQUE AUTO_INCREMENT,
 	problem_id  BIGINT NOT NULL,
-	point_id  	BIGINT NOT NULL,
-	nu       	DOUBLE(20,7) NOT NULL,
-	v1  		DOUBLE(20,7) DEFAULT NULL,
-	v3  		DOUBLE(20,7) DEFAULT NULL,
+	probe_id  	BIGINT NOT NULL,
+	m 			INTEGER(3) NOT NULL,
+	nu       	DOUBLE(25,7) NOT NULL,
+	vmh 	  	DOUBLE(25,7) DEFAULT NULL,
 	PRIMARY KEY (id),
 	FOREIGN KEY (problem_id) REFERENCES problem  (id) ON DELETE CASCADE,
-	FOREIGN KEY (point_id)   REFERENCES observer (id) ON DELETE CASCADE,
-	CONSTRAINT unique_mode UNIQUE (problem_id, point_id, nu)
+	FOREIGN KEY (probe_id)   REFERENCES probe (id) ON DELETE CASCADE,
+	CONSTRAINT unique_coeff UNIQUE (problem_id, probe_id, m, nu)
 ) ENGINE=InnoDB;
