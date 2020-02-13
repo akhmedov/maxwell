@@ -246,6 +246,11 @@ double Math::derivat4 ( std::function<double(double)> f, double x )
 	return ( f(x-2*h) - 8*f(x-h) + 8*f(x+h) - f(x+2*h) ) / (12*h);
 }
 
+double Math::simpson_integral (const std::vector<double>& fnc, const std::vector<double>& arg)
+{
+	throw std::logic_error("Math::simpson_integral is not implemented.");
+}
+
 double Math::lommel (std::size_t terms, int order, double W, double Z)
 {
 	if (Z < 1e-10) throw std::invalid_argument("Z=0 is not allowed in Math::lommel(term,n,W,Z)");

@@ -31,6 +31,7 @@ struct MySQL {
 
 	void delete_problem ();
 	void select_problem (std::size_t id);
+	void select_problem (const std::string& comment);
 	void update_problem (const std::string& comment);
 	std::size_t insert_problem (const std::string& comment);
 
@@ -44,7 +45,7 @@ struct MySQL {
 	void delete_coeff ();
 	void select_coeff (int m, double nu);
 	std::size_t insert_coeff (int m, double nu);
-	std::vector<std::size_t> select_all_coeffs (); // get all coeff->id for selected probe->id
+	std::pair<std::vector<double>,std::vector<double>> select_all_coeffs (int m = 666); // get all coeff->vmh with coeff->nu for selected probe->id
 	double get_coeff_result () const;
 	void update_coeff_result (double value);
 
@@ -79,7 +80,8 @@ private:
 	static const std::string LIST_SAVED_MODELS;
 	static const std::string INSERT_PROBLEM;
 	static const std::string UPDATE_COMMENT;
-	static const std::string PRIBLEM_EXISTS;
+	static const std::string SELECT_PROBLEM_ID;
+	static const std::string SELECT_PROBLEM_COMMENT;
 	static const std::string SELECT_ALL_PROBES;
 
 	static const std::string DELETE_PROBE;

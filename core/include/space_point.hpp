@@ -46,8 +46,9 @@ namespace Point {
         SpaceTime (double ct, const SystemImp& base) : SystemImp(base), ctime(ct) { }
         SpaceTime (const std::initializer_list<double>::iterator& from, const std::initializer_list<double>::iterator& to) : SystemImp(from+1,to), ctime(*from)
         {
-            if (std::distance(from,to) != this->size()+1) throw std::logic_error("Number of arguments is not legal!");
             // TODO: bug!!! case never works
+            if (static_cast<std::size_t>(std::distance(from,to)) != this->size()+1) 
+                throw std::logic_error("Number of arguments is not legal!");
         }
         SpaceTime (const std::initializer_list<double> il) : SystemImp(il.begin()+1,il.end()), ctime(*il.begin()) 
         { if (il.size() != 1+this->size()) throw std::logic_error("Number of arguments is not legal!"); }

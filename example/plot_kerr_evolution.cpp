@@ -41,17 +41,21 @@ AbstractField<Point::Cylindrical>* create_model ()
 vector<double> nonlinear_evolution (AbstractField<Point::Cylindrical>* model, const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events)
 {
 	vector<double> res(events.size());
-	CalculationManager cluster(4);
+	DatabaseCalculationManager cluster(12, "plot_kerr_evolution.example.maxwell");
 	cluster.start(events, res, model, &AbstractField<Point::Cylindrical>::modal_vmh);
 
-	auto str_of = [] (double val) { return to_string(val).substr(0,4); };
-	while (cluster.progress() != events.size()) {
-		double persent = static_cast<double>(cluster.progress()) / events.size();
-		cout << '\r' << "Evaluation progress: " << str_of(100 * persent) << '%';
-		cout.flush();
-		this_thread::sleep_for(chrono::milliseconds(100));
-	}
-	cout << endl;
+	cluster.wait();
+
+	// auto str_of = [] (double val) { return to_string(val).substr(0,4); };
+	// while (cluster.progress() != events.size()) {
+	// 	double persent = static_cast<double>(cluster.progress()) / events.size();
+	// 	cout << '\r' << "Evaluation progress: " << str_of(100 * persent) << '%';
+	// 	cout.flush();
+	// 	this_thread::sleep_for(chrono::milliseconds(100));
+	// }
+	// cout << endl;
+
+	cout << "Evaluation done." << endl;
 
 	delete model;
 	return res;
@@ -59,31 +63,44 @@ vector<double> nonlinear_evolution (AbstractField<Point::Cylindrical>* model, co
 
 void plot_evolution (const vector<Point::ModalSpaceTime<Point::Cylindrical>>& events, const vector<double>& res)
 {
-	vector<double> arg;
-	arg.reserve(events.size());
-	for (auto i = 0u; i < events.size(); i++)
-		arg.push_back(events[i].nu());
+	vector<vector<double>> args(2, vector<double>()), fncs(2, vector<double>());
+
+	for (auto i = 0u; i < events.size(); i++) {
+		size_t idx = static_cast<size_t>(events[i].m()/2);
+		args[idx].push_back(events[i].nu());
+		fncs[idx].push_back(res[i]);
+	}
 
 	PyPlotManager plot = PyPlotManager("kerr_evolution.py");
 	plot.set_ox_label("nu");
 	plot.set_oy_label("Vmh");
 	plot.set_colormap(ScriptManager::Colormap::grey); // grey, jet, hot, coolwarm
-	plot.plot2d(arg, res);
+	plot.plot2d(args, fncs, {"m = 1", "m = 3"});
 }
 
-int main ()
+int main (int argc, char* argv[])
 {
-	AbstractField<Point::Cylindrical>* kerr = create_model();
-	vector<Point::ModalSpaceTime<Point::Cylindrical>> events;
+	if (argc != 2) { 
+		cout << "Fail: wrong argument. Argument is needed: ct" << endl;
+		return 0;
+	}
 
-	for (double nu = 0; nu < 10; nu += 1) {
-		Point::ModalSpaceTime<Point::Cylindrical> observer = {1, nu, 2.1, 0.0, 0.0, 2.0};
-		events.push_back(observer);
+	float ct = atof(argv[1]);
+
+	AbstractField<Point::Cylindrical>* kerr = create_model();
+
+	vector<Point::ModalSpaceTime<Point::Cylindrical>> events;
+	for (double nu = 0; nu < 69; nu += 0.25) {
+		Point::ModalSpaceTime<Point::Cylindrical> mode1 = {1, nu, ct, 0.0, 0.0, 2.0};
+		Point::ModalSpaceTime<Point::Cylindrical> mode3 = {3, nu, ct, 0.0, 0.0, 2.0};
+		events.push_back(mode1);
+		events.push_back(mode3);
 	}
 
 	cout << "Argument ready, number of items: " << events.size() << endl;
 
 	vector<double> res = nonlinear_evolution(kerr, events);
+	cout << "Plotting..." << endl;
 	plot_evolution(events, res);
 
     return 0;

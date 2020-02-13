@@ -24,8 +24,8 @@ template <class System> using FieldComponent = std::function<double(AbstractFiel
 
 template <template <class System> class AbstractFieldImpl, class System> struct DuhamelSuperpose : public AbstractFieldImpl<System> {
 
-	DuhamelSuperpose (AbstractField<System>* tresponce, double duration, const std::function<double(double)>& shape, Logger* global_log = NULL)
-	: AbstractFieldImpl<System>(global_log), tau0(duration), tr(tresponce), func(shape) { }
+	DuhamelSuperpose (AbstractField<System>* tresponce, double duration, const std::function<double(double)>& shape, Logger* global_log_pt = NULL)
+	: AbstractFieldImpl<System>(global_log_pt), tau0(duration), tr(tresponce), func(shape) { }
 
 	double electric_x (const Point::SpaceTime<System>& event) const 
 	{

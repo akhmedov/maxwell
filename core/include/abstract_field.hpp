@@ -55,7 +55,7 @@ template <class System> struct AbstractField {
 	virtual double modal_jm  (const Point::ModalSpaceTime<System>&) const
 	{ throw std::logic_error("AbstractField<System>::modal_jm is not implemented!"); }
 	virtual double modal_vmh (const Point::ModalSpaceTime<System>&) const
-	{ throw std::logic_error("AbstractField<System>::modal_jm is not implemented!"); }
+	{ throw std::logic_error("AbstractField<System>::modal_vmh is not implemented!"); }
 
 	constexpr static const double C = 299792458;
 	constexpr static const double C2 = C * C;

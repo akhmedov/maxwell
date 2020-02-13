@@ -32,15 +32,16 @@ AbstractField<Point::Cylindrical>* create_model ()
 	if (!loaded) throw std::logic_error("Library loading error");
 	AbstractField<Point::Cylindrical>* tr = mng.get_module(mng.get_loaded()[SUBMODULE]).field_cyl_arg;
 	cout << "Submodule loaded: " << mng.get_loaded()[SUBMODULE] << endl;
-	auto shape = [] (double ct) { return Function::gauss_perp(ct,TAU0,1); };
-	return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
+	return tr;
+	// auto shape = [] (double ct) { return Function::gauss_perp(ct,TAU0,1); };
+	// return new DuhamelSuperpose<CylindricalField,Point::Cylindrical>(tr, TAU0, shape, NULL);
 }
 
 int main ()
 {
     AbstractField<Point::Cylindrical>* model = create_model();
 
-	Point::Cylindrical cart = Point::Cylindrical(R/2,M_PI/8,4*R/10);
+	Point::Cylindrical cart = Point::Cylindrical(0,0,2);
 	Point::Cylindrical cyln = Point::Cylindrical::convert(cart);
 	Point::SpaceTime<Point::Cylindrical> event {cyln};
 
@@ -52,7 +53,7 @@ int main ()
 
 	PyPlotManager plot = PyPlotManager("emp_shape.py");
 	plot.set_ox_label("ct, R");
-	plot.set_oy_label("Ex, A/m");
+	plot.set_oy_label("Ex, V/m");
 	plot.set_colormap(ScriptManager::Colormap::grey);
 	plot.plot2d(arg, fnc);
 

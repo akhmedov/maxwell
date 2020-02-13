@@ -10,8 +10,8 @@
 
 // Linear current distribution of time squared shape
 
-SquaredPulse::SquaredPulse (double radius, double magnitude, double eps_r, double mu_r, double duration, Logger* global_log)
-: TransientResponse(radius,magnitude,eps_r,mu_r,global_log), tau(duration) {}
+SquaredPulse::SquaredPulse (double radius, double magnitude, double eps_r, double mu_r, double duration, Logger* global_log_pt)
+: TransientResponse(radius,magnitude,eps_r,mu_r,global_log_pt), tau(duration) {}
 
 double SquaredPulse::electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const
 {

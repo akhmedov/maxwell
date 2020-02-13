@@ -115,7 +115,7 @@ bool ckeck_evolution_data (size_t inserted)
         client.delete_coeff();
     }
 
-    bool empty_coeff = (client.select_all_coeffs().size() == 0) ? true : false;
+    bool empty_coeff = (client.select_all_coeffs().first.size() == 0) ? true : false;
 
     // client.delete_probe(); // Not nessesery
     client.delete_problem();

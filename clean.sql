@@ -13,6 +13,6 @@
 -- DELETE FROM maxwell_header WHERE radius = 1;
 
 USE maxwell;
-DELETE FROM entity;
+DELETE FROM problem;
 DELETE FROM probe;
 DELETE FROM evolution;

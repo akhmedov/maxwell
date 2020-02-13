@@ -14,6 +14,7 @@
 #define kerr_amendment_hpp
 
 #include "maxwell.hpp"
+#include "mysql_connect.hpp" // not recommended to use in modules
 #include "uniform_disk_current.hpp"
 #include "updisk_meandr.hpp"
 
@@ -25,7 +26,7 @@ struct KerrAmendment : public TransientResponse {
 
 	KerrAmendment (double R, double A0, double eps_r, double mu_r, double chi3, Logger* global_logger = NULL);
 
-	double electric_x (const Point::SpaceTime<Point::Cylindrical>& event) const override;
+	// double electric_x (const Point::SpaceTime<Point::Cylindrical>& event) const override;
 	double electric_rho (const Point::SpaceTime<Point::Cylindrical>& event) const override;
 	double electric_phi (const Point::SpaceTime<Point::Cylindrical>& event) const override;
 	double electric_z (const Point::SpaceTime<Point::Cylindrical>& event) const override;
@@ -50,7 +51,7 @@ protected:
 	static double int_bessel_001_perp (double ct_z, double rho, double R);
 
 private:
-	double kerr;
+	double KERR;
 };
 
 #endif /* kerr_amendment_hpp */

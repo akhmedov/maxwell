@@ -16,7 +16,7 @@ TODO LIST
 10. PyPlot -> ScriptManager<PyPlot>
 11. GUI of feco, hfss, cst to Maxwell
 12. Spectrum calculations in AbstructField<>
-13. Add test for MySQL API for evolution coefficient tabe
+13. Add test for MySQL API for evolution coefficient table
 
 NEW MODULES TO IMPLEMENT
 ------
@@ -36,6 +36,7 @@ BUGS LIST
 5. override keyword for CartesianField, CylindricalField
 6. FFT frequency resolution and magnitude bugs
 7. LinearDuhamel<> inegtal exaption returns 0 - it is not correct
+8. CalculationManagers divide argument for separate threads and some of them are done faster. Then dead cores are not in use.
 
 UPDATE LIST FOR c++17 STANDART
 ------

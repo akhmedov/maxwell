@@ -26,8 +26,8 @@ bool Test::I2_time_partder ()
 			for (double ct = 0.1; ct <= 1.4; ct += 0.3) {
 				for (double z = 1e-2; z <= ct - 0.05; z += 0.3) {
 
-					auto I2 = [rho, R, z] (double ct) {
-						double vt_z = std::sqrt(ct * ct - z * z);
+					auto I2 = [rho, R, z] (double ct_perp) {
+						double vt_z = std::sqrt(ct_perp * ct_perp - z * z);
 						return TransientResponse::int_bessel_001(vt_z,rho,R); 
 					};
 					

@@ -42,6 +42,7 @@ struct Math {
 	static float inv_sqrt (float arg);
 	static double derivat3 ( std::function<double(double)>, double arg );
 	static double derivat4 ( std::function<double(double)>, double arg );
+	static double simpson_integral (const std::vector<double>& fnc, const std::vector<double>& arg);
 	static double lommel (std::size_t terms, int order, double W, double Z);
 	static std::vector<std::complex<double>> fft (const std::vector<std::complex<double>> &vec); // DFT for any vec.size()
 	static std::vector<double> fft_arg (size_t func_samples, double sampling_rate);

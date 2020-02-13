@@ -12,8 +12,8 @@
 
 std::size_t TransientResponse::STATIC_TERMS_NUMBER = 100;
 
-TransientResponse::TransientResponse (double radius, double magnitude, double eps_r, double mu_r, Logger* global_log)
-: CylindricalField<Point::Cylindrical>(global_log,1), A0(magnitude), R(radius), MU(mu_r), EPS(eps_r) {}
+TransientResponse::TransientResponse (double radius, double magnitude, double eps_r, double mu_r, Logger* global_log_pt)
+: CylindricalField<Point::Cylindrical>(global_log_pt,1), A0(magnitude), R(radius), MU(mu_r), EPS(eps_r) {}
 
 void TransientResponse::set_yterms_num (std::size_t number)
 {

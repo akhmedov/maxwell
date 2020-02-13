@@ -20,6 +20,7 @@ set(SOURCES
     ${SOURCE_DIR}/plot_emp_spectrum.cpp
     ${SOURCE_DIR}/plot_kerr_source.cpp
     ${SOURCE_DIR}/plot_kerr_evolution.cpp
+    ${SOURCE_DIR}/plot_kerr_intensity.cpp 
 )
 
 project(${PROJECT_NAME} LANGUAGES CXX)

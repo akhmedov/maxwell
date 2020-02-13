@@ -15,7 +15,8 @@ const std::string MySQL::LIST_SAVED_MODELS 		= "SELECT * FROM problem ORDER BY i
 const std::string MySQL::INSERT_PROBLEM    		= "INSERT INTO problem SET comment = '$COMMENT';";
 const std::string MySQL::UPDATE_COMMENT    		= "UPDATE problem SET comment = '$COMMENT' WHERE id = $PROBLEM;";
 const std::string MySQL::DELETE_PROBLEM    		= "DELETE FROM problem WHERE id = $PROBLEM;";
-const std::string MySQL::PRIBLEM_EXISTS    		= "SELECT EXISTS(SELECT id FROM problem WHERE id = $PROBLEM);";
+const std::string MySQL::SELECT_PROBLEM_ID    	= "SELECT EXISTS(SELECT id FROM problem WHERE id = $PROBLEM);";
+const std::string MySQL::SELECT_PROBLEM_COMMENT = "SELECT id FROM problem WHERE comment = '$COMMENT';";
 const std::string MySQL::SELECT_ALL_PROBES		= "SELECT id FROM probe WHERE problem_id = $PROBLEM;";
 
 const std::string MySQL::DELETE_PROBE   		= "DELETE FROM probe WHERE id = $POINT;";
@@ -29,7 +30,7 @@ const std::string MySQL::SELECT_COEFF 	   		= "SELECT id,vmh FROM evolution WHER
 const std::string MySQL::INSERT_COEFF 	 		= "INSERT INTO evolution SET problem_id = $PROBLEM, probe_id = $PROBE, m = $M, nu = $NU;";
 const std::string MySQL::UPDATE_COEFF_VAL  		= "UPDATE evolution SET vmh = $VALUE WHERE id = $INDEX;";
 const std::string MySQL::SELECT_COEFF_VAL 		= "SELECT vmh FROM evolution WHERE id = $INDEX;";
-const std::string MySQL::SELECT_ALL_COEFF  		= "SELECT vmh FROM evolution WHERE problem_id = $PROBLEM AND probe_id = $PROBE;";
+const std::string MySQL::SELECT_ALL_COEFF  		= "SELECT nu,vmh FROM evolution WHERE problem_id = $PROBLEM AND probe_id = $PROBE $M_OPT AND vmh IS NOT NULL ORDER BY nu;";
 
 MySQL::MySQL (const std::string& host, const std::string& user, const std::string& pass, const std::string& db)
 : hostname(host), username(user), password(pass), database(db)
@@ -108,7 +109,7 @@ std::vector<std::pair<std::size_t,std::string>> MySQL::get_saved_problems () con
 
 void MySQL::select_problem (std::size_t id)
 {
-	std::string problem_exists = MySQL::PRIBLEM_EXISTS;
+	std::string problem_exists = MySQL::SELECT_PROBLEM_ID;
 	problem_exists = std::regex_replace(problem_exists, std::regex("\\$PROBLEM"), std::to_string(id));
 
 	auto error_code = mysql_query(this->connection, problem_exists.c_str());
@@ -120,6 +121,27 @@ void MySQL::select_problem (std::size_t id)
 
 	if (exists) this->problem_id = id;
 	else this->problem_id = this->insert_problem("autoinserted problem [TIMESTAMP]");
+	this->problem_selected = true;
+}
+
+void MySQL::select_problem (const std::string& comment)
+{
+	std::string request = MySQL::SELECT_PROBLEM_COMMENT;
+	request = std::regex_replace(request, std::regex("\\$COMMENT"), comment);
+
+	int error_code = mysql_query(this->connection, request.c_str());
+	MySQL::throw_error_code(error_code);
+
+	MYSQL_RES* responce = mysql_store_result(this->connection);
+	MYSQL_ROW row = mysql_fetch_row(responce);
+
+	if (row != NULL) {
+		this->problem_id = std::stod(row[0]);
+		mysql_free_result(responce);
+	} else {
+		this->insert_problem(comment);
+	}
+
 	this->problem_selected = true;
 }
 
@@ -315,7 +337,7 @@ std::size_t MySQL::insert_coeff (int m, double nu)
 	return mysql_insert_id(this->connection);
 }
 
-std::vector<std::size_t> MySQL::select_all_coeffs ()
+std::pair<std::vector<double>,std::vector<double>> MySQL::select_all_coeffs (int m)
 {
 	if (!this->problem_selected) throw std::logic_error("Problem is not selected. Needed by MySQL::select_all_coeffs");
 	if (!this->probe_selected) throw std::logic_error("No probe.id selected. Needed by MySQL::select_all_coeffs");
@@ -323,6 +345,8 @@ std::vector<std::size_t> MySQL::select_all_coeffs ()
 	std::string request = MySQL::SELECT_ALL_COEFF;
 	request = std::regex_replace(request, std::regex("\\$PROBLEM"), std::to_string(this->problem_id));
 	request = std::regex_replace(request, std::regex("\\$PROBE"), std::to_string(this->probe_id));
+	if (m == 666) request = std::regex_replace(request, std::regex("\\$M_OPT"), " ");
+	else request = std::regex_replace(request, std::regex("\\$M_OPT"), " AND m = " + std::to_string(m));
 
 	int error_code = mysql_query(this->connection, request.c_str());
 	MySQL::throw_error_code(error_code);
@@ -330,14 +354,17 @@ std::vector<std::size_t> MySQL::select_all_coeffs ()
 	MYSQL_RES* responce = mysql_store_result(connection);
 	std::size_t point_nums = mysql_num_rows(responce);
 
-	std::vector<std::size_t> id;
+	std::vector<double> nu, vmh;
+	nu.reserve(point_nums);
+	vmh.reserve(point_nums);
 	for (std::size_t item = 0; item < point_nums; item++) {
 		MYSQL_ROW serch_row = mysql_fetch_row(responce);
-		id.push_back(std::stoi(serch_row[0]));
+		nu.push_back(std::stod(serch_row[0]));
+		vmh.push_back(std::stod(serch_row[1]));
 	}
 
 	mysql_free_result(responce);
-	return id;
+	return std::make_pair(nu, vmh);
 }
 
 double MySQL::get_coeff_result () const
@@ -351,7 +378,7 @@ void MySQL::update_coeff_result (double value)
 	if (!this->evolution_selected) throw std::logic_error("No point selected. Needed by MySQL::update_coeff_result");
 
 	std::string request = MySQL::UPDATE_COEFF_VAL;
-	request = std::regex_replace(request, std::regex("\\$INDEX"), std::to_string(this->probe_id));
+	request = std::regex_replace(request, std::regex("\\$INDEX"), std::to_string(this->evo_id));
 	request = std::regex_replace(request, std::regex("\\$VALUE"), std::to_string(value));
 
 	int error_code = mysql_query(this->connection, request.c_str());
