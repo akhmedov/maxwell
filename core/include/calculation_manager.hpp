@@ -2,7 +2,7 @@
 //  abstract_field.hpp
 //  Maxwell
 //
-//  Created by Oleh Zahrychanskyi on 19.05.17.
+//  Created by Rolan Akhmedov on 19.05.17.
 //  Copyright © 2017 Rolan Akhmedov. All rights reserved.
 //
 
